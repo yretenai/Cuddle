@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>preview</LangVersion>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Releaase' ">
+        <Optimize>True</Optimize>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(TargetFramework)' == 'net7.0' ">
+        <EnablePreviewFeatures>true</EnablePreviewFeatures>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\DragonLib\DragonLib\DragonLib.csproj"/>
+    </ItemGroup>
+
+    <Target Name="CustomAfterBuild" AfterTargets="AfterBuild">
+        <Copy SourceFiles="..\ATTRIBUTION.txt" DestinationFolder="$(TargetDir)" ContinueOnError="true"/>
+    </Target>
+
+</Project>

@@ -7,6 +7,6 @@ Unreal PAK Processor
 
 ### Special Thanks
 
-- TODO: fill me out
+- [Gildor's UModel viewer](https://github.com/gildor2/UEViewer/) was used as reference points for multiple classes in this project. 
 
 See [ATTRIBUTION.txt](ATTRIBUTION.txt)
