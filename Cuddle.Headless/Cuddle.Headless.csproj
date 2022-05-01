@@ -7,7 +7,7 @@
         <LangVersion>preview</LangVersion>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(Configuration)' == 'Releaase' ">
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <Optimize>True</Optimize>
     </PropertyGroup>
 

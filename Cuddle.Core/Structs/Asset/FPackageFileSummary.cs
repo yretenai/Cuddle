@@ -19,8 +19,8 @@ public class FPackageFileSummary {
         LegacyUE3Version = LegacyFileVersion switch {
             > ELegacyFileVersion.OLDEST_LOADABLE_PACKAGE => throw new NotSupportedException(),
             < ELegacyFileVersion.NEWEST_LOADABLE_PACKAGE => throw new NotSupportedException(),
-            ELegacyFileVersion.REMOVED_UE3_VERSION => archive.Read<int>(),
-            _ => LegacyUE3Version,
+            ELegacyFileVersion.REMOVED_UE3_VERSION => LegacyUE3Version,
+            _ => archive.Read<int>(),
         };
 
         FileVersionUE4 = archive.Read<EObjectVersion>();
@@ -67,7 +67,7 @@ public class FPackageFileSummary {
             }
         }
 
-        if (FileVersionUE4 is < EObjectVersion.NEWEST_LOADABLE_PACKAGE or < EObjectVersion.OLDEST_LOADABLE_PACKAGE) {
+        if (FileVersionUE4 is > EObjectVersion.NEWEST_LOADABLE_PACKAGE or < EObjectVersion.OLDEST_LOADABLE_PACKAGE) {
             throw new NotSupportedException();
         }
 
@@ -128,10 +128,10 @@ public class FPackageFileSummary {
 
         Generations = archive.ReadArray<FGenerationInfo>().ToArray();
 
-        SavedByEngineVersion = FileVersionUE4 >= EObjectVersion.ENGINE_VERSION_OBJECT ? archive.Read<FEngineVersion>() : new FEngineVersion { Major = 4, Changeset = archive.Read<uint>() };
+        SavedByEngineVersion = FileVersionUE4 >= EObjectVersion.ENGINE_VERSION_OBJECT ? new FEngineVersion(archive) : new FEngineVersion { Major = 4, Changeset = archive.Read<uint>() };
 
         if (FileVersionUE4 >= EObjectVersion.PACKAGE_SUMMARY_HAS_COMPATIBLE_ENGINE_VERSION) {
-            CompatibleWithEngineVersion = archive.Read<FEngineVersion>();
+            CompatibleWithEngineVersion = new FEngineVersion(archive);
         }
 
         CompressionFlags = archive.Read<int>();

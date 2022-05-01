@@ -10,12 +10,12 @@ namespace Cuddle.Core.FileSystem;
 public class FArchive {
     public FArchive(UAssetFile asset, ReadOnlyMemory<byte> data) {
         Asset = asset;
-        Game = Asset.Game;
         Data = data;
         // todo?
     }
 
-    public EGame Game { get; }
+    public EGame Game => Asset.Game;
+    public EObjectVersion Version => Asset.Summary.FileVersionUE4;
     public UAssetFile Asset { get; }
     public ReadOnlyMemory<byte> Data { get; }
 
@@ -28,7 +28,7 @@ public class FArchive {
     }
 
     public bool ReadBoolean() {
-        var value = MemoryMarshal.Read<uint>(Data.Span[Position..]);
+        var value = Read<uint>();
         if (value > 1) {
             throw new InvalidDataException($"Expected 0 or 1 for a boolean value, got {value}");
         }
