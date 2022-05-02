@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cuddle.Headless", "Cuddle.H
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cuddle", "Cuddle\Cuddle.csproj", "{E7561DC4-1900-4A71-839F-BD68A1D5892B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextureDecoder", "TextureDecoder\TextureDecoder\TextureDecoder.csproj", "{0B0B8003-3FC7-4051-98B5-ED86E16C80CA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{E7561DC4-1900-4A71-839F-BD68A1D5892B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E7561DC4-1900-4A71-839F-BD68A1D5892B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E7561DC4-1900-4A71-839F-BD68A1D5892B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0B0B8003-3FC7-4051-98B5-ED86E16C80CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B0B8003-3FC7-4051-98B5-ED86E16C80CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B0B8003-3FC7-4051-98B5-ED86E16C80CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0B0B8003-3FC7-4051-98B5-ED86E16C80CA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

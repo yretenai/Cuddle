@@ -36,12 +36,14 @@ public class FArchive {
         return value == 1;
     }
 
-    public ReadOnlyMemory<T> ReadArray<T>(int? count = null) where T : struct {
+    public Memory<T> ReadArray<T>(int? count = null) where T : struct {
         count ??= Read<int>();
 
-        var value = MemoryMarshal.Cast<byte, T>(Data.Span[Position..])[..count.Value];
-        Position += Unsafe.SizeOf<T>() * count.Value;
-        return value.ToArray().AsMemory();
+        var value = new T[count.Value].AsMemory();
+        var size = Unsafe.SizeOf<T>() * count.Value;
+        Data.Span.Slice(Position, size).CopyTo(MemoryMarshal.AsBytes(value.Span));
+        Position += size;
+        return value;
     }
 
     public T[] ReadClassArray<T>(int? count = null) where T : class, new() {
