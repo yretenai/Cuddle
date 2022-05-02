@@ -1,6 +1,6 @@
 ﻿namespace Cuddle.Core.Structs.Asset;
 
 public struct FGenerationInfo {
-    public int ExportCount { get; set; }
-    public int NameCount { get; set; }
+    public int ExportCount { get; }
+    public int NameCount { get; }
 }

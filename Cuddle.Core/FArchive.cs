@@ -5,18 +5,27 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Cuddle.Core.Enums;
 
-namespace Cuddle.Core.FileSystem;
+namespace Cuddle.Core;
 
 public class FArchive {
-    public FArchive(UAssetFile asset, ReadOnlyMemory<byte> data) {
+    public FArchive(UAssetFile? asset, ReadOnlyMemory<byte> data) {
         Asset = asset;
         Data = data;
-        // todo?
     }
 
-    public EGame Game => Asset.Game;
-    public EObjectVersion Version => Asset.Summary.FileVersionUE4;
-    public UAssetFile Asset { get; }
+    public FArchive(EGame game, ReadOnlyMemory<byte> data) {
+        Game = game;
+        Version = game.ToGameObjectVersion();
+        if (Version == 0) {
+            Version = game.GetEngineVersion().ToObjectVersion();
+        }
+
+        Data = data;
+    }
+
+    public EGame Game { get; }
+    public EObjectVersion Version { get; }
+    public UAssetFile? Asset { get; }
     public ReadOnlyMemory<byte> Data { get; }
 
     public int Position { get; set; }
@@ -46,13 +55,16 @@ public class FArchive {
         return value;
     }
 
-    public T[] ReadClassArray<T>(int? count = null) where T : class, new() {
+    public T[] ReadClassArray<T>(int? count = null, params object?[] extra) where T : class, new() {
         count ??= Read<int>();
 
         var value = new T[count.Value];
         var type = typeof(T);
-        for (var i = 0; i < value.Length; ++i) {
-            value[i] = (T) Activator.CreateInstance(type, this)!;
+        var args = new object?[extra.Length + 1];
+        args[0] = this;
+        extra.CopyTo(args, 1);
+        for (var index = 0; index < value.Length; ++index) {
+            value[index] = (T) Activator.CreateInstance(type, args)!;
         }
 
         Position += Unsafe.SizeOf<T>() * count.Value;
@@ -61,7 +73,7 @@ public class FArchive {
 
     public string ReadString(int? count = null) {
         count ??= Read<int>();
-        var value = "None";
+        var value = "";
 
         switch (count) {
             case > 1:
@@ -81,8 +93,8 @@ public class FArchive {
         count ??= Read<int>();
 
         var value = new string[count.Value];
-        for (var i = 0; i < value.Length; ++i) {
-            value[i] = ReadString();
+        for (var index = 0; index < value.Length; ++index) {
+            value[index] = ReadString();
         }
 
         return value;

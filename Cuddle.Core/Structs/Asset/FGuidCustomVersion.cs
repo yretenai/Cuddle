@@ -1,5 +1,4 @@
 ﻿using System;
-using Cuddle.Core.FileSystem;
 
 namespace Cuddle.Core.Structs.Asset;
 
@@ -13,7 +12,7 @@ public class FGuidCustomVersion {
         FriendlyName = archive.ReadString();
     }
 
-    public Guid Key { get; set; }
-    public int Version { get; set; }
-    public string FriendlyName { get; set; } = "None";
+    public Guid Key { get; }
+    public int Version { get; }
+    public string FriendlyName { get; } = "";
 }

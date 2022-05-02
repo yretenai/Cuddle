@@ -1,19 +1,19 @@
 ﻿using DragonLib.IO;
 
-namespace Cuddle.Core.FileSystem;
+namespace Cuddle.Core.Structs.FileSystem;
 
 // UE4 reference: FPakFile::DecodePakEntry
 public struct FPakEntryFlags {
-    [BitField(5)]
+    [BitField(6)]
     public int CompressionBlockSize { get; set; }
 
-    [BitField(15)]
+    [BitField(16)]
     public int CompressionBlockCount { get; set; }
 
     [BitField(1)]
     public bool Encrypted { get; set; }
 
-    [BitField(5)]
+    [BitField(6)]
     public int CompressionMethod { get; set; }
 
     [BitField(1)]

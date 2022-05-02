@@ -1,6 +1,4 @@
-﻿using Cuddle.Core.FileSystem;
-
-namespace Cuddle.Core.Structs.Asset;
+﻿namespace Cuddle.Core.Structs.Asset;
 
 public class FPackageIndex {
     public FPackageIndex() { }

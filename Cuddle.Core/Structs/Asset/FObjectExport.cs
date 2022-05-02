@@ -1,6 +1,5 @@
 ﻿using System;
 using Cuddle.Core.Enums;
-using Cuddle.Core.FileSystem;
 
 namespace Cuddle.Core.Structs.Asset;
 

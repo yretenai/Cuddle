@@ -1,6 +1,4 @@
-﻿using Cuddle.Core.FileSystem;
-
-namespace Cuddle.Core.Structs.Asset;
+﻿namespace Cuddle.Core.Structs.Asset;
 
 public class FEngineVersion {
     public FEngineVersion() { }
@@ -13,9 +11,9 @@ public class FEngineVersion {
         Branch = archive.ReadString();
     }
 
-    public ushort Major { get; set; }
-    public ushort Minor { get; set; }
-    public ushort Patch { get; set; }
-    public uint Changeset { get; set; }
-    public string Branch { get; set; } = "None";
+    public ushort Major { get; init; }
+    public ushort Minor { get; init; }
+    public ushort Patch { get; init; }
+    public uint Changeset { get; init; }
+    public string Branch { get; init; } = "";
 }

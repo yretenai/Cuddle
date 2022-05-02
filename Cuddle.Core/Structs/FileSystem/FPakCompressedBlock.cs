@@ -1,6 +1,6 @@
-﻿namespace Cuddle.Core.FileSystem;
+﻿namespace Cuddle.Core.Structs.FileSystem;
 
-public class FPakCompressedBlock {
+public struct FPakCompressedBlock {
     public long CompressedStart { get; set; }
     public long CompressedEnd { get; set; }
 }

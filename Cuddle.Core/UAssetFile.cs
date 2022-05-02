@@ -1,13 +1,13 @@
 ﻿using System;
 using Cuddle.Core.Enums;
-using Cuddle.Core.FileSystem;
 using Cuddle.Core.Structs.Asset;
 
 namespace Cuddle.Core;
 
 public class UAssetFile {
-    public UAssetFile(ReadOnlyMemory<byte> uasset, EGame game) {
+    public UAssetFile(ReadOnlyMemory<byte> uasset, string name, EGame game) {
         Game = game;
+        Name = name;
 
         var archive = new FArchive(this, uasset);
         Summary = new FPackageFileSummary(archive);
@@ -24,8 +24,9 @@ public class UAssetFile {
 
     public EGame Game { get; }
 
-    public FPackageFileSummary Summary { get; set; }
-    public FNameEntry[] Names { get; set; }
-    public FObjectImport[] Imports { get; set; }
-    public FObjectExport[] Exports { get; set; }
+    public string Name { get; }
+    public FPackageFileSummary Summary { get; }
+    public FNameEntry[] Names { get; }
+    public FObjectImport[] Imports { get; }
+    public FObjectExport[] Exports { get; }
 }
