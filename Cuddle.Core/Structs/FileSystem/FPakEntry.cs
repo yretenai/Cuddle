@@ -27,7 +27,7 @@ public class FPakEntry {
             IsEncrypted = fields.Encrypted;
 
             // read hash from lead-in struct
-            Hash = owner.ReadBytes(Pos, 0x30)[^0x14..].ToArray();
+            Hash = owner.ReadBytes(Pos, 0x30, IsEncrypted)[^0x14..].ToArray();
 
             // we read the entire data block from after the lead-in struct.
             Pos += 53; // no version checks because this can only exist after UE 4.23

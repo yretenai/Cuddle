@@ -54,7 +54,7 @@ public class FPakIndex {
             Files.AddRange(archive.ReadClassArray<FPakEntry>(null, owner, false));
 
             if (hasFullDirectoryIndex) { // we have paths, yay.
-                var dirData = owner.ReadBytes(fullDirectoryIndexOffset, fullDirectoryIndexSize);
+                var dirData = owner.ReadBytes(fullDirectoryIndexOffset, fullDirectoryIndexSize, owner.IsIndexEncrypted);
                 var dirReader = new FArchive(encodedReader.Game, dirData);
                 var dirCount = dirReader.Read<int>();
                 for (var index = 0; index < dirCount; ++index) {
@@ -85,7 +85,7 @@ public class FPakIndex {
                     }
                 }
             } else if (hasPathHashIndex) { // we only have hashes, which is workable.
-                var hashData = owner.ReadBytes(hashPathIndexOffset, hashPathIndexSize);
+                var hashData = owner.ReadBytes(hashPathIndexOffset, hashPathIndexSize, owner.IsIndexEncrypted);
                 var hashReader = new FArchive(encodedReader.Game, hashData);
                 var count = hashReader.Read<int>();
                 for (var index = 0; index < count; ++index) {

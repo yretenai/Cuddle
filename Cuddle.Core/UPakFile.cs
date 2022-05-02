@@ -40,7 +40,7 @@ public sealed class UPakFile : IDisposable {
         var header = new FArchive(game, buffer);
 
         EncryptionGuid = header.Read<Guid>();
-        IsEncrypted = header.Read<byte>() != 0;
+        IsIndexEncrypted = header.Read<byte>() != 0;
         Tag = header.Read<uint>();
         if (Tag != 0x5A6F12E1) {
             Log.Error("Failed to read PakFile header for {PakName}! Magic is invalid, expected 5A6F12E1 but got {Tag:X}", Name, Tag);
@@ -52,7 +52,7 @@ public sealed class UPakFile : IDisposable {
         Version = header.Read<EPakVersion>();
 
         if (Version < EPakVersion.IndexEncryption) {
-            IsEncrypted = false;
+            IsIndexEncrypted = false;
         }
 
         if (Version < EPakVersion.EncryptionKeyGuid) {
@@ -91,7 +91,7 @@ public sealed class UPakFile : IDisposable {
             }
         }
 
-        if (IsEncrypted) {
+        if (IsIndexEncrypted) {
             var testBlock = new byte[16].AsMemory();
             Stream.Position = indexOffset;
             if (Stream.Read(testBlock.Span) != 16) {
@@ -106,7 +106,7 @@ public sealed class UPakFile : IDisposable {
             }
         }
 
-        Index = new FPakIndex(new FArchive(game, ReadBytes(indexOffset, indexSize)), this, hashStore);
+        Index = new FPakIndex(new FArchive(game, ReadBytes(indexOffset, indexSize, IsIndexEncrypted)), this, hashStore);
     }
 
     public List<string> CompressionMethods { get; } = null!;
@@ -115,7 +115,7 @@ public sealed class UPakFile : IDisposable {
     private Stream? Stream { get; }
     public Guid EncryptionGuid { get; }
     private byte[]? EncryptionKey { get; set; }
-    public bool IsEncrypted { get; }
+    public bool IsIndexEncrypted { get; }
     public uint Tag { get; }
     public EPakVersion Version { get; }
     public ushort SubVersion { get; }
@@ -127,7 +127,7 @@ public sealed class UPakFile : IDisposable {
         Stream?.Dispose();
     }
 
-    internal Memory<byte> ReadBytes(long offset, long count) {
+    internal Memory<byte> ReadBytes(long offset, long count, bool isEncrypted) {
         if (Stream is not { CanRead: true }) {
             return Memory<byte>.Empty;
         }
@@ -144,7 +144,7 @@ public sealed class UPakFile : IDisposable {
             readOffset += amount;
         }
 
-        var decrypted = Decrypt(data);
+        var decrypted = Decrypt(data, isEncrypted);
         if (count < 16) { // aes needs 16 bytes.
             return decrypted[..(int) count];
         }
@@ -160,7 +160,7 @@ public sealed class UPakFile : IDisposable {
 
         foreach (var unknownKey in aesKey.NullKeys) {
             EncryptionKey = unknownKey;
-            var data = Decrypt(test);
+            var data = Decrypt(test, true);
             if (Math.Abs(BinaryPrimitives.ReadInt32LittleEndian(data.Span)) < 255) {
                 aesKey.Keys[EncryptionGuid] = EncryptionKey;
                 return true;
@@ -171,8 +171,8 @@ public sealed class UPakFile : IDisposable {
         return false;
     }
 
-    private Memory<byte> Decrypt(Memory<byte> data) {
-        if (EncryptionKey == null) {
+    private Memory<byte> Decrypt(Memory<byte> data, bool isEncrypted) {
+        if (!isEncrypted || EncryptionKey == null) {
             return data;
         }
 
