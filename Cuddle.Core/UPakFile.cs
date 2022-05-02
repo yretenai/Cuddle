@@ -2,11 +2,16 @@
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Security.Cryptography;
 using Cuddle.Core.Enums;
 using Cuddle.Core.Structs.FileSystem;
 using DragonLib;
+using K4os.Compression.LZ4;
+using Microsoft.Toolkit.HighPerformance;
 using Serilog;
+using ZstdNet;
 
 namespace Cuddle.Core;
 
@@ -125,6 +130,116 @@ public sealed class UPakFile : IDisposable {
 
     public void Dispose() {
         Stream?.Dispose();
+    }
+
+    public Memory<byte> ReadFile(string path) {
+        var index = Index.Files.FirstOrDefault(x => x.MountedPath == path);
+        if (index == null) {
+            return Memory<byte>.Empty;
+        }
+
+        return ReadFile(index);
+    }
+
+    public Memory<byte> ReadFile(FPakEntry index) {
+        var dataBuffer = ReadBytes(index.Pos, index.Size, index.IsEncrypted);
+
+        if (index.CompressionMethod == 0) {
+            return dataBuffer;
+        }
+        
+        var outputBuffer = new byte[index.UncompressedSize].AsMemory();
+
+        var lastBlockIndex = index.CompressionBlocks.Length - 1;
+        var outputOffset = 0L;
+        for (var i = 0; i < index.CompressionBlocks.Length; i++) {
+            var block = index.CompressionBlocks[i];
+            var size = i == lastBlockIndex ? index.UncompressedSize - outputOffset : index.CompressionBlockSize;
+            var blockChunk = dataBuffer[(int) block.CompressedStart..(int)block.CompressedEnd];
+
+            var compressionType = CompressionMethods[index.CompressionMethod].ToLower();
+
+            if (compressionType == "magic") {
+                if ((BinaryPrimitives.ReadUInt16LittleEndian(blockChunk.Span) & 0xFFFFFF) == 0xb52ffd) {
+                    compressionType = "zstd";
+                } else if (blockChunk.Span[0] == 0b1111000) {
+                    compressionType = "zlib";
+                } else if (BinaryPrimitives.ReadUInt16LittleEndian(blockChunk.Span) == 0x8b1f) {
+                    compressionType = "gzip";
+                } else if ((blockChunk.Span[0] & 0x7F) == 0b1100 && (blockChunk.Span[1] & 0x7F) < 15) {
+                    // Oodle compression magic:
+                    // 7654 3210 | 7654 3210
+                    // ABBB CCCC | DEEE EEEE
+                    
+                    // A = restart decoder after frame
+                    // B = reserved
+                    // C = magic bits
+                    // D = use checksums
+                    // E = encoder 0~14 { LZH, LZHLW, LZNIB, None, LZB16, LZBLW, LZA, LZNA, Kraken, Mermaid, BitKnit, Selkie, Hydra, Leviathan, Akkorokamui } as of oo2core_9
+                    compressionType = "oodle";
+                } else {
+                    compressionType = "lz4";
+                }
+            }
+
+            var blockData = Memory<byte>.Empty;
+            switch (compressionType) {
+                case "zlib": {
+                    using var dataStream = blockChunk.AsStream();
+                    dataStream.Position = 2;
+                    using var zlib = new DeflateStream(dataStream, CompressionMode.Decompress);
+                    var offset = 0;
+                    blockData = new byte[size].AsMemory();
+                    while (blockData.Length - offset > 0) {
+                        var amount = zlib.Read(blockData[offset..].Span);
+                        if (amount == 0) {
+                            break;
+                        }
+
+                        offset += amount;
+                    }
+                    break;
+                }
+                case "zstd": {
+                    using var zstd = new Decompressor();
+                    blockData = zstd.Unwrap(blockChunk.Span, (int) size);
+                    break;
+                }
+                case "gzip": {
+                    using var dataStream = blockChunk.AsStream();
+                    dataStream.Position = 2;
+                    using var zlib = new GZipStream(dataStream, CompressionMode.Decompress);
+                    var offset = 0;
+                    blockData = new byte[size].AsMemory();
+                    while (blockData.Length - offset > 0) {
+                        var amount = zlib.Read(blockData[offset..].Span);
+                        if (amount == 0) {
+                            break;
+                        }
+
+                        offset += amount;
+                    }
+                    break;
+                }
+                case "oodle": {
+                    if (!Oodle.IsReady) {
+                        Log.Error("Unable to decompress file {Path} because it uses Oodle compression and the Oodle dll has not been loaded!", index.Path);
+                    }
+                    blockData = Oodle.Decompress(blockChunk, (int) size);
+                    break;
+                }
+                case "lz4": {
+                    blockData = new byte[size].AsMemory();
+                    LZ4Codec.Decode(blockChunk.Span, blockData.Span);
+                    break;
+                }
+            }
+
+            blockData.CopyTo(outputBuffer[(int)outputOffset..]);
+            outputOffset += blockData.Length;
+        }
+
+        return outputBuffer;
     }
 
     internal Memory<byte> ReadBytes(long offset, long count, bool isEncrypted) {
