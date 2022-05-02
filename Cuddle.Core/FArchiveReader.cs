@@ -7,13 +7,13 @@ using Cuddle.Core.Enums;
 
 namespace Cuddle.Core;
 
-public class FArchive {
-    public FArchive(UAssetFile? asset, ReadOnlyMemory<byte> data) {
+public class FArchiveReader {
+    public FArchiveReader(UAssetFile? asset, ReadOnlyMemory<byte> data) {
         Asset = asset;
         Data = data;
     }
 
-    public FArchive(EGame game, ReadOnlyMemory<byte> data) {
+    public FArchiveReader(EGame game, ReadOnlyMemory<byte> data) {
         Game = game;
         Version = game.ToGameObjectVersion();
         if (Version == 0) {
@@ -30,7 +30,7 @@ public class FArchive {
 
     public int Position { get; set; }
 
-    public T Read<T>() where T : struct {
+    public T Read<T>() where T : unmanaged {
         var value = MemoryMarshal.Read<T>(Data.Span[Position..]);
         Position += Unsafe.SizeOf<T>();
         return value;
@@ -45,7 +45,7 @@ public class FArchive {
         return value == 1;
     }
 
-    public Memory<T> ReadArray<T>(int? count = null) where T : struct {
+    public Memory<T> ReadArray<T>(int? count = null) where T : unmanaged {
         count ??= Read<int>();
 
         var value = new T[count.Value].AsMemory();

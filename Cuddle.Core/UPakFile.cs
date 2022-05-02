@@ -42,7 +42,7 @@ public sealed class UPakFile : IDisposable {
             return;
         }
 
-        var header = new FArchive(game, buffer);
+        var header = new FArchiveReader(game, buffer);
 
         EncryptionGuid = header.Read<Guid>();
         IsIndexEncrypted = header.Read<byte>() != 0;
@@ -96,7 +96,7 @@ public sealed class UPakFile : IDisposable {
             }
         }
 
-        if (IsIndexEncrypted) {
+        if (IsIndexEncrypted || EncryptionGuid != Guid.Empty) {
             var testBlock = new byte[16].AsMemory();
             Stream.Position = indexOffset;
             if (Stream.Read(testBlock.Span) != 16) {
@@ -111,7 +111,13 @@ public sealed class UPakFile : IDisposable {
             }
         }
 
-        Index = new FPakIndex(new FArchive(game, ReadBytes(indexOffset, indexSize, IsIndexEncrypted)), this, hashStore);
+        Index = new FPakIndex(new FArchiveReader(game, ReadBytes(indexOffset, indexSize, IsIndexEncrypted)), this, hashStore);
+
+        if (IsIndexEncrypted || EncryptionGuid != Guid.Empty) {
+            Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, key {EncryptionGuid:n} which is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionGuid, EncryptionKey == null ? "not present" : "present");   
+        } else {
+            Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files)", Name, Index.MountPoint, Index.Files.Count);
+        }
     }
 
     public List<string> CompressionMethods { get; } = null!;

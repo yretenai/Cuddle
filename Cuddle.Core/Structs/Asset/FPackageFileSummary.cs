@@ -10,7 +10,7 @@ namespace Cuddle.Core.Structs.Asset;
 public class FPackageFileSummary {
     public FPackageFileSummary() { }
 
-    public FPackageFileSummary(FArchive archive) {
+    public FPackageFileSummary(FArchiveReader archive) {
         Tag = archive.Read<uint>();
         Logger.Assert(Tag == 0x9E2A83C1, "Tag == 0x9E2A83C1", "Tag does not match expected asset magic tag", $"Got {Tag:X8} instead!");
         LegacyFileVersion = archive.Read<ELegacyFileVersion>();
@@ -164,8 +164,8 @@ public class FPackageFileSummary {
     public Guid PersistentGuid { get; }
     public Guid OwnerPersistentGuid { get; }
     public FGenerationInfo[] Generations { get; } = Array.Empty<FGenerationInfo>();
-    public FEngineVersion SavedByEngineVersion { get; }
-    public FEngineVersion CompatibleWithEngineVersion { get; }
+    public FEngineVersion SavedByEngineVersion { get; } = new();
+    public FEngineVersion CompatibleWithEngineVersion { get; } = new();
     public int CompressionFlags { get; }
     public FCompressedChunk[] CompressedChunks { get; } = Array.Empty<FCompressedChunk>();
     public uint PackageSource { get; }

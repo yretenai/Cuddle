@@ -6,7 +6,7 @@ namespace Cuddle.Core.Structs.Asset;
 public class FGuidCustomVersion {
     public FGuidCustomVersion() { }
 
-    public FGuidCustomVersion(FArchive archive) {
+    public FGuidCustomVersion(FArchiveReader archive) {
         Key = archive.Read<Guid>();
         Version = archive.Read<int>();
         FriendlyName = archive.ReadString();

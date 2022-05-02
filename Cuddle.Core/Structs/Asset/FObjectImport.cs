@@ -3,7 +3,7 @@
 public class FObjectImport : FObjectAbstract {
     public FObjectImport() { }
 
-    public FObjectImport(FArchive archive) {
+    public FObjectImport(FArchiveReader archive) {
         ClassPackage = new FName(archive);
         ClassName = new FName(archive);
         PackageIndex = new FPackageIndex(archive);

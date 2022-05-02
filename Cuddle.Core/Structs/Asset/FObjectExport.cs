@@ -6,7 +6,7 @@ namespace Cuddle.Core.Structs.Asset;
 public class FObjectExport : FObjectAbstract {
     public FObjectExport() { }
 
-    public FObjectExport(FArchive archive) {
+    public FObjectExport(FArchiveReader archive) {
         ClassIndex = new FPackageIndex(archive);
         SuperIndex = new FPackageIndex(archive);
         if (archive.Version >= EObjectVersion.TemplateIndex_IN_COOKED_EXPORTS) {

@@ -1,7 +1,6 @@
 ﻿using System;
 using Cuddle.Core.Enums;
 using DragonLib;
-using DragonLib.IO;
 
 namespace Cuddle.Core.Structs.FileSystem;
 
@@ -9,9 +8,12 @@ namespace Cuddle.Core.Structs.FileSystem;
 public class FPakEntry {
     public FPakEntry() => Hash = new byte[0x14];
 
-    public FPakEntry(FArchive archive, UPakFile owner, bool isCompressed) {
+    public FPakEntry(FArchiveReader archive, UPakFile owner, bool isCompressed) {
+        Owner = owner;
+        
         if (isCompressed) {
-            var fields = BitPacked.Unpack<FPakEntryFlags>(archive.Read<uint>());
+            // var fields = BitPacked.Unpack<FPakEntryFlags>(archive.Read<uint>());
+            var fields = new FPakEntryFlags(archive.Read<uint>());
 
             if (fields.CompressionBlockSize == 0x3F) {
                 CompressionBlockSize = archive.Read<uint>();
@@ -97,6 +99,7 @@ public class FPakEntry {
         }
     }
 
+    public UPakFile Owner { get; } = null!;
     public long Pos { get; }
     public long Size { get; }
     public long UncompressedSize { get; }

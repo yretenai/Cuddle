@@ -4,7 +4,7 @@ using Cuddle.Core.Enums;
 namespace Cuddle.Core.Structs.FileSystem;
 
 public class FPakIndex {
-    public FPakIndex(FArchive archive, UPakFile owner, HashPathStore? hashStore) {
+    public FPakIndex(FArchiveReader archive, UPakFile owner, HashPathStore? hashStore) {
         Owner = owner;
 
         MountPoint = archive.ReadString();
@@ -43,7 +43,7 @@ public class FPakIndex {
             FullDirectoryIndexHash = hasFullDirectoryIndex ? archive.ReadArray<byte>(0x14).ToArray() : null;
 
             var encodedData = archive.ReadArray<byte>();
-            var encodedReader = new FArchive(archive.Game, encodedData);
+            var encodedReader = new FArchiveReader(archive.Game, encodedData);
             Files.EnsureCapacity(Count);
             var encodedMap = new Dictionary<int, int>(Count);
             for (var index = 0; index < Count; ++index) {
@@ -55,7 +55,7 @@ public class FPakIndex {
 
             if (hasFullDirectoryIndex) { // we have paths, yay.
                 var dirData = owner.ReadBytes(fullDirectoryIndexOffset, fullDirectoryIndexSize, owner.IsIndexEncrypted);
-                var dirReader = new FArchive(encodedReader.Game, dirData);
+                var dirReader = new FArchiveReader(encodedReader.Game, dirData);
                 var dirCount = dirReader.Read<int>();
                 for (var index = 0; index < dirCount; ++index) {
                     var dirName = dirReader.ReadString();
@@ -86,7 +86,7 @@ public class FPakIndex {
                 }
             } else if (hasPathHashIndex) { // we only have hashes, which is workable.
                 var hashData = owner.ReadBytes(hashPathIndexOffset, hashPathIndexSize, owner.IsIndexEncrypted);
-                var hashReader = new FArchive(encodedReader.Game, hashData);
+                var hashReader = new FArchiveReader(encodedReader.Game, hashData);
                 var count = hashReader.Read<int>();
                 for (var index = 0; index < count; ++index) {
                     var hash = hashReader.Read<ulong>();

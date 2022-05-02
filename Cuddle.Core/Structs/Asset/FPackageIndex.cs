@@ -3,7 +3,7 @@
 public class FPackageIndex {
     public FPackageIndex() { }
 
-    public FPackageIndex(FArchive archive) {
+    public FPackageIndex(FArchiveReader archive) {
         Index = archive.Read<int>();
         Asset = archive.Asset;
     }

@@ -9,7 +9,7 @@ public class UAssetFile {
         Game = game;
         Name = name;
 
-        var archive = new FArchive(this, uasset);
+        var archive = new FArchiveReader(this, uasset);
         Summary = new FPackageFileSummary(archive);
 
         archive.Position = Summary.NameOffset;

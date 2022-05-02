@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Text;
 using DragonLib.Hash;
 using DragonLib.Hash.Basis;
@@ -12,7 +10,7 @@ namespace Cuddle.Core;
 public class HashPathStore {
     public HashPathStore() { }
 
-    public HashPathStore(FArchive archive) {
+    public HashPathStore(FArchiveReader archive) {
         var count = archive.Read<int>();
         Paths.EnsureCapacity(count);
         for (var index = 0; index < count; ++index) {
@@ -48,22 +46,15 @@ public class HashPathStore {
         return false;
     }
 
-    public Memory<byte> Serialize() {
-        var size = 4 + 13 * Paths.Count + Paths.Sum(x => Encoding.UTF8.GetByteCount(x.Value));
-        var buffer = new byte[size].AsMemory();
-
-        var offset = 4;
-        BinaryPrimitives.WriteInt32LittleEndian(buffer.Span, Paths.Count);
+    public ReadOnlyMemory<byte> Serialize() {
+        var writer = new FArchiveWriter();
+        writer.Write(Paths.Count);
+        
         foreach (var (hash, path) in Paths) {
-            BinaryPrimitives.WriteUInt64LittleEndian(buffer.Span[offset..], hash);
-            offset += 8;
-            var data = Encoding.UTF8.GetBytes(path);
-            BinaryPrimitives.WriteInt32LittleEndian(buffer.Span[offset..], data.Length + 1);
-            offset += 4;
-            data.CopyTo(buffer.Span[offset..]);
-            offset += data.Length + 1;
+            writer.Write(hash);
+            writer.Write(path);
         }
 
-        return buffer;
+        return writer.Data;
     }
 }

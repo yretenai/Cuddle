@@ -8,13 +8,17 @@ public class FName {
         Instance = 0;
     }
 
-    public FName(FArchive archive) {
+    public FName(FArchiveReader archive) {
         Index = archive.Read<int>();
+        Instance = archive.Read<int>();
+
+        if (archive.Asset == null) {
+            return;
+        }
+
         if (Index > archive.Asset.Names.Length) {
             throw new IndexOutOfRangeException($"FName index {Index} is out of range!");
         }
-
-        Instance = archive.Read<int>();
 
         Value = archive.Asset.Names[Index].Name;
         if (Instance > 0) {

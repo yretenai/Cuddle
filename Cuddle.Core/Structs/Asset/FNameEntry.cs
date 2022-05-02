@@ -3,7 +3,7 @@
 public class FNameEntry {
     public FNameEntry() => Name = "None";
 
-    public FNameEntry(FArchive archive) {
+    public FNameEntry(FArchiveReader archive) {
         Name = archive.ReadString();
         if (Name.Length == 0) {
             Name = "None";

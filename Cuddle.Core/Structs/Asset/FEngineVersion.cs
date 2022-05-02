@@ -3,7 +3,7 @@
 public class FEngineVersion {
     public FEngineVersion() { }
 
-    public FEngineVersion(FArchive archive) {
+    public FEngineVersion(FArchiveReader archive) {
         Major = archive.Read<ushort>();
         Minor = archive.Read<ushort>();
         Patch = archive.Read<ushort>();
