@@ -35,4 +35,5 @@ public class FName {
     public static implicit operator string(FName? name) => name?.Value ?? "None";
 
     public override string ToString() => Value;
+    public override int GetHashCode() => Value.GetHashCode();
 }

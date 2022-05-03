@@ -13,4 +13,6 @@ public class FObjectImport : FObjectAbstract {
     public FName ClassPackage { get; } = FName.Null;
     public FName ClassName { get; } = FName.Null;
     public FPackageIndex PackageIndex { get; protected init; } = FPackageIndex.Null;
+    public UObject? Object { get; internal set; }
+    public bool ObjectCreated { get; internal set; }
 }

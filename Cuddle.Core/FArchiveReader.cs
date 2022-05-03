@@ -8,26 +8,27 @@ using Cuddle.Core.Enums;
 namespace Cuddle.Core;
 
 public class FArchiveReader {
-    public FArchiveReader(UAssetFile? asset, ReadOnlyMemory<byte> data) {
+    public FArchiveReader(UAssetFile asset, ReadOnlyMemory<byte> data) {
         Asset = asset;
         Data = data;
+        Game = asset.Game;
+        Version = asset.Summary.FileVersionUE4;
     }
 
     public FArchiveReader(EGame game, ReadOnlyMemory<byte> data) {
         Game = game;
         Version = game.ToGameObjectVersion();
         if (Version == 0) {
-            Version = game.GetEngineVersion().ToObjectVersion();
+            Version = game.ToObjectVersion();
         }
 
         Data = data;
     }
 
-    public EGame Game { get; }
-    public EObjectVersion Version { get; }
+    public EGame Game { get; set; }
+    public EObjectVersion Version { get; set; }
     public UAssetFile? Asset { get; }
     public ReadOnlyMemory<byte> Data { get; }
-
     public int Position { get; set; }
 
     public T Read<T>() where T : unmanaged {
@@ -99,4 +100,16 @@ public class FArchiveReader {
 
         return value;
     }
+
+    public FArchiveReader Partition(int pos, int size) {
+        var slice = Data.Slice(pos, size);
+        return Asset == null ? new FArchiveReader(Game, slice) : new FArchiveReader(Asset, slice);
+    }
+
+    public FArchiveReader Partition() {
+        var count = Read<int>();
+        return Partition(Position, count);
+    }
+
+    public FArchiveReader Partition(int count) => Partition(Position, count);
 }

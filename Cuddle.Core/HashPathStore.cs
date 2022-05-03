@@ -49,7 +49,7 @@ public class HashPathStore {
     public ReadOnlyMemory<byte> Serialize() {
         var writer = new FArchiveWriter();
         writer.Write(Paths.Count);
-        
+
         foreach (var (hash, path) in Paths) {
             writer.Write(hash);
             writer.Write(path);

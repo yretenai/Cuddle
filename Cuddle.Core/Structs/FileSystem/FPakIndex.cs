@@ -42,8 +42,7 @@ public class FPakIndex {
             var fullDirectoryIndexSize = hasFullDirectoryIndex ? archive.Read<long>() : 0;
             FullDirectoryIndexHash = hasFullDirectoryIndex ? archive.ReadArray<byte>(0x14).ToArray() : null;
 
-            var encodedData = archive.ReadArray<byte>();
-            var encodedReader = new FArchiveReader(archive.Game, encodedData);
+            var encodedReader = archive.Partition();
             Files.EnsureCapacity(Count);
             var encodedMap = new Dictionary<int, int>(Count);
             for (var index = 0; index < Count; ++index) {

@@ -114,7 +114,7 @@ public sealed class UPakFile : IDisposable {
         Index = new FPakIndex(new FArchiveReader(game, ReadBytes(indexOffset, indexSize, IsIndexEncrypted)), this, hashStore);
 
         if (IsIndexEncrypted || EncryptionGuid != Guid.Empty) {
-            Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, key {EncryptionGuid:n} which is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionGuid, EncryptionKey == null ? "not present" : "present");   
+            Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, key {EncryptionGuid:n} which is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionGuid, EncryptionKey == null ? "not present" : "present");
         } else {
             Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files)", Name, Index.MountPoint, Index.Files.Count);
         }
@@ -153,7 +153,7 @@ public sealed class UPakFile : IDisposable {
         if (index.CompressionMethod == 0) {
             return dataBuffer;
         }
-        
+
         var outputBuffer = new byte[index.UncompressedSize].AsMemory();
 
         var lastBlockIndex = index.CompressionBlocks.Length - 1;
@@ -161,7 +161,7 @@ public sealed class UPakFile : IDisposable {
         for (var i = 0; i < index.CompressionBlocks.Length; i++) {
             var block = index.CompressionBlocks[i];
             var size = i == lastBlockIndex ? index.UncompressedSize - outputOffset : index.CompressionBlockSize;
-            var blockChunk = dataBuffer[(int) block.CompressedStart..(int)block.CompressedEnd];
+            var blockChunk = dataBuffer[(int) block.CompressedStart..(int) block.CompressedEnd];
 
             var compressionType = CompressionMethods[index.CompressionMethod].ToLower();
 
@@ -176,7 +176,6 @@ public sealed class UPakFile : IDisposable {
                     // Oodle compression magic:
                     // 7654 3210 | 7654 3210
                     // ABBB CCCC | DEEE EEEE
-                    
                     // A = restart decoder after frame
                     // B = reserved
                     // C = magic bits
@@ -204,6 +203,7 @@ public sealed class UPakFile : IDisposable {
 
                         offset += amount;
                     }
+
                     break;
                 }
                 case "zstd": {
@@ -225,12 +225,14 @@ public sealed class UPakFile : IDisposable {
 
                         offset += amount;
                     }
+
                     break;
                 }
                 case "oodle": {
                     if (!Oodle.IsReady) {
                         Log.Error("Unable to decompress file {Path} because it uses Oodle compression and the Oodle dll has not been loaded!", index.Path);
                     }
+
                     blockData = Oodle.Decompress(blockChunk, (int) size);
                     break;
                 }
@@ -241,7 +243,7 @@ public sealed class UPakFile : IDisposable {
                 }
             }
 
-            blockData.CopyTo(outputBuffer[(int)outputOffset..]);
+            blockData.CopyTo(outputBuffer[(int) outputOffset..]);
             outputOffset += blockData.Length;
         }
 

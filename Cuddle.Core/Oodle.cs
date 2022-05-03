@@ -7,7 +7,7 @@ namespace Cuddle.Core;
 
 public static class Oodle {
     public static bool IsReady => DecompressDelegate != null;
-    
+
     private static OodleLZ_Decompress? DecompressDelegate { get; set; }
 
     [DllImport("kernel32", CharSet = CharSet.Unicode, SetLastError = true)]
@@ -24,7 +24,7 @@ public static class Oodle {
         Memory<byte> buffer = new byte[size];
         using var src = input.Pin();
         using var pinned = buffer.Pin();
-        
+
         unsafe {
             var outSize = DecompressDelegate.Invoke((IntPtr) src.Pointer, input.Length, (IntPtr) pinned.Pointer, buffer.Length, 0, 0, 0, IntPtr.Zero, 0, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, 0, 3);
             return buffer[..outSize];

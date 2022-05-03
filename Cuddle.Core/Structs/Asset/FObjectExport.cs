@@ -54,4 +54,6 @@ public class FObjectExport : FObjectAbstract {
     public int CreateBeforeSerializationDependencies { get; }
     public int SerializationBeforeCreateDependencies { get; }
     public int CreateBeforeCreateDependencies { get; }
+    public UObject? Object { get; internal set; }
+    public bool ObjectCreated { get; internal set; }
 }

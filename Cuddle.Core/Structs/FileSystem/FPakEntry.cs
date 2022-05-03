@@ -10,7 +10,7 @@ public class FPakEntry {
 
     public FPakEntry(FArchiveReader archive, UPakFile owner, bool isCompressed) {
         Owner = owner;
-        
+
         if (isCompressed) {
             // var fields = BitPacked.Unpack<FPakEntryFlags>(archive.Read<uint>());
             var fields = new FPakEntryFlags(archive.Read<uint>());

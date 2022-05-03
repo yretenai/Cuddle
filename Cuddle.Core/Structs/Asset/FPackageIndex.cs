@@ -1,4 +1,6 @@
-﻿namespace Cuddle.Core.Structs.Asset;
+﻿using System.Diagnostics;
+
+namespace Cuddle.Core.Structs.Asset;
 
 public class FPackageIndex {
     public FPackageIndex() { }
@@ -30,6 +32,9 @@ public class FPackageIndex {
             return null;
         }
     }
+
+    [DebuggerBrowsable(DebuggerBrowsableState.Collapsed)]
+    public UObject? Object => Asset?.GetIndex(this);
 
     public bool IsImport => Index < 0;
     public bool IsExport => Index > 0;
