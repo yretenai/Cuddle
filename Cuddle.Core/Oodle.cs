@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -31,22 +30,36 @@ public static class Oodle {
         }
     }
 
-    public static void Load(string path) {
+    public static bool Load(string? path) {
+        if (!OperatingSystem.IsWindows()) { // todo: investigate oodle decompressors for linux (ooz?)
+            return false;
+        }
+        
         if (Directory.Exists(path)) {
-            path = Directory.GetFiles(path, "oo2core_*_win64.dll")[0];
+            var files = Directory.GetFiles(path, "oo2core_*_win64.dll");
+            if (files.Length == 0) {
+                return false;
+            }
+
+            path = files[0];
+        }
+
+        if (string.IsNullOrEmpty(path) || !File.Exists(path)) {
+            return false;
         }
 
         var handle = LoadLibraryW(path);
         if (handle == IntPtr.Zero) {
-            throw new Win32Exception(Marshal.GetLastWin32Error());
+            return false;
         }
 
         var address = GetProcAddress(handle, "OodleLZ_Decompress");
         if (address == IntPtr.Zero) {
-            throw new Win32Exception(Marshal.GetLastWin32Error());
+            return false;
         }
 
         DecompressDelegate = Marshal.GetDelegateForFunctionPointer<OodleLZ_Decompress>(address);
+        return true;
     }
 
     private delegate int OodleLZ_Decompress(IntPtr srcBuf, int srcSize, IntPtr dstBuf, int dstSize, int fuzz, int crc, int verbose, IntPtr dstBase, int dstBaseSize, IntPtr cb, IntPtr cbContext, IntPtr scratch, uint scratchSize, uint threadPhase);
