@@ -18,6 +18,7 @@ namespace Cuddle.Core;
 public sealed class UPakFile : IDisposable {
     public UPakFile(Stream stream, EGame game, string name, AESKeyStore? keyStore = null, HashPathStore? hashStore = null) {
         Name = name;
+        Game = game;
 
         var offset = 0x3D;
 
@@ -123,6 +124,7 @@ public sealed class UPakFile : IDisposable {
     public List<string> CompressionMethods { get; } = null!;
 
     public string Name { get; }
+    public EGame Game { get; }
     private Stream? Stream { get; }
     public Guid EncryptionGuid { get; }
     private byte[]? EncryptionKey { get; set; }
@@ -273,6 +275,46 @@ public sealed class UPakFile : IDisposable {
         }
 
         return decrypted;
+    }
+
+    public UObject? ReadAssetExport(string path, int export) {
+        var index = Index.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
+        return index == null ? null : ReadAssetExport(index, export);
+    }
+
+    public UObject? ReadAssetExport(FPakEntry entry, int export) {
+        var data = ReadFile(entry);
+        if (data.IsEmpty) {
+            return null;
+        }
+
+        var uexp = ReadFile(Path.ChangeExtension(entry.MountedPath, ".uexp"));
+        var ubulk = ReadFile(Path.ChangeExtension(entry.MountedPath, ".ubulk"));
+        var uptnl = ReadFile(Path.ChangeExtension(entry.MountedPath, ".uptnl"));
+
+        var uasset = new UAssetFile(data, uexp, ubulk, uptnl, Path.GetFileNameWithoutExtension(entry.MountedPath), Game, this);
+
+        return uasset.GetExport(export);
+    }
+
+    public UObject?[] ReadAssetExports(string path) {
+        var index = Index.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
+        return index == null ? Array.Empty<UObject>() : ReadAssetExports(index);
+    }
+
+    public UObject?[] ReadAssetExports(FPakEntry entry) {
+        var data = ReadFile(entry);
+        if (data.IsEmpty) {
+            return Array.Empty<UObject>();
+        }
+
+        var uexp = ReadFile(Path.ChangeExtension(entry.MountedPath, ".uexp"));
+        var ubulk = ReadFile(Path.ChangeExtension(entry.MountedPath, ".ubulk"));
+        var uptnl = ReadFile(Path.ChangeExtension(entry.MountedPath, ".uptnl"));
+
+        var uasset = new UAssetFile(data, uexp, ubulk, uptnl, Path.GetFileNameWithoutExtension(entry.MountedPath), Game, this);
+
+        return uasset.GetExports();
     }
 
     private bool FindEncryptionKey(AESKeyStore aesKey, Memory<byte> test) {

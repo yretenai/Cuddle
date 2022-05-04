@@ -29,4 +29,19 @@ public sealed class PakManager : IDisposable {
             Paks.Add(new UPakFile(new FileStream(pakPath.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite), game, Path.GetFileNameWithoutExtension(pakPath.Name), KeyStore, HashStore));
         }
     }
+
+    public Memory<byte> ReadFile(string path) {
+        var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
+        return file == null ? Memory<byte>.Empty : file.Owner.ReadFile(file);
+    }
+
+    public UObject? ReadExport(string path, int index) {
+        var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
+        return file?.Owner.ReadAssetExport(file, index);
+    }
+
+    public UObject?[] ReadExports(string path) {
+        var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
+        return file == null ? Array.Empty<UObject>() : file.Owner.ReadAssetExports(file);
+    }
 }

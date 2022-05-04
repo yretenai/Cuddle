@@ -9,13 +9,13 @@ namespace Cuddle.Core;
 public class UObject {
     public UObject(FArchiveReader data) {
         Owner = data.Asset!;
-        while (true) {
-            var start = data.Position;
+        while (data.Remaining > 0) {
             var tag = new FPropertyTag(data);
             if (tag.Name == "None") {
                 break;
             }
 
+            var start = data.Position;
             var expectedEnd = start + tag.Size;
 
             try {

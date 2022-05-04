@@ -27,9 +27,11 @@ public class FArchiveReader {
 
     public EGame Game { get; set; }
     public EObjectVersion Version { get; set; }
-    public UAssetFile? Asset { get; }
+    public UAssetFile? Asset { get; internal set; }
     public ReadOnlyMemory<byte> Data { get; }
     public int Position { get; set; }
+    public int Length => Data.Length;
+    public int Remaining => Data.Length - Position;
 
     public T Read<T>() where T : unmanaged {
         var value = MemoryMarshal.Read<T>(Data.Span[Position..]);
@@ -106,10 +108,10 @@ public class FArchiveReader {
         return Asset == null ? new FArchiveReader(Game, slice) : new FArchiveReader(Asset, slice);
     }
 
-    public FArchiveReader Partition() {
-        var count = Read<int>();
-        return Partition(Position, count);
+    public FArchiveReader Partition(int? count = null) {
+        count ??= Read<int>();
+        var pos = Position;
+        Position += count.Value;
+        return Partition(pos, count.Value);
     }
-
-    public FArchiveReader Partition(int count) => Partition(Position, count);
 }

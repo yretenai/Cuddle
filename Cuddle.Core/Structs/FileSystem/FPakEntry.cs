@@ -112,5 +112,11 @@ public class FPakEntry {
     public string MountedPath { get; internal set; } = "";
     public string Path { get; internal set; } = "";
 
+    public Memory<byte> ReadFile() => Owner.ReadFile(this);
+
+    public UObject? ReadAssetExport(int index) => Owner.ReadAssetExport(this, index);
+
+    public UObject?[] ReadAssetExports() => Owner.ReadAssetExports(this);
+
     public override string ToString() => MountedPath;
 }

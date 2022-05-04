@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Cuddle.Core.Enums;
 using Cuddle.Core.Structs.Asset;
 
@@ -10,8 +11,10 @@ public class UAssetFile {
         Name = name;
         Owner = owner;
 
-        var archive = new FArchiveReader(this, uasset);
+        var archive = new FArchiveReader(game, uasset);
         Summary = new FPackageFileSummary(archive);
+        archive.Asset = this;
+        archive.Version = Summary.FileVersionUE4;
 
         archive.Position = Summary.NameOffset;
         Names = archive.ReadClassArray<FNameEntry>(Summary.NameCount);
@@ -41,23 +44,22 @@ public class UAssetFile {
     public FArchiveReader BulkData { get; }
     public FArchiveReader OptionalData { get; }
 
-    public UObject? GetExport(int index) {
-        if (index > Exports.Length) {
-            return null;
-        }
+    public UObject? GetExport(int index) => index > Exports.Length ? null : GetExport(Exports[index]);
 
-        if (!Exports[index].ObjectCreated) {
-            var export = Exports[index];
+    private UObject? GetExport(FObjectExport export) {
+        if (!export.ObjectCreated) {
             if (export.SerialOffset > 0x7FFFFFF) {
                 throw new IndexOutOfRangeException("Export is outside of reasonable range");
             }
 
-            Exports[index].Object = UObjectRegistry.Create(export.ClassIndex.Reference?.ObjectName, export, this);
-            Exports[index].ObjectCreated = true;
+            export.Object = UObjectRegistry.Create(export.ClassIndex.Reference?.ObjectName, export, this);
+            export.ObjectCreated = true;
         }
 
-        return Exports[index].Object;
+        return export.Object;
     }
+
+    public UObject?[] GetExports() => Exports.Select(GetExport).ToArray();
 
     public UObject? GetImport(int index) {
         if (Owner == null || index > Imports.Length) {
