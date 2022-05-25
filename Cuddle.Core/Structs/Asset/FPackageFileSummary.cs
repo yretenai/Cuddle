@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using Cuddle.Core.Enums;
-using DragonLib.IO;
 
 namespace Cuddle.Core.Structs.Asset;
 
@@ -12,7 +12,7 @@ public class FPackageFileSummary {
 
     public FPackageFileSummary(FArchiveReader archive) {
         Tag = archive.Read<uint>();
-        Logger.Assert(Tag == 0x9E2A83C1, "Tag == 0x9E2A83C1", "Tag does not match expected asset magic tag", $"Got {Tag:X8} instead!");
+        Debug.Assert(Tag == 0x9E2A83C1, "Tag == 0x9E2A83C1", "Tag does not match expected asset magic tag", $"Got {Tag:X8} instead!");
         LegacyFileVersion = archive.Read<ELegacyFileVersion>();
 
         LegacyUE3Version = LegacyFileVersion switch {

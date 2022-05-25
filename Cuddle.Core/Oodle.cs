@@ -15,18 +15,16 @@ public static class Oodle {
     [DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true)]
     private static extern IntPtr GetProcAddress(IntPtr hModule, string procname);
 
-    public static Memory<byte> Decompress(Memory<byte> input, int size) {
+    public static int Decompress(Memory<byte> input, Memory<byte> output) {
         if (DecompressDelegate == null) {
-            return Memory<byte>.Empty;
+            return -1;
         }
 
-        Memory<byte> buffer = new byte[size];
-        using var src = input.Pin();
-        using var pinned = buffer.Pin();
+        using var inPin = input.Pin();
+        using var outPin = output.Pin();
 
         unsafe {
-            var outSize = DecompressDelegate.Invoke((IntPtr) src.Pointer, input.Length, (IntPtr) pinned.Pointer, buffer.Length, 0, 0, 0, IntPtr.Zero, 0, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, 0, 3);
-            return buffer[..outSize];
+            return DecompressDelegate.Invoke((IntPtr) inPin.Pointer, input.Length, (IntPtr) outPin.Pointer, output.Length, 0, 0, 0, IntPtr.Zero, 0, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, 0, 3);
         }
     }
 

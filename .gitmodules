@@ -1,6 +1,3 @@
 [submodule "DragonLib"]
 	path = DragonLib
 	url = https://github.com/yretenai/DragonLib.git
-[submodule "TextureDecoder"]
-	path = TextureDecoder
-	url = https://github.com/yretenai/TextureDecoder.git

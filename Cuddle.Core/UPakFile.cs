@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
@@ -9,7 +10,6 @@ using Cuddle.Core.Enums;
 using Cuddle.Core.Structs.FileSystem;
 using DragonLib;
 using K4os.Compression.LZ4;
-using Microsoft.Toolkit.HighPerformance;
 using Serilog;
 using ZstdNet;
 
@@ -149,7 +149,7 @@ public sealed class UPakFile : IDisposable {
         return ReadFile(index);
     }
 
-    public Memory<byte> ReadFile(FPakEntry index) {
+    public unsafe Memory<byte> ReadFile(FPakEntry index) {
         var dataBuffer = ReadBytes(index.Pos, index.Size, index.IsEncrypted);
 
         if (index.CompressionMethod == 0) {
@@ -160,9 +160,11 @@ public sealed class UPakFile : IDisposable {
 
         var lastBlockIndex = index.CompressionBlocks.Length - 1;
         var outputOffset = 0L;
+        using var blockDataRoot = MemoryPool<byte>.Shared.Rent((int) index.CompressionBlockSize);
         for (var i = 0; i < index.CompressionBlocks.Length; i++) {
             var block = index.CompressionBlocks[i];
             var size = i == lastBlockIndex ? index.UncompressedSize - outputOffset : index.CompressionBlockSize;
+            var blockData = blockDataRoot.Memory[..(int) size];
             var blockChunk = dataBuffer[(int) block.CompressedStart..(int) block.CompressedEnd];
 
             var compressionType = CompressionMethods[index.CompressionMethod].ToLower();
@@ -189,15 +191,14 @@ public sealed class UPakFile : IDisposable {
                 }
             }
 
-            var blockData = Memory<byte>.Empty;
             switch (compressionType) {
                 case "zlib": {
-                    using var dataStream = blockChunk.AsStream();
+                    using var dataPin = blockChunk.Pin();
+                    using var dataStream = new UnmanagedMemoryStream((byte*) dataPin.Pointer, blockChunk.Length);
                     dataStream.Position = 2;
                     using var zlib = new DeflateStream(dataStream, CompressionMode.Decompress);
                     var offset = 0;
-                    blockData = new byte[size].AsMemory();
-                    while (blockData.Length - offset > 0) {
+                    while (size - offset > 0) {
                         var amount = zlib.Read(blockData[offset..].Span);
                         if (amount == 0) {
                             break;
@@ -210,16 +211,16 @@ public sealed class UPakFile : IDisposable {
                 }
                 case "zstd": {
                     using var zstd = new Decompressor();
-                    blockData = zstd.Unwrap(blockChunk.Span, (int) size);
+                    zstd.Unwrap(blockChunk.Span, blockData.Span);
                     break;
                 }
                 case "gzip": {
-                    using var dataStream = blockChunk.AsStream();
+                    using var dataPin = blockChunk.Pin();
+                    using var dataStream = new UnmanagedMemoryStream((byte*) dataPin.Pointer, blockChunk.Length);
                     dataStream.Position = 2;
                     using var zlib = new GZipStream(dataStream, CompressionMode.Decompress);
                     var offset = 0;
-                    blockData = new byte[size].AsMemory();
-                    while (blockData.Length - offset > 0) {
+                    while (size - offset > 0) {
                         var amount = zlib.Read(blockData[offset..].Span);
                         if (amount == 0) {
                             break;
@@ -235,18 +236,17 @@ public sealed class UPakFile : IDisposable {
                         Log.Error("Unable to decompress file {Path} because it uses Oodle compression and the Oodle dll has not been loaded!", index.Path);
                     }
 
-                    blockData = Oodle.Decompress(blockChunk, (int) size);
+                    Oodle.Decompress(blockChunk, blockData);
                     break;
                 }
                 case "lz4": {
-                    blockData = new byte[size].AsMemory();
                     LZ4Codec.Decode(blockChunk.Span, blockData.Span);
                     break;
                 }
             }
 
             blockData.CopyTo(outputBuffer[(int) outputOffset..]);
-            outputOffset += blockData.Length;
+            outputOffset += size;
         }
 
         return outputBuffer;
