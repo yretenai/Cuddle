@@ -1,6 +1,4 @@
-﻿using System.Windows;
-
-namespace Cuddle;
+﻿namespace Cuddle;
 
 /// <summary>Interaction logic for App.xaml</summary>
-public partial class App : Application { }
+public partial class App { }
