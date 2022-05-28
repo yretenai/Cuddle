@@ -5,9 +5,10 @@ using Microsoft.Toolkit.HighPerformance.Buffers;
 namespace Cuddle.Core.VFS;
 
 public interface IVFSEntry : IDisposable {
-    UPakFile Owner { get; }
+    IVFSFile Owner { get; }
     long Size { get; }
     string MountedPath { get; }
+    string ObjectPath { get; }
     ulong MountedHash { get; }
     object? Data { get; set; }
     bool Disposed { get; }

@@ -10,6 +10,7 @@ namespace Cuddle.Core.Assets;
 public class UObject {
     public UObject(FArchiveReader data) {
         Owner = data.Asset!;
+
         while (data.Remaining > 0) {
             var tag = new FPropertyTag(data);
             if (tag.Name == "None") {

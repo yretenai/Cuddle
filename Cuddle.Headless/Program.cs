@@ -14,6 +14,6 @@ public static class Program {
         Oodle.Load(args[3]);
         using var manager = new VFSManager();
         manager.MountPakDir(new DirectoryInfo(args[0]), Enum.Parse<EGame>(args[1]));
-        using var test = manager.ReadAsset(args[2]);
+        manager.ReadExport(args[2], 0);
     }
 }
