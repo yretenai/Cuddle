@@ -15,4 +15,8 @@
         <EnablePreviewFeatures>true</EnablePreviewFeatures>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="SixLabors.ImageSharp" Version="2.1.2" />
+    </ItemGroup>
+
 </Project>
