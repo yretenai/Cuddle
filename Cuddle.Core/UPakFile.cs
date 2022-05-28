@@ -391,7 +391,8 @@ public sealed class UPakFile : IVFSFile {
     internal MemoryOwner<byte> ReadBytes(long offset, long count, bool isEncrypted) {
         using var stream = new FileStream(FullPath, FileMode.Open, FileAccess.ReadWrite);
 
-        using var data = MemoryOwner<byte>.Allocate((int) (count < 16 ? 16 : count));
+        // aes needs 16 byte aligned data.
+        var data = MemoryOwner<byte>.Allocate((int) count.Align(16));
         stream.Position = offset;
         var readOffset = 0;
         while (count - readOffset > 0) {
@@ -403,10 +404,7 @@ public sealed class UPakFile : IVFSFile {
             readOffset += amount;
         }
 
-        var decrypted = Decrypt(data, isEncrypted);
-
-        // aes needs 16 bytes.
-        return count < 16 ? decrypted[..(int) count] : decrypted;
+        return Decrypt(data, isEncrypted)[..(int) count];
     }
 
     private MemoryOwner<byte> Decrypt(MemoryOwner<byte> data, bool isEncrypted) {

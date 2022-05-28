@@ -82,7 +82,10 @@ public class FPakIndex {
                         // note: figure out what value gets passed to FPakFile::HashPath and store the value in hashStore.
                     }
                 }
-            } else if (hasPathHashIndex) { // we only have hashes, which is workable.
+            }
+
+            // we only have hashes, which is workable.
+            if (hasPathHashIndex) {
                 using var hashReader = new FArchiveReader(encodedReader.Game, owner.ReadBytes(hashPathIndexOffset, hashPathIndexSize, owner.IsIndexEncrypted));
                 var count = hashReader.Read<int>();
                 for (var index = 0; index < count; ++index) {
@@ -99,18 +102,24 @@ public class FPakIndex {
                             break;
                     }
 
-                    var path = hash.ToString("x8");
-                    if (hashStore == null || !hashStore.TryGetPath(hash, out var mountPath)) {
-                        mountPath = MountPoint + path;
-                    } else {
-                        path = mountPath[MountPoint.Length..];
+                    if (!hasFullDirectoryIndex) {
+                        var path = hash.ToString("x8");
+                        if (hashStore == null || !hashStore.TryGetPath(hash, out var mountPath)) {
+                            mountPath = MountPoint + path;
+                        } else {
+                            path = mountPath[MountPoint.Length..];
+                        }
+
+                        Files[entryLoc].Path = path;
+                        Files[entryLoc].MountedPath = mountPath;
                     }
 
-                    Files[entryLoc].Path = path;
-                    Files[entryLoc].MountedPath = mountPath;
                     Files[entryLoc].MountedPathHash = hash;
                 }
-            } else { // we have nothing :hollow:
+            }
+
+            // we have nothing :hollow:
+            if (!hasFullDirectoryIndex && !hasPathHashIndex) {
                 // realistically, should never happen.
                 for (var index = 0; index < Files.Count; index++) {
                     var file = Files[index];
