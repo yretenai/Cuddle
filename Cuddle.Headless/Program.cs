@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Cuddle.Core;
 using Cuddle.Core.Enums;
 using Serilog;
@@ -10,6 +11,7 @@ public static class Program {
         Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateLogger();
 
         using var manager = new VFSManager();
-        manager.MountPakDir(new DirectoryInfo(args[0]), EGame.UE4_26);
+        manager.MountPakDir(new DirectoryInfo(args[0]), Enum.Parse<EGame>(args[1]));
+        using var test = manager.ReadAsset(args[2]);
     }
 }

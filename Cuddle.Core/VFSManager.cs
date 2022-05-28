@@ -39,7 +39,8 @@ public sealed class VFSManager : IDisposable {
     }
 
     public void MountPakDir(DirectoryInfo dir, EGame game) {
-        foreach (var pakPath in dir.GetFiles("*.pak", SearchOption.TopDirectoryOnly).OrderBy(x => x.Name.Replace('.', '_'), new NaturalStringComparer(StringComparison.OrdinalIgnoreCase, true))) {
+        // this natural language sort is an easy hack to get pak ordering correctly.
+        foreach (var pakPath in dir.GetFiles("*.pak", SearchOption.TopDirectoryOnly).OrderBy(x => x.Name.Replace('.', '_'), new NaturalStringComparer(StringComparison.OrdinalIgnoreCase))) {
             Containers.Add(new UPakFile(pakPath.FullName, game, Path.GetFileNameWithoutExtension(pakPath.Name), KeyStore, HashStore));
         }
     }
@@ -49,13 +50,38 @@ public sealed class VFSManager : IDisposable {
         return file == null ? MemoryOwner<byte>.Empty : file.Owner.ReadFile(file);
     }
 
+    public MemoryOwner<byte> ReadFile(ulong hash) {
+        var file = Files.FirstOrDefault(x => x.MountedPathHash == hash);
+        return file == null ? MemoryOwner<byte>.Empty : file.Owner.ReadFile(file);
+    }
+
+    public UAssetFile? ReadAsset(string path) {
+        var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
+        return file?.Owner.ReadAsset(file);
+    }
+
+    public UAssetFile? ReadAsset(ulong hash) {
+        var file = Files.FirstOrDefault(x => x.MountedPathHash == hash);
+        return file?.Owner.ReadAsset(file);
+    }
+
     public UObject? ReadExport(string path, int index) {
         var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
         return file?.Owner.ReadAssetExport(file, index);
     }
 
+    public UObject? ReadExport(ulong hash, int index) {
+        var file = Files.FirstOrDefault(x => x.MountedPathHash == hash);
+        return file?.Owner.ReadAssetExport(file, index);
+    }
+
     public UObject?[] ReadExports(string path) {
         var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
+        return file == null ? Array.Empty<UObject>() : file.Owner.ReadAssetExports(file);
+    }
+
+    public UObject?[] ReadExports(ulong hash) {
+        var file = Files.FirstOrDefault(x => x.MountedPathHash == hash);
         return file == null ? Array.Empty<UObject>() : file.Owner.ReadAssetExports(file);
     }
 }
