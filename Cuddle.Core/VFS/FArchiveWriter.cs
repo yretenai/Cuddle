@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using DragonLib;
 
-namespace Cuddle.Core;
+namespace Cuddle.Core.VFS;
 
 public class FArchiveWriter {
     public FArchiveWriter() => Buffer = new byte[0x1000].AsMemory();

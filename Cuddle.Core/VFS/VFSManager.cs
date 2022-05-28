@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Cuddle.Core.Assets;
 using Cuddle.Core.Enums;
 using DragonLib.Text;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 
-namespace Cuddle.Core;
+namespace Cuddle.Core.VFS;
 
 public sealed class VFSManager : IDisposable {
     public AESKeyStore KeyStore { get; } = new();
@@ -15,7 +16,7 @@ public sealed class VFSManager : IDisposable {
     public List<IVFSFile> Containers { get; } = new();
     public IEnumerable<IVFSEntry> Files => Containers.SelectMany(x => x.Entries);
     public IEnumerable<IVFSEntry> UniqueFilesPath => Files.DistinctBy(x => x.MountedPath);
-    public IEnumerable<IVFSEntry> UniqueFilesHash => Files.DistinctBy(x => x.MountedPathHash);
+    public IEnumerable<IVFSEntry> UniqueFilesHash => Files.DistinctBy(x => x.MountedHash);
 
     public bool Disposed { get; private set; }
 
@@ -51,7 +52,7 @@ public sealed class VFSManager : IDisposable {
     }
 
     public MemoryOwner<byte> ReadFile(ulong hash) {
-        var file = Files.FirstOrDefault(x => x.MountedPathHash == hash);
+        var file = Files.FirstOrDefault(x => x.MountedHash == hash);
         return file == null ? MemoryOwner<byte>.Empty : file.Owner.ReadFile(file);
     }
 
@@ -61,7 +62,7 @@ public sealed class VFSManager : IDisposable {
     }
 
     public UAssetFile? ReadAsset(ulong hash) {
-        var file = Files.FirstOrDefault(x => x.MountedPathHash == hash);
+        var file = Files.FirstOrDefault(x => x.MountedHash == hash);
         return file?.Owner.ReadAsset(file);
     }
 
@@ -71,7 +72,7 @@ public sealed class VFSManager : IDisposable {
     }
 
     public UObject? ReadExport(ulong hash, int index) {
-        var file = Files.FirstOrDefault(x => x.MountedPathHash == hash);
+        var file = Files.FirstOrDefault(x => x.MountedHash == hash);
         return file?.Owner.ReadAssetExport(file, index);
     }
 
@@ -81,7 +82,7 @@ public sealed class VFSManager : IDisposable {
     }
 
     public UObject?[] ReadExports(ulong hash) {
-        var file = Files.FirstOrDefault(x => x.MountedPathHash == hash);
+        var file = Files.FirstOrDefault(x => x.MountedHash == hash);
         return file == null ? Array.Empty<UObject>() : file.Owner.ReadAssetExports(file);
     }
 }

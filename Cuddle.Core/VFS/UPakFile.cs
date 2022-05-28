@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
+using Cuddle.Core.Assets;
 using Cuddle.Core.Enums;
 using Cuddle.Core.Structs.FileSystem;
 using DragonLib;
@@ -13,7 +14,7 @@ using Microsoft.Toolkit.HighPerformance.Buffers;
 using Serilog;
 using ZstdNet;
 
-namespace Cuddle.Core;
+namespace Cuddle.Core.VFS;
 
 public sealed class UPakFile : IVFSFile {
     public UPakFile(string fullPath, EGame game, string name, AESKeyStore? keyStore = null, HashPathStore? hashStore = null) {
@@ -143,7 +144,7 @@ public sealed class UPakFile : IVFSFile {
     public IEnumerable<IVFSEntry> Entries => Index.Files;
 
     public MemoryOwner<byte> ReadFile(string path) {
-        var index = Index.Files.FirstOrDefault(x => x.MountedPath == path);
+        var index = Index.Files.FirstOrDefault(x => x.MountedPath == path || x.ObjectPath.EndsWith(path, StringComparison.Ordinal));
         return index == null ? MemoryOwner<byte>.Empty : ReadFile(index);
     }
 
@@ -152,7 +153,7 @@ public sealed class UPakFile : IVFSFile {
             return MemoryOwner<byte>.Empty;
         }
 
-        var index = Index.Files.FirstOrDefault(x => x.MountedPathHash == hash);
+        var index = Index.Files.FirstOrDefault(x => x.MountedHash == hash);
         return index == null ? MemoryOwner<byte>.Empty : ReadFile(index);
     }
 
@@ -172,8 +173,11 @@ public sealed class UPakFile : IVFSFile {
         for (var i = 0; i < index.CompressionBlocks.Length; i++) {
             var block = index.CompressionBlocks[i];
             var size = i == lastBlockIndex ? index.UncompressedSize - outputOffset : index.CompressionBlockSize;
-            var blockData = blockDataRoot[..(int) size];
-            var blockChunk = dataBuffer[(int) block.CompressedStart..(int) block.CompressedEnd];
+            if (size > blockDataRoot.Length) {
+                throw new InvalidOperationException();
+            }
+            var blockData = blockDataRoot.Memory[..(int) size];
+            var blockChunk = dataBuffer.Memory[(int) block.CompressedStart..(int) block.CompressedEnd];
 
             var compressionType = CompressionMethods[index.CompressionMethod].ToLower();
 
@@ -201,7 +205,7 @@ public sealed class UPakFile : IVFSFile {
 
             switch (compressionType) {
                 case "zlib": {
-                    using var dataPin = blockChunk.Memory.Pin();
+                    using var dataPin = blockChunk.Pin();
                     using var dataStream = new UnmanagedMemoryStream((byte*) dataPin.Pointer, blockChunk.Length);
                     dataStream.Position = 2;
                     using var zlib = new DeflateStream(dataStream, CompressionMode.Decompress);
@@ -219,11 +223,13 @@ public sealed class UPakFile : IVFSFile {
                 }
                 case "zstd": {
                     using var zstd = new Decompressor();
-                    zstd.Unwrap(blockChunk.Span, blockData.Span);
+                    if (zstd.Unwrap(blockChunk.Span, blockData.Span) < 0) {
+                        throw new InvalidOperationException();
+                    }
                     break;
                 }
                 case "gzip": {
-                    using var dataPin = blockChunk.Memory.Pin();
+                    using var dataPin = blockChunk.Pin();
                     using var dataStream = new UnmanagedMemoryStream((byte*) dataPin.Pointer, blockChunk.Length);
                     dataStream.Position = 2;
                     using var zlib = new GZipStream(dataStream, CompressionMode.Decompress);
@@ -244,16 +250,20 @@ public sealed class UPakFile : IVFSFile {
                         Log.Error("Unable to decompress file {Path} because it uses Oodle compression and the Oodle dll has not been loaded!", index.Path);
                     }
 
-                    Oodle.Decompress(blockChunk, blockData);
+                    if (Oodle.Decompress(blockChunk, blockData) == -1) {
+                        throw new InvalidOperationException();
+                    }
                     break;
                 }
                 case "lz4": {
-                    LZ4Codec.Decode(blockChunk.Span, blockData.Span);
+                    if (LZ4Codec.Decode(blockChunk.Span, blockData.Span) == -1) {
+                        throw new InvalidOperationException();
+                    }
                     break;
                 }
             }
 
-            blockData.Memory.CopyTo(outputBuffer.Memory[(int) outputOffset..]);
+            blockData.CopyTo(outputBuffer.Memory[(int) outputOffset..]);
             outputOffset += size;
         }
 
@@ -266,7 +276,7 @@ public sealed class UPakFile : IVFSFile {
             return null;
         }
 
-        var index = Index.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
+        var index = Index.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.EndsWith(path, StringComparison.Ordinal));
         return index == null ? null : ReadAsset(index);
     }
 
@@ -275,7 +285,7 @@ public sealed class UPakFile : IVFSFile {
             return null;
         }
 
-        var index = Index.Files.FirstOrDefault(x => x.MountedPathHash == hash);
+        var index = Index.Files.FirstOrDefault(x => x.MountedHash == hash);
         return index == null ? null : ReadAsset(index);
     }
 
@@ -305,7 +315,7 @@ public sealed class UPakFile : IVFSFile {
             return null;
         }
 
-        var index = Index.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
+        var index = Index.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.EndsWith(path, StringComparison.Ordinal));
         return index == null ? null : ReadAssetExport(index, export);
     }
 
@@ -314,7 +324,7 @@ public sealed class UPakFile : IVFSFile {
             return null;
         }
 
-        var index = Index.Files.FirstOrDefault(x => x.MountedPathHash == hash);
+        var index = Index.Files.FirstOrDefault(x => x.MountedHash == hash);
         return index == null ? null : ReadAssetExport(index, export);
     }
 
@@ -325,7 +335,7 @@ public sealed class UPakFile : IVFSFile {
             return Array.Empty<UObject>();
         }
 
-        var index = Index.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
+        var index = Index.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.EndsWith(path, StringComparison.Ordinal));
         return index == null ? Array.Empty<UObject>() : ReadAssetExports(index);
     }
 
@@ -334,7 +344,7 @@ public sealed class UPakFile : IVFSFile {
             return Array.Empty<UObject>();
         }
 
-        var index = Index.Files.FirstOrDefault(x => x.MountedPathHash == hash);
+        var index = Index.Files.FirstOrDefault(x => x.MountedHash == hash);
         return index == null ? Array.Empty<UObject>() : ReadAssetExports(index);
     }
 

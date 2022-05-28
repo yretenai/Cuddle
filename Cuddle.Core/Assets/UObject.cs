@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using Cuddle.Core.Structs;
+using Cuddle.Core.VFS;
 using Serilog;
 
-namespace Cuddle.Core;
+namespace Cuddle.Core.Assets;
 
 public class UObject {
     public UObject(FArchiveReader data) {

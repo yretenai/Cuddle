@@ -1,4 +1,7 @@
-﻿namespace Cuddle.Core.Structs.Asset;
+﻿using Cuddle.Core.Assets;
+using Cuddle.Core.VFS;
+
+namespace Cuddle.Core.Structs.Asset;
 
 public class FObjectImport : FObjectAbstract {
     public FObjectImport() { }

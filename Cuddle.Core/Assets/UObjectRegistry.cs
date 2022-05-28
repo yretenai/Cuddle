@@ -1,6 +1,6 @@
 ﻿using Cuddle.Core.Structs.Asset;
 
-namespace Cuddle.Core;
+namespace Cuddle.Core.Assets;
 
 public static class UObjectRegistry {
     public static UObject? Create(string? className, FObjectExport export, UAssetFile uasset) {

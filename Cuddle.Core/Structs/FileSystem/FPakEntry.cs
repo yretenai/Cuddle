@@ -1,5 +1,7 @@
 ﻿using System;
+using Cuddle.Core.Assets;
 using Cuddle.Core.Enums;
+using Cuddle.Core.VFS;
 using DragonLib;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 
@@ -114,7 +116,8 @@ public class FPakEntry : IVFSEntry {
     public UPakFile Owner { get; } = null!;
     public long Size { get; }
     public string MountedPath { get; internal set; } = "";
-    public ulong MountedPathHash { get; internal set; }
+    public string ObjectPath { get; internal set; } = "";
+    public ulong MountedHash { get; internal set; }
     public object? Data { get; set; }
     public bool Disposed { get; private set; }
 
@@ -144,4 +147,37 @@ public class FPakEntry : IVFSEntry {
     }
 
     public override string ToString() => MountedPath;
+
+    // ref: https://github.com/gildor2/UEViewer/blob/eaba2837228f9fe39134616d7bff734acd314ffb/Unreal/FileSystem/FileSystemUtils.cpp#L20
+    public void CreateObjectPath() {
+        // Engine/Content/Stuff -> /Engine/Stuff
+        if (MountedPath.StartsWith("Engine/Content")) {
+            ObjectPath = "/Engine" + MountedPath[14..];
+            return;
+        }
+        
+        // Engine/Plugins/Stuff -> /Engine/Plugins
+        if (MountedPath.StartsWith("Engine/Plugins")) {
+            ObjectPath = MountedPath[6..];
+            return;
+        }
+
+        // GameName/Content/Stuff/ -> Game/Content/Stuff 
+        var index = MountedPath.IndexOf('/');
+        if (index == -1) {
+            return;
+        }
+
+        if (MountedPath[..index] != "Game") {
+            ObjectPath = MountedPath[(index+1)..];
+        }
+
+        // Content/Stuff/ -> Stuff
+        if (MountedPath.StartsWith("Content/")) {
+            ObjectPath = ObjectPath[8..];
+        }
+        
+        // Stuff -> /Game/Stuff
+        ObjectPath = "/Game/" + ObjectPath;
+    }
 }

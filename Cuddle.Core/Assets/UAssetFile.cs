@@ -2,9 +2,10 @@
 using System.Linq;
 using Cuddle.Core.Enums;
 using Cuddle.Core.Structs.Asset;
+using Cuddle.Core.VFS;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 
-namespace Cuddle.Core;
+namespace Cuddle.Core.Assets;
 
 public class UAssetFile : IDisposable {
     public UAssetFile(MemoryOwner<byte> uasset, MemoryOwner<byte> uexp, MemoryOwner<byte> ubulk, MemoryOwner<byte> uptnl, string name, EGame game, UPakFile? owner) {
@@ -13,7 +14,7 @@ public class UAssetFile : IDisposable {
         Owner = owner;
 
         using var archive = new FArchiveReader(game, uasset);
-        Summary = new FPackageFileSummary(archive);
+        Summary = new FPackageFileSummary(archive, Name);
         archive.Asset = this;
         archive.Version = Summary.FileVersionUE4;
 

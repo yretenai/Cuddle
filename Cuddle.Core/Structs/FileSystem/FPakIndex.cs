@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Cuddle.Core.Enums;
+using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs.FileSystem;
 
@@ -18,6 +19,10 @@ public class FPakIndex {
 
         if (MountPoint.StartsWith("/")) {
             MountPoint = MountPoint[1..];
+        }
+
+        if (!MountPoint.EndsWith("/")) {
+            MountPoint += '/';
         }
 
         Count = archive.Read<int>();
@@ -57,11 +62,10 @@ public class FPakIndex {
                 var dirCount = dirReader.Read<int>();
                 for (var index = 0; index < dirCount; ++index) {
                     var dirName = dirReader.ReadString();
-                    if (!dirName.EndsWith('/')) {
-                        dirName += '/';
-                    }
-
                     var fileCount = dirReader.Read<int>();
+                    if (dirName[0] == '/') {
+                        dirName = dirName[1..];
+                    }
 
                     for (var fileIndex = 0; fileIndex < fileCount; ++fileIndex) {
                         var fileName = dirReader.ReadString();
@@ -79,6 +83,7 @@ public class FPakIndex {
 
                         Files[entryLoc].Path = dirName + fileName;
                         Files[entryLoc].MountedPath = MountPoint + Files[entryLoc].Path;
+                        Files[entryLoc].CreateObjectPath();
                         // note: figure out what value gets passed to FPakFile::HashPath and store the value in hashStore.
                     }
                 }
@@ -112,9 +117,10 @@ public class FPakIndex {
 
                         Files[entryLoc].Path = path;
                         Files[entryLoc].MountedPath = mountPath;
+                        Files[entryLoc].CreateObjectPath();
                     }
 
-                    Files[entryLoc].MountedPathHash = hash;
+                    Files[entryLoc].MountedHash = hash;
                 }
             }
 
@@ -124,7 +130,7 @@ public class FPakIndex {
                 for (var index = 0; index < Files.Count; index++) {
                     var file = Files[index];
                     file.Path = index.ToString("x8");
-                    file.MountedPath = MountPoint + file.Path;
+                    file.MountedPath = file.ObjectPath = MountPoint + file.Path;
                 }
             }
         }

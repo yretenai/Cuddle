@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using Cuddle.Core.VFS;
 using DragonLib.Hash;
 using DragonLib.Hash.Basis;
 
@@ -20,7 +21,7 @@ public class HashPathStore {
 
     public Dictionary<ulong, string> Paths { get; } = new();
 
-    public void AddPath(string relativePath, string absolutePath, ulong seed, bool bugged) {
+    public ulong AddPath(string relativePath, string absolutePath, ulong seed, bool bugged) {
         var lowercaseRelativePath = relativePath.ToLower();
         var basis = 0xcbf29ce484222325UL;
         var prime = 0x00000100000001b3UL;
@@ -31,8 +32,9 @@ public class HashPathStore {
         basis += seed;
 
         using var fnv = FowlerNollVo.CreateAlternate((FNV64Basis) basis, prime);
-
-        Paths[fnv.ComputeHashValue(Encoding.UTF8.GetBytes(lowercaseRelativePath))] = absolutePath;
+        var hash = fnv.ComputeHashValue(Encoding.UTF8.GetBytes(lowercaseRelativePath));
+        Paths[hash] = absolutePath;
+        return hash;
     }
 
     public bool TryGetPath(ulong value, [MaybeNullWhen(false)] out string path) {

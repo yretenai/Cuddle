@@ -3,10 +3,11 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using Cuddle.Core.Assets;
 using Cuddle.Core.Enums;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 
-namespace Cuddle.Core;
+namespace Cuddle.Core.VFS;
 
 public sealed class FArchiveReader : IDisposable {
     public FArchiveReader(UAssetFile asset, MemoryOwner<byte> data) {

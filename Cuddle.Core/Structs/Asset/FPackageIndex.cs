@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using Cuddle.Core.Assets;
+using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs.Asset;
 
