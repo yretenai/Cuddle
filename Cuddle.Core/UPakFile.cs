@@ -15,10 +15,12 @@ using ZstdNet;
 
 namespace Cuddle.Core;
 
-public sealed class UPakFile : IDisposable {
-    public UPakFile(Stream stream, EGame game, string name, AESKeyStore? keyStore = null, HashPathStore? hashStore = null) {
+public sealed class UPakFile : IVFSFile {
+    public UPakFile(string fullPath, EGame game, string name, AESKeyStore? keyStore = null, HashPathStore? hashStore = null) {
         Name = name;
         Game = game;
+
+        using var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
         var offset = 0x3D;
 
@@ -53,7 +55,7 @@ public sealed class UPakFile : IDisposable {
             return;
         }
 
-        Stream = stream;
+        FullPath = fullPath;
 
         Version = header.Read<EPakVersion>();
 
@@ -99,8 +101,8 @@ public sealed class UPakFile : IDisposable {
 
         if (IsIndexEncrypted || EncryptionGuid != Guid.Empty) {
             using var testBlock = MemoryOwner<byte>.Allocate(16);
-            Stream.Position = indexOffset;
-            if (Stream.Read(testBlock.Span) != 16) {
+            stream.Position = indexOffset;
+            if (stream.Read(testBlock.Span) != 16) {
                 Log.Error("Failed reading encryption test block for PAK {PakName}", Name);
                 // ????
                 return;
@@ -123,12 +125,7 @@ public sealed class UPakFile : IDisposable {
     }
 
     public List<string> CompressionMethods { get; } = null!;
-
-    public string Name { get; }
-    public EGame Game { get; }
-    private Stream? Stream { get; }
-    public Guid EncryptionGuid { get; }
-    private byte[]? EncryptionKey { get; set; }
+    private string FullPath { get; } = null!;
     public bool IsIndexEncrypted { get; }
     public uint Tag { get; }
     public EPakVersion Version { get; }
@@ -137,16 +134,30 @@ public sealed class UPakFile : IDisposable {
     public bool IndexIsFrozen { get; }
     public FPakIndex Index { get; } = null!;
 
-    public void Dispose() {
-        Stream?.Dispose();
-    }
+    public string Name { get; }
+    public EGame Game { get; }
+    public Guid EncryptionGuid { get; }
+    public byte[]? EncryptionKey { get; set; }
+    public bool HasHashes => Version >= EPakVersion.PathHashIndex;
+    public bool HasPaths => true;
+    public IEnumerable<IVFSEntry> Entries => Index.Files;
 
     public MemoryOwner<byte> ReadFile(string path) {
         var index = Index.Files.FirstOrDefault(x => x.MountedPath == path);
         return index == null ? MemoryOwner<byte>.Empty : ReadFile(index);
     }
 
-    public unsafe MemoryOwner<byte> ReadFile(FPakEntry index) {
+    public MemoryOwner<byte> ReadFile(ulong hash) {
+        if (!HasHashes) {
+            return MemoryOwner<byte>.Empty;
+        }
+
+        var index = Index.Files.FirstOrDefault(x => x.MountedPathHash == hash);
+        return index == null ? MemoryOwner<byte>.Empty : ReadFile(index);
+    }
+
+    public unsafe MemoryOwner<byte> ReadFile(IVFSEntry vfsIndex) {
+        var index = (FPakEntry) vfsIndex;
         var dataBuffer = ReadBytes(index.Pos, index.Size, index.IsEncrypted);
 
         if (index.CompressionMethod == 0) {
@@ -250,35 +261,21 @@ public sealed class UPakFile : IDisposable {
         return outputBuffer;
     }
 
-    internal MemoryOwner<byte> ReadBytes(long offset, long count, bool isEncrypted) {
-        if (Stream is not { CanRead: true }) {
-            return MemoryOwner<byte>.Empty;
-        }
-
-        using var data = MemoryOwner<byte>.Allocate((int) (count < 16 ? 16 : count));
-        Stream.Position = offset;
-        var readOffset = 0;
-        while (count - readOffset > 0) {
-            var amount = Stream.Read(data.Span[readOffset..]);
-            if (amount == 0) {
-                break; // can't read anymore.
-            }
-
-            readOffset += amount;
-        }
-
-        var decrypted = Decrypt(data, isEncrypted);
-        
-        // aes needs 16 bytes.
-        return count < 16 ? decrypted[..(int) count] : decrypted;
-    }
-
     public UObject? ReadAssetExport(string path, int export) {
         var index = Index.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
         return index == null ? null : ReadAssetExport(index, export);
     }
 
-    public UObject? ReadAssetExport(FPakEntry entry, int export) {
+    public UObject? ReadAssetExport(ulong hash, int export) {
+        if (!HasHashes) {
+            return null;
+        }
+
+        var index = Index.Files.FirstOrDefault(x => x.MountedPathHash == hash);
+        return index == null ? null : ReadAssetExport(index, export);
+    }
+
+    public UObject? ReadAssetExport(IVFSEntry entry, int export) {
         var data = ReadFile(entry);
         if (data.Length == 0) {
             return null;
@@ -288,7 +285,7 @@ public sealed class UPakFile : IDisposable {
         var ubulk = ReadFile(Path.ChangeExtension(entry.MountedPath, ".ubulk"));
         var uptnl = ReadFile(Path.ChangeExtension(entry.MountedPath, ".uptnl"));
 
-        var uasset = new UAssetFile(data, uexp, ubulk, uptnl, Path.GetFileNameWithoutExtension(entry.MountedPath), Game, this);
+        using var uasset = new UAssetFile(data, uexp, ubulk, uptnl, Path.GetFileNameWithoutExtension(entry.MountedPath), Game, this);
 
         return uasset.GetExport(export);
     }
@@ -298,7 +295,16 @@ public sealed class UPakFile : IDisposable {
         return index == null ? Array.Empty<UObject>() : ReadAssetExports(index);
     }
 
-    public UObject?[] ReadAssetExports(FPakEntry entry) {
+    public UObject?[] ReadAssetExports(ulong hash) {
+        if (!HasHashes) {
+            return Array.Empty<UObject>();
+        }
+
+        var index = Index.Files.FirstOrDefault(x => x.MountedPathHash == hash);
+        return index == null ? Array.Empty<UObject>() : ReadAssetExports(index);
+    }
+
+    public UObject?[] ReadAssetExports(IVFSEntry entry) {
         var data = ReadFile(entry);
         if (data.Length == 0) {
             return Array.Empty<UObject>();
@@ -308,12 +314,12 @@ public sealed class UPakFile : IDisposable {
         var ubulk = ReadFile(Path.ChangeExtension(entry.MountedPath, ".ubulk"));
         var uptnl = ReadFile(Path.ChangeExtension(entry.MountedPath, ".uptnl"));
 
-        var uasset = new UAssetFile(data, uexp, ubulk, uptnl, Path.GetFileNameWithoutExtension(entry.MountedPath), Game, this);
+        using var uasset = new UAssetFile(data, uexp, ubulk, uptnl, Path.GetFileNameWithoutExtension(entry.MountedPath), Game, this);
 
         return uasset.GetExports();
     }
 
-    private bool FindEncryptionKey(AESKeyStore aesKey, MemoryOwner<byte> test) {
+    public bool FindEncryptionKey(AESKeyStore aesKey, MemoryOwner<byte> test) {
         if (aesKey.Keys.TryGetValue(EncryptionGuid, out var key)) {
             EncryptionKey = key;
             return true;
@@ -330,6 +336,27 @@ public sealed class UPakFile : IDisposable {
 
         EncryptionKey = null;
         return false;
+    }
+
+    internal MemoryOwner<byte> ReadBytes(long offset, long count, bool isEncrypted) {
+        using var stream = new FileStream(FullPath, FileMode.Open, FileAccess.ReadWrite);
+
+        using var data = MemoryOwner<byte>.Allocate((int) (count < 16 ? 16 : count));
+        stream.Position = offset;
+        var readOffset = 0;
+        while (count - readOffset > 0) {
+            var amount = stream.Read(data.Span[readOffset..]);
+            if (amount == 0) {
+                break; // can't read anymore.
+            }
+
+            readOffset += amount;
+        }
+
+        var decrypted = Decrypt(data, isEncrypted);
+
+        // aes needs 16 bytes.
+        return count < 16 ? decrypted[..(int) count] : decrypted;
     }
 
     private MemoryOwner<byte> Decrypt(MemoryOwner<byte> data, bool isEncrypted) {

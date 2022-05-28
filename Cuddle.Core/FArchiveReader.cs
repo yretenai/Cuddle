@@ -25,11 +25,7 @@ public sealed class FArchiveReader : IDisposable {
 
         Data = data;
     }
-    
-    ~FArchiveReader() {
-        Dispose();
-    }
-    
+
     public bool Disposed { get; private set; }
 
     public EGame Game { get; set; }
@@ -39,6 +35,20 @@ public sealed class FArchiveReader : IDisposable {
     public int Position { get; set; }
     public int Length => Data.Length;
     public int Remaining => Data.Length - Position;
+
+    public void Dispose() {
+        Data.Dispose();
+        if (Disposed) {
+            return;
+        }
+
+        GC.SuppressFinalize(this);
+        Disposed = true;
+    }
+
+    ~FArchiveReader() {
+        Dispose();
+    }
 
     public T Read<T>() where T : unmanaged {
         var value = MemoryMarshal.Read<T>(Data.Span[Position..]);
@@ -122,15 +132,5 @@ public sealed class FArchiveReader : IDisposable {
         Data.Memory.Slice(Position, count.Value).CopyTo(block.Memory);
         Position += count.Value;
         return Asset == null ? new FArchiveReader(Game, block) : new FArchiveReader(Asset, block);
-    }
-
-    public void Dispose() {
-        Data.Dispose();
-        if (Disposed) {
-            return;
-        }
-
-        GC.SuppressFinalize(this);
-        Disposed = true;
     }
 }

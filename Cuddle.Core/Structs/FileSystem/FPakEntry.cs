@@ -6,7 +6,7 @@ using Microsoft.Toolkit.HighPerformance.Buffers;
 namespace Cuddle.Core.Structs.FileSystem;
 
 // umodel reference: https://github.com/gildor2/UEViewer/blob/c444911a6ad65bff5266f273dd5bdf7dd6fb506e/Unreal/FileSystem/UnArchivePak.h#L69
-public class FPakEntry {
+public class FPakEntry : IVFSEntry {
     public FPakEntry() => Hash = new byte[0x14];
 
     public FPakEntry(FArchiveReader archive, UPakFile owner, bool isCompressed) {
@@ -101,9 +101,7 @@ public class FPakEntry {
         }
     }
 
-    public UPakFile Owner { get; } = null!;
     public long Pos { get; }
-    public long Size { get; }
     public long UncompressedSize { get; }
     public int CompressionMethod { get; }
     public long Timestamp { get; }
@@ -111,8 +109,12 @@ public class FPakEntry {
     public FPakCompressedBlock[] CompressionBlocks { get; } = Array.Empty<FPakCompressedBlock>();
     public bool IsEncrypted { get; }
     public uint CompressionBlockSize { get; }
-    public string MountedPath { get; internal set; } = "";
     public string Path { get; internal set; } = "";
+
+    public UPakFile Owner { get; } = null!;
+    public long Size { get; }
+    public string MountedPath { get; internal set; } = "";
+    public ulong MountedPathHash { get; internal set; }
 
     public MemoryOwner<byte> ReadFile() => Owner.ReadFile(this);
 

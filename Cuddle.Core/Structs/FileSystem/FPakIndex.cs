@@ -108,6 +108,7 @@ public class FPakIndex {
 
                     Files[entryLoc].Path = path;
                     Files[entryLoc].MountedPath = mountPath;
+                    Files[entryLoc].MountedPathHash = hash;
                 }
             } else { // we have nothing :hollow:
                 // realistically, should never happen.

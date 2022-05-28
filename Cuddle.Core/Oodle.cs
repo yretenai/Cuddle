@@ -33,7 +33,7 @@ public static class Oodle {
         if (!OperatingSystem.IsWindows()) { // todo: investigate oodle decompressors for linux (ooz?)
             return false;
         }
-        
+
         if (Directory.Exists(path)) {
             var files = Directory.GetFiles(path, "oo2core_*_win64.dll");
             if (files.Length == 0) {

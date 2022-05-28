@@ -32,13 +32,9 @@ public class UAssetFile : IDisposable {
         ExportData = new FArchiveReader(this, combined);
         BulkData = new FArchiveReader(this, ubulk);
         OptionalData = new FArchiveReader(this, uptnl);
-        
+
         uasset.Dispose();
         uexp.Dispose();
-    }
-    
-    ~UAssetFile() {
-        Dispose();
     }
 
     public UPakFile? Owner { get; }
@@ -51,6 +47,25 @@ public class UAssetFile : IDisposable {
     public FArchiveReader ExportData { get; }
     public FArchiveReader BulkData { get; }
     public FArchiveReader OptionalData { get; }
+
+    public bool Disposed { get; private set; }
+
+    public void Dispose() {
+        ExportData.Dispose();
+        BulkData.Dispose();
+        OptionalData.Dispose();
+
+        if (Disposed) {
+            return;
+        }
+
+        GC.SuppressFinalize(this);
+        Disposed = true;
+    }
+
+    ~UAssetFile() {
+        Dispose();
+    }
 
     public UObject? GetExport(int index) => index > Exports.Length ? null : GetExport(Exports[index]);
 
@@ -87,21 +102,5 @@ public class UAssetFile : IDisposable {
         }
 
         return index.IsExport ? GetExport(index.Index - 1) : GetImport(0 - index.Index - 1);
-    }
-    
-    public bool Disposed { get; private set; }
-
-    public void Dispose()
-    {
-        ExportData.Dispose();
-        BulkData.Dispose();
-        OptionalData.Dispose();
-        
-        if (Disposed) {
-            return;
-        }
-
-        GC.SuppressFinalize(this);
-        Disposed = true;
     }
 }
