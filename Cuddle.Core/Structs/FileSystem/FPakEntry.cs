@@ -113,7 +113,7 @@ public class FPakEntry : IVFSEntry {
     public uint CompressionBlockSize { get; }
     public string Path { get; internal set; } = "";
 
-    public UPakFile Owner { get; } = null!;
+    public IVFSFile Owner { get; } = null!;
     public long Size { get; }
     public string MountedPath { get; internal set; } = "";
     public string ObjectPath { get; internal set; } = "";
@@ -155,7 +155,7 @@ public class FPakEntry : IVFSEntry {
             ObjectPath = "/Engine" + MountedPath[14..];
             return;
         }
-        
+
         // Engine/Plugins/Stuff -> /Engine/Plugins
         if (MountedPath.StartsWith("Engine/Plugins")) {
             ObjectPath = MountedPath[6..];
@@ -169,14 +169,14 @@ public class FPakEntry : IVFSEntry {
         }
 
         if (MountedPath[..index] != "Game") {
-            ObjectPath = MountedPath[(index+1)..];
+            ObjectPath = MountedPath[(index + 1)..];
         }
 
         // Content/Stuff/ -> Stuff
-        if (MountedPath.StartsWith("Content/")) {
+        if (ObjectPath.StartsWith("Content/")) {
             ObjectPath = ObjectPath[8..];
         }
-        
+
         // Stuff -> /Game/Stuff
         ObjectPath = "/Game/" + ObjectPath;
     }

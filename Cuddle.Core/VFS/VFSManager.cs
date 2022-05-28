@@ -42,12 +42,12 @@ public sealed class VFSManager : IDisposable {
     public void MountPakDir(DirectoryInfo dir, EGame game) {
         // this natural language sort is an easy hack to get pak ordering correctly.
         foreach (var pakPath in dir.GetFiles("*.pak", SearchOption.TopDirectoryOnly).OrderBy(x => x.Name.Replace('.', '_'), new NaturalStringComparer(StringComparison.OrdinalIgnoreCase))) {
-            Containers.Add(new UPakFile(pakPath.FullName, game, Path.GetFileNameWithoutExtension(pakPath.Name), KeyStore, HashStore));
+            Containers.Add(new UPakFile(pakPath.FullName, game, Path.GetFileNameWithoutExtension(pakPath.Name), KeyStore, HashStore, this));
         }
     }
 
     public MemoryOwner<byte> ReadFile(string path) {
-        var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
+        var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.Equals(path, StringComparison.Ordinal));
         return file == null ? MemoryOwner<byte>.Empty : file.Owner.ReadFile(file);
     }
 
@@ -57,7 +57,7 @@ public sealed class VFSManager : IDisposable {
     }
 
     public UAssetFile? ReadAsset(string path) {
-        var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
+        var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.Equals(path, StringComparison.Ordinal));
         return file?.Owner.ReadAsset(file);
     }
 
@@ -67,7 +67,7 @@ public sealed class VFSManager : IDisposable {
     }
 
     public UObject? ReadExport(string path, int index) {
-        var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
+        var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.Equals(path, StringComparison.Ordinal));
         return file?.Owner.ReadAssetExport(file, index);
     }
 
@@ -77,7 +77,7 @@ public sealed class VFSManager : IDisposable {
     }
 
     public UObject?[] ReadExports(string path) {
-        var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
+        var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.Equals(path, StringComparison.Ordinal));
         return file == null ? Array.Empty<UObject>() : file.Owner.ReadAssetExports(file);
     }
 

@@ -8,10 +8,11 @@ using Microsoft.Toolkit.HighPerformance.Buffers;
 namespace Cuddle.Core.Assets;
 
 public class UAssetFile : IDisposable {
-    public UAssetFile(MemoryOwner<byte> uasset, MemoryOwner<byte> uexp, MemoryOwner<byte> ubulk, MemoryOwner<byte> uptnl, string name, EGame game, UPakFile? owner) {
+    public UAssetFile(MemoryOwner<byte> uasset, MemoryOwner<byte> uexp, MemoryOwner<byte> ubulk, MemoryOwner<byte> uptnl, string name, EGame game, IVFSFile? owner, VFSManager manager) {
         Game = game;
         Name = name;
         Owner = owner;
+        Manager = manager;
 
         using var archive = new FArchiveReader(game, uasset);
         Summary = new FPackageFileSummary(archive, Name);
@@ -38,7 +39,8 @@ public class UAssetFile : IDisposable {
         uexp.Dispose();
     }
 
-    public UPakFile? Owner { get; }
+    public IVFSFile? Owner { get; }
+    public VFSManager Manager { get; }
     public EGame Game { get; }
     public string Name { get; }
     public FPackageFileSummary Summary { get; }

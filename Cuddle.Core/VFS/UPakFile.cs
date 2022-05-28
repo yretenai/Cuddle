@@ -17,9 +17,10 @@ using ZstdNet;
 namespace Cuddle.Core.VFS;
 
 public sealed class UPakFile : IVFSFile {
-    public UPakFile(string fullPath, EGame game, string name, AESKeyStore? keyStore = null, HashPathStore? hashStore = null) {
+    public UPakFile(string fullPath, EGame game, string name, AESKeyStore? keyStore, HashPathStore? hashStore, VFSManager manager) {
         Name = name;
         Game = game;
+        Manager = manager;
 
         using var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
@@ -135,6 +136,8 @@ public sealed class UPakFile : IVFSFile {
     public bool IndexIsFrozen { get; }
     public FPakIndex Index { get; } = null!;
 
+    public VFSManager Manager { get; }
+
     public string Name { get; }
     public EGame Game { get; }
     public Guid EncryptionGuid { get; }
@@ -176,6 +179,7 @@ public sealed class UPakFile : IVFSFile {
             if (size > blockDataRoot.Length) {
                 throw new InvalidOperationException();
             }
+
             var blockData = blockDataRoot.Memory[..(int) size];
             var blockChunk = dataBuffer.Memory[(int) block.CompressedStart..(int) block.CompressedEnd];
 
@@ -226,6 +230,7 @@ public sealed class UPakFile : IVFSFile {
                     if (zstd.Unwrap(blockChunk.Span, blockData.Span) < 0) {
                         throw new InvalidOperationException();
                     }
+
                     break;
                 }
                 case "gzip": {
@@ -253,12 +258,14 @@ public sealed class UPakFile : IVFSFile {
                     if (Oodle.Decompress(blockChunk, blockData) == -1) {
                         throw new InvalidOperationException();
                     }
+
                     break;
                 }
                 case "lz4": {
                     if (LZ4Codec.Decode(blockChunk.Span, blockData.Span) == -1) {
                         throw new InvalidOperationException();
                     }
+
                     break;
                 }
             }
@@ -304,7 +311,7 @@ public sealed class UPakFile : IVFSFile {
             var ubulk = ReadFile(Path.ChangeExtension(entry.MountedPath, ".ubulk"));
             var uptnl = ReadFile(Path.ChangeExtension(entry.MountedPath, ".uptnl"));
 
-            entry.Data = new UAssetFile(data, uexp, ubulk, uptnl, Path.GetFileNameWithoutExtension(entry.MountedPath), Game, this);
+            entry.Data = new UAssetFile(data, uexp, ubulk, uptnl, Path.GetFileNameWithoutExtension(entry.MountedPath), Game, this, Manager);
         }
 
         return (UAssetFile) entry.Data;
