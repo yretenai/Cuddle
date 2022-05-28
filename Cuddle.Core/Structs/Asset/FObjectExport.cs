@@ -3,7 +3,7 @@ using Cuddle.Core.Enums;
 
 namespace Cuddle.Core.Structs.Asset;
 
-public class FObjectExport : FObjectAbstract {
+public class FObjectExport : FObjectAbstract, IDisposable {
     public FObjectExport() { }
 
     public FObjectExport(FArchiveReader archive) {
@@ -56,4 +56,24 @@ public class FObjectExport : FObjectAbstract {
     public int CreateBeforeCreateDependencies { get; }
     public UObject? Object { get; internal set; }
     public bool ObjectCreated { get; internal set; }
+    public bool Disposed { get; protected set; }
+
+    public void Dispose() {
+        if (Object is IDisposable disposable) {
+            disposable.Dispose();
+        }
+
+        ObjectCreated = false;
+
+        if (Disposed) {
+            return;
+        }
+
+        GC.SuppressFinalize(this);
+        Disposed = true;
+    }
+
+    ~FObjectExport() {
+        Dispose();
+    }
 }

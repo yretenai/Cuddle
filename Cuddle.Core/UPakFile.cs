@@ -261,13 +261,56 @@ public sealed class UPakFile : IVFSFile {
         return outputBuffer;
     }
 
+    public UAssetFile? ReadAsset(string path) {
+        if (Disposed) {
+            return null;
+        }
+
+        var index = Index.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
+        return index == null ? null : ReadAsset(index);
+    }
+
+    public UAssetFile? ReadAsset(ulong hash) {
+        if (Disposed || !HasHashes) {
+            return null;
+        }
+
+        var index = Index.Files.FirstOrDefault(x => x.MountedPathHash == hash);
+        return index == null ? null : ReadAsset(index);
+    }
+
+    public UAssetFile? ReadAsset(IVFSEntry entry) {
+        if (Disposed || entry.Disposed) {
+            return null;
+        }
+
+        if (entry.Data is null) {
+            var data = ReadFile(entry);
+            if (data.Length == 0) {
+                return null;
+            }
+
+            var uexp = ReadFile(Path.ChangeExtension(entry.MountedPath, ".uexp"));
+            var ubulk = ReadFile(Path.ChangeExtension(entry.MountedPath, ".ubulk"));
+            var uptnl = ReadFile(Path.ChangeExtension(entry.MountedPath, ".uptnl"));
+
+            entry.Data = new UAssetFile(data, uexp, ubulk, uptnl, Path.GetFileNameWithoutExtension(entry.MountedPath), Game, this);
+        }
+
+        return (UAssetFile) entry.Data;
+    }
+
     public UObject? ReadAssetExport(string path, int export) {
+        if (Disposed) {
+            return null;
+        }
+
         var index = Index.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
         return index == null ? null : ReadAssetExport(index, export);
     }
 
     public UObject? ReadAssetExport(ulong hash, int export) {
-        if (!HasHashes) {
+        if (Disposed || !HasHashes) {
             return null;
         }
 
@@ -275,28 +318,19 @@ public sealed class UPakFile : IVFSFile {
         return index == null ? null : ReadAssetExport(index, export);
     }
 
-    public UObject? ReadAssetExport(IVFSEntry entry, int export) {
-        var data = ReadFile(entry);
-        if (data.Length == 0) {
-            return null;
-        }
-
-        var uexp = ReadFile(Path.ChangeExtension(entry.MountedPath, ".uexp"));
-        var ubulk = ReadFile(Path.ChangeExtension(entry.MountedPath, ".ubulk"));
-        var uptnl = ReadFile(Path.ChangeExtension(entry.MountedPath, ".uptnl"));
-
-        using var uasset = new UAssetFile(data, uexp, ubulk, uptnl, Path.GetFileNameWithoutExtension(entry.MountedPath), Game, this);
-
-        return uasset.GetExport(export);
-    }
+    public UObject? ReadAssetExport(IVFSEntry entry, int export) => Disposed ? null : ReadAsset(entry)?.GetExport(export);
 
     public UObject?[] ReadAssetExports(string path) {
+        if (Disposed) {
+            return Array.Empty<UObject>();
+        }
+
         var index = Index.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
         return index == null ? Array.Empty<UObject>() : ReadAssetExports(index);
     }
 
     public UObject?[] ReadAssetExports(ulong hash) {
-        if (!HasHashes) {
+        if (Disposed || !HasHashes) {
             return Array.Empty<UObject>();
         }
 
@@ -304,20 +338,7 @@ public sealed class UPakFile : IVFSFile {
         return index == null ? Array.Empty<UObject>() : ReadAssetExports(index);
     }
 
-    public UObject?[] ReadAssetExports(IVFSEntry entry) {
-        var data = ReadFile(entry);
-        if (data.Length == 0) {
-            return Array.Empty<UObject>();
-        }
-
-        var uexp = ReadFile(Path.ChangeExtension(entry.MountedPath, ".uexp"));
-        var ubulk = ReadFile(Path.ChangeExtension(entry.MountedPath, ".ubulk"));
-        var uptnl = ReadFile(Path.ChangeExtension(entry.MountedPath, ".uptnl"));
-
-        using var uasset = new UAssetFile(data, uexp, ubulk, uptnl, Path.GetFileNameWithoutExtension(entry.MountedPath), Game, this);
-
-        return uasset.GetExports();
-    }
+    public UObject?[] ReadAssetExports(IVFSEntry entry) => (Disposed ? null : ReadAsset(entry)?.GetExports()) ?? Array.Empty<UObject?>();
 
     public bool FindEncryptionKey(AESKeyStore aesKey, MemoryOwner<byte> test) {
         if (aesKey.Keys.TryGetValue(EncryptionGuid, out var key)) {
@@ -336,6 +357,35 @@ public sealed class UPakFile : IVFSFile {
 
         EncryptionKey = null;
         return false;
+    }
+
+    public void ClearCaches() {
+        foreach (var entry in Entries) {
+            if (entry.Data is IDisposable disposable) {
+                disposable.Dispose();
+            }
+
+            entry.Data = null;
+        }
+    }
+
+    public bool Disposed { get; private set; }
+
+    public void Dispose() {
+        foreach (var entry in Entries) {
+            entry.Dispose();
+        }
+
+        if (Disposed) {
+            return;
+        }
+
+        GC.SuppressFinalize(this);
+        Disposed = true;
+    }
+
+    ~UPakFile() {
+        Dispose();
     }
 
     internal MemoryOwner<byte> ReadBytes(long offset, long count, bool isEncrypted) {

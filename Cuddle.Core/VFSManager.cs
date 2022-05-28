@@ -8,7 +8,7 @@ using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Cuddle.Core;
 
-public sealed class VFSManager {
+public sealed class VFSManager : IDisposable {
     public AESKeyStore KeyStore { get; } = new();
     public HashPathStore HashStore { get; } = new();
 
@@ -16,6 +16,27 @@ public sealed class VFSManager {
     public IEnumerable<IVFSEntry> Files => Containers.SelectMany(x => x.Entries);
     public IEnumerable<IVFSEntry> UniqueFilesPath => Files.DistinctBy(x => x.MountedPath);
     public IEnumerable<IVFSEntry> UniqueFilesHash => Files.DistinctBy(x => x.MountedPathHash);
+
+    public bool Disposed { get; private set; }
+
+    public void Dispose() {
+        foreach (var vfs in Containers) {
+            vfs.Dispose();
+        }
+
+        Containers.Clear();
+
+        if (Disposed) {
+            return;
+        }
+
+        GC.SuppressFinalize(this);
+        Disposed = true;
+    }
+
+    ~VFSManager() {
+        Dispose();
+    }
 
     public void MountPakDir(DirectoryInfo dir, EGame game) {
         foreach (var pakPath in dir.GetFiles("*.pak", SearchOption.TopDirectoryOnly).OrderBy(x => x.Name.Replace('.', '_'), new NaturalStringComparer(StringComparison.OrdinalIgnoreCase, true))) {

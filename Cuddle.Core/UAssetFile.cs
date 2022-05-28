@@ -55,6 +55,10 @@ public class UAssetFile : IDisposable {
         BulkData.Dispose();
         OptionalData.Dispose();
 
+        foreach (var export in Exports) {
+            export.Dispose();
+        }
+
         if (Disposed) {
             return;
         }
@@ -70,6 +74,10 @@ public class UAssetFile : IDisposable {
     public UObject? GetExport(int index) => index > Exports.Length ? null : GetExport(Exports[index]);
 
     private UObject? GetExport(FObjectExport export) {
+        if (export.Disposed) {
+            return null;
+        }
+
         if (!export.ObjectCreated) {
             if (export.SerialOffset > 0x7FFFFFF) {
                 throw new IndexOutOfRangeException("Export is outside of reasonable range");
@@ -89,11 +97,11 @@ public class UAssetFile : IDisposable {
             return null;
         }
 
-        if (Imports[index].ObjectCreated) {
-            return Imports[index].Object;
+        if (!Imports[index].ObjectCreated) {
+            throw new NotImplementedException();
         }
 
-        throw new NotImplementedException();
+        return Imports[index].Object;
     }
 
     public UObject? GetIndex(FPackageIndex index) {

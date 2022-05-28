@@ -115,12 +115,33 @@ public class FPakEntry : IVFSEntry {
     public long Size { get; }
     public string MountedPath { get; internal set; } = "";
     public ulong MountedPathHash { get; internal set; }
+    public object? Data { get; set; }
+    public bool Disposed { get; private set; }
 
     public MemoryOwner<byte> ReadFile() => Owner.ReadFile(this);
+
+    public UAssetFile? ReadAsset() => Owner.ReadAsset(this);
 
     public UObject? ReadAssetExport(int index) => Owner.ReadAssetExport(this, index);
 
     public UObject?[] ReadAssetExports() => Owner.ReadAssetExports(this);
+
+    public void Dispose() {
+        if (Data is IDisposable disposable) {
+            disposable.Dispose();
+        }
+
+        if (Disposed) {
+            return;
+        }
+
+        GC.SuppressFinalize(this);
+        Disposed = true;
+    }
+
+    ~FPakEntry() {
+        Dispose();
+    }
 
     public override string ToString() => MountedPath;
 }
