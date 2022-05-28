@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
@@ -10,6 +9,7 @@ using Cuddle.Core.Enums;
 using Cuddle.Core.Structs.FileSystem;
 using DragonLib;
 using K4os.Compression.LZ4;
+using Microsoft.Toolkit.HighPerformance.Buffers;
 using Serilog;
 using ZstdNet;
 
@@ -36,14 +36,14 @@ public sealed class UPakFile : IDisposable {
             offset += 1; // ????
         }
 
-        var buffer = new byte[offset].AsMemory();
+        using var buffer = MemoryOwner<byte>.Allocate(offset);
         stream.Seek(-offset, SeekOrigin.End);
         if (stream.Read(buffer.Span) != offset) {
             Log.Error("Failed to read PakFile header for {PakName}! Stream is too small", Name);
             return;
         }
 
-        var header = new FArchiveReader(game, buffer);
+        using var header = new FArchiveReader(game, buffer);
 
         EncryptionGuid = header.Read<Guid>();
         IsIndexEncrypted = header.Read<byte>() != 0;
@@ -93,12 +93,12 @@ public sealed class UPakFile : IDisposable {
             }
 
             for (var index = 0; index < count; ++index) {
-                CompressionMethods.Add(header.ReadArray<byte>(0x20).Span.ReadString() ?? "None");
+                CompressionMethods.Add(header.ReadArray<byte>(0x20).ReadString() ?? "None");
             }
         }
 
         if (IsIndexEncrypted || EncryptionGuid != Guid.Empty) {
-            var testBlock = new byte[16].AsMemory();
+            using var testBlock = MemoryOwner<byte>.Allocate(16);
             Stream.Position = indexOffset;
             if (Stream.Read(testBlock.Span) != 16) {
                 Log.Error("Failed reading encryption test block for PAK {PakName}", Name);
@@ -112,7 +112,8 @@ public sealed class UPakFile : IDisposable {
             }
         }
 
-        Index = new FPakIndex(new FArchiveReader(game, ReadBytes(indexOffset, indexSize, IsIndexEncrypted)), this, hashStore);
+        using var indexReader = new FArchiveReader(game, ReadBytes(indexOffset, indexSize, IsIndexEncrypted));
+        Index = new FPakIndex(indexReader, this, hashStore);
 
         if (IsIndexEncrypted || EncryptionGuid != Guid.Empty) {
             Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, key {EncryptionGuid:n} which is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionGuid, EncryptionKey == null ? "not present" : "present");
@@ -140,31 +141,27 @@ public sealed class UPakFile : IDisposable {
         Stream?.Dispose();
     }
 
-    public Memory<byte> ReadFile(string path) {
+    public MemoryOwner<byte> ReadFile(string path) {
         var index = Index.Files.FirstOrDefault(x => x.MountedPath == path);
-        if (index == null) {
-            return Memory<byte>.Empty;
-        }
-
-        return ReadFile(index);
+        return index == null ? MemoryOwner<byte>.Empty : ReadFile(index);
     }
 
-    public unsafe Memory<byte> ReadFile(FPakEntry index) {
+    public unsafe MemoryOwner<byte> ReadFile(FPakEntry index) {
         var dataBuffer = ReadBytes(index.Pos, index.Size, index.IsEncrypted);
 
         if (index.CompressionMethod == 0) {
             return dataBuffer;
         }
 
-        var outputBuffer = new byte[index.UncompressedSize].AsMemory();
+        var outputBuffer = MemoryOwner<byte>.Allocate((int) index.UncompressedSize);
 
         var lastBlockIndex = index.CompressionBlocks.Length - 1;
         var outputOffset = 0L;
-        using var blockDataRoot = MemoryPool<byte>.Shared.Rent((int) index.CompressionBlockSize);
+        using var blockDataRoot = MemoryOwner<byte>.Allocate((int) index.CompressionBlockSize);
         for (var i = 0; i < index.CompressionBlocks.Length; i++) {
             var block = index.CompressionBlocks[i];
             var size = i == lastBlockIndex ? index.UncompressedSize - outputOffset : index.CompressionBlockSize;
-            var blockData = blockDataRoot.Memory[..(int) size];
+            var blockData = blockDataRoot[..(int) size];
             var blockChunk = dataBuffer[(int) block.CompressedStart..(int) block.CompressedEnd];
 
             var compressionType = CompressionMethods[index.CompressionMethod].ToLower();
@@ -193,7 +190,7 @@ public sealed class UPakFile : IDisposable {
 
             switch (compressionType) {
                 case "zlib": {
-                    using var dataPin = blockChunk.Pin();
+                    using var dataPin = blockChunk.Memory.Pin();
                     using var dataStream = new UnmanagedMemoryStream((byte*) dataPin.Pointer, blockChunk.Length);
                     dataStream.Position = 2;
                     using var zlib = new DeflateStream(dataStream, CompressionMode.Decompress);
@@ -215,7 +212,7 @@ public sealed class UPakFile : IDisposable {
                     break;
                 }
                 case "gzip": {
-                    using var dataPin = blockChunk.Pin();
+                    using var dataPin = blockChunk.Memory.Pin();
                     using var dataStream = new UnmanagedMemoryStream((byte*) dataPin.Pointer, blockChunk.Length);
                     dataStream.Position = 2;
                     using var zlib = new GZipStream(dataStream, CompressionMode.Decompress);
@@ -245,19 +242,20 @@ public sealed class UPakFile : IDisposable {
                 }
             }
 
-            blockData.CopyTo(outputBuffer[(int) outputOffset..]);
+            blockData.Memory.CopyTo(outputBuffer.Memory[(int) outputOffset..]);
             outputOffset += size;
         }
 
+        dataBuffer.Dispose();
         return outputBuffer;
     }
 
-    internal Memory<byte> ReadBytes(long offset, long count, bool isEncrypted) {
+    internal MemoryOwner<byte> ReadBytes(long offset, long count, bool isEncrypted) {
         if (Stream is not { CanRead: true }) {
-            return Memory<byte>.Empty;
+            return MemoryOwner<byte>.Empty;
         }
 
-        var data = new byte[count < 16 ? 16 : count].AsMemory();
+        using var data = MemoryOwner<byte>.Allocate((int) (count < 16 ? 16 : count));
         Stream.Position = offset;
         var readOffset = 0;
         while (count - readOffset > 0) {
@@ -270,11 +268,9 @@ public sealed class UPakFile : IDisposable {
         }
 
         var decrypted = Decrypt(data, isEncrypted);
-        if (count < 16) { // aes needs 16 bytes.
-            return decrypted[..(int) count];
-        }
-
-        return decrypted;
+        
+        // aes needs 16 bytes.
+        return count < 16 ? decrypted[..(int) count] : decrypted;
     }
 
     public UObject? ReadAssetExport(string path, int export) {
@@ -284,7 +280,7 @@ public sealed class UPakFile : IDisposable {
 
     public UObject? ReadAssetExport(FPakEntry entry, int export) {
         var data = ReadFile(entry);
-        if (data.IsEmpty) {
+        if (data.Length == 0) {
             return null;
         }
 
@@ -304,7 +300,7 @@ public sealed class UPakFile : IDisposable {
 
     public UObject?[] ReadAssetExports(FPakEntry entry) {
         var data = ReadFile(entry);
-        if (data.IsEmpty) {
+        if (data.Length == 0) {
             return Array.Empty<UObject>();
         }
 
@@ -317,7 +313,7 @@ public sealed class UPakFile : IDisposable {
         return uasset.GetExports();
     }
 
-    private bool FindEncryptionKey(AESKeyStore aesKey, Memory<byte> test) {
+    private bool FindEncryptionKey(AESKeyStore aesKey, MemoryOwner<byte> test) {
         if (aesKey.Keys.TryGetValue(EncryptionGuid, out var key)) {
             EncryptionKey = key;
             return true;
@@ -336,7 +332,7 @@ public sealed class UPakFile : IDisposable {
         return false;
     }
 
-    private Memory<byte> Decrypt(Memory<byte> data, bool isEncrypted) {
+    private MemoryOwner<byte> Decrypt(MemoryOwner<byte> data, bool isEncrypted) {
         if (!isEncrypted || EncryptionKey == null) {
             return data;
         }
@@ -347,7 +343,9 @@ public sealed class UPakFile : IDisposable {
         cipher.BlockSize = 128;
         cipher.Key = EncryptionKey;
         cipher.IV = new byte[16];
-        using var decrypt = cipher.CreateDecryptor();
-        return decrypt.TransformFinalBlock(data.ToArray(), 0, data.Length);
+        var decryptedOwner = MemoryOwner<byte>.Allocate(data.Length);
+        var size = cipher.DecryptEcb(data.Span, decryptedOwner.Span, cipher.Padding);
+        data.Dispose();
+        return decryptedOwner[..size];
     }
 }

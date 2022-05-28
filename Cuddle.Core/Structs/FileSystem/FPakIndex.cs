@@ -42,7 +42,7 @@ public class FPakIndex {
             var fullDirectoryIndexSize = hasFullDirectoryIndex ? archive.Read<long>() : 0;
             FullDirectoryIndexHash = hasFullDirectoryIndex ? archive.ReadArray<byte>(0x14).ToArray() : null;
 
-            var encodedReader = archive.Partition();
+            using var encodedReader = archive.Partition();
             Files.EnsureCapacity(Count);
             var encodedMap = new Dictionary<int, int>(Count);
             for (var index = 0; index < Count; ++index) {
@@ -53,8 +53,7 @@ public class FPakIndex {
             Files.AddRange(archive.ReadClassArray<FPakEntry>(null, owner, false));
 
             if (hasFullDirectoryIndex) { // we have paths, yay.
-                var dirData = owner.ReadBytes(fullDirectoryIndexOffset, fullDirectoryIndexSize, owner.IsIndexEncrypted);
-                var dirReader = new FArchiveReader(encodedReader.Game, dirData);
+                using var dirReader = new FArchiveReader(encodedReader.Game, owner.ReadBytes(fullDirectoryIndexOffset, fullDirectoryIndexSize, owner.IsIndexEncrypted));
                 var dirCount = dirReader.Read<int>();
                 for (var index = 0; index < dirCount; ++index) {
                     var dirName = dirReader.ReadString();
@@ -84,8 +83,7 @@ public class FPakIndex {
                     }
                 }
             } else if (hasPathHashIndex) { // we only have hashes, which is workable.
-                var hashData = owner.ReadBytes(hashPathIndexOffset, hashPathIndexSize, owner.IsIndexEncrypted);
-                var hashReader = new FArchiveReader(encodedReader.Game, hashData);
+                using var hashReader = new FArchiveReader(encodedReader.Game, owner.ReadBytes(hashPathIndexOffset, hashPathIndexSize, owner.IsIndexEncrypted));
                 var count = hashReader.Read<int>();
                 for (var index = 0; index < count; ++index) {
                     var hash = hashReader.Read<ulong>();

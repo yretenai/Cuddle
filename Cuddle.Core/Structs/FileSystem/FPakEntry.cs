@@ -1,6 +1,7 @@
 ﻿using System;
 using Cuddle.Core.Enums;
 using DragonLib;
+using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Cuddle.Core.Structs.FileSystem;
 
@@ -29,7 +30,8 @@ public class FPakEntry {
             IsEncrypted = fields.Encrypted;
 
             // read hash from lead-in struct
-            Hash = owner.ReadBytes(Pos, 0x30, IsEncrypted)[^0x14..].ToArray();
+            using var hash = owner.ReadBytes(Pos, 0x30, IsEncrypted)[^0x14..];
+            Hash = hash.Span.ToArray();
 
             // we read the entire data block from after the lead-in struct.
             Pos += 53; // no version checks because this can only exist after UE 4.23
@@ -112,7 +114,7 @@ public class FPakEntry {
     public string MountedPath { get; internal set; } = "";
     public string Path { get; internal set; } = "";
 
-    public Memory<byte> ReadFile() => Owner.ReadFile(this);
+    public MemoryOwner<byte> ReadFile() => Owner.ReadFile(this);
 
     public UObject? ReadAssetExport(int index) => Owner.ReadAssetExport(this, index);
 

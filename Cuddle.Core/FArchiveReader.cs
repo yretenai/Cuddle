@@ -4,18 +4,19 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using Cuddle.Core.Enums;
+using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Cuddle.Core;
 
-public class FArchiveReader {
-    public FArchiveReader(UAssetFile asset, ReadOnlyMemory<byte> data) {
+public sealed class FArchiveReader : IDisposable {
+    public FArchiveReader(UAssetFile asset, MemoryOwner<byte> data) {
         Asset = asset;
         Data = data;
         Game = asset.Game;
         Version = asset.Summary.FileVersionUE4;
     }
 
-    public FArchiveReader(EGame game, ReadOnlyMemory<byte> data) {
+    public FArchiveReader(EGame game, MemoryOwner<byte> data) {
         Game = game;
         Version = game.ToGameObjectVersion();
         if (Version == 0) {
@@ -24,11 +25,17 @@ public class FArchiveReader {
 
         Data = data;
     }
+    
+    ~FArchiveReader() {
+        Dispose();
+    }
+    
+    public bool Disposed { get; private set; }
 
     public EGame Game { get; set; }
     public EObjectVersion Version { get; set; }
     public UAssetFile? Asset { get; internal set; }
-    public ReadOnlyMemory<byte> Data { get; }
+    public MemoryOwner<byte> Data { get; }
     public int Position { get; set; }
     public int Length => Data.Length;
     public int Remaining => Data.Length - Position;
@@ -48,12 +55,12 @@ public class FArchiveReader {
         return value == 1;
     }
 
-    public Memory<T> ReadArray<T>(int? count = null) where T : unmanaged {
+    public Span<T> ReadArray<T>(int? count = null) where T : unmanaged {
         count ??= Read<int>();
 
-        var value = new T[count.Value].AsMemory();
+        var value = new T[count.Value].AsSpan();
         var size = Unsafe.SizeOf<T>() * count.Value;
-        Data.Span.Slice(Position, size).CopyTo(MemoryMarshal.AsBytes(value.Span));
+        Data.Span.Slice(Position, size).CopyTo(MemoryMarshal.AsBytes(value));
         Position += size;
         return value;
     }
@@ -104,14 +111,26 @@ public class FArchiveReader {
     }
 
     public FArchiveReader Partition(int pos, int size) {
-        var slice = Data.Slice(pos, size);
-        return Asset == null ? new FArchiveReader(Game, slice) : new FArchiveReader(Asset, slice);
+        var block = MemoryOwner<byte>.Allocate(size);
+        Data.Memory.Slice(pos, size).CopyTo(block.Memory);
+        return Asset == null ? new FArchiveReader(Game, block) : new FArchiveReader(Asset, block);
     }
 
     public FArchiveReader Partition(int? count = null) {
         count ??= Read<int>();
-        var pos = Position;
+        var block = MemoryOwner<byte>.Allocate(count.Value);
+        Data.Memory.Slice(Position, count.Value).CopyTo(block.Memory);
         Position += count.Value;
-        return Partition(pos, count.Value);
+        return Asset == null ? new FArchiveReader(Game, block) : new FArchiveReader(Asset, block);
+    }
+
+    public void Dispose() {
+        Data.Dispose();
+        if (Disposed) {
+            return;
+        }
+
+        GC.SuppressFinalize(this);
+        Disposed = true;
     }
 }

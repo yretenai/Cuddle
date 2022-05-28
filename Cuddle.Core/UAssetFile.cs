@@ -2,16 +2,17 @@
 using System.Linq;
 using Cuddle.Core.Enums;
 using Cuddle.Core.Structs.Asset;
+using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Cuddle.Core;
 
-public class UAssetFile {
-    public UAssetFile(ReadOnlyMemory<byte> uasset, ReadOnlyMemory<byte> uexp, ReadOnlyMemory<byte> ubulk, ReadOnlyMemory<byte> uptnl, string name, EGame game, UPakFile? owner) {
+public class UAssetFile : IDisposable {
+    public UAssetFile(MemoryOwner<byte> uasset, MemoryOwner<byte> uexp, MemoryOwner<byte> ubulk, MemoryOwner<byte> uptnl, string name, EGame game, UPakFile? owner) {
         Game = game;
         Name = name;
         Owner = owner;
 
-        var archive = new FArchiveReader(game, uasset);
+        using var archive = new FArchiveReader(game, uasset);
         Summary = new FPackageFileSummary(archive);
         archive.Asset = this;
         archive.Version = Summary.FileVersionUE4;
@@ -25,12 +26,19 @@ public class UAssetFile {
         archive.Position = Summary.ExportOffset;
         Exports = archive.ReadClassArray<FObjectExport>(Summary.ExportCount);
 
-        var combined = new byte[uasset.Length + uexp.Length].AsMemory();
-        uasset.CopyTo(combined);
-        uexp.CopyTo(combined[Summary.TotalHeaderSize..]);
+        var combined = MemoryOwner<byte>.Allocate(uasset.Length + uexp.Length);
+        uasset.Memory.CopyTo(combined.Memory);
+        uexp.Memory.CopyTo(combined.Memory[Summary.TotalHeaderSize..]);
         ExportData = new FArchiveReader(this, combined);
         BulkData = new FArchiveReader(this, ubulk);
         OptionalData = new FArchiveReader(this, uptnl);
+        
+        uasset.Dispose();
+        uexp.Dispose();
+    }
+    
+    ~UAssetFile() {
+        Dispose();
     }
 
     public UPakFile? Owner { get; }
@@ -79,5 +87,21 @@ public class UAssetFile {
         }
 
         return index.IsExport ? GetExport(index.Index - 1) : GetImport(0 - index.Index - 1);
+    }
+    
+    public bool Disposed { get; private set; }
+
+    public void Dispose()
+    {
+        ExportData.Dispose();
+        BulkData.Dispose();
+        OptionalData.Dispose();
+        
+        if (Disposed) {
+            return;
+        }
+
+        GC.SuppressFinalize(this);
+        Disposed = true;
     }
 }

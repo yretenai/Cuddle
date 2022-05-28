@@ -5,6 +5,7 @@ using System.Linq;
 using Cuddle.Core.Enums;
 using Cuddle.Core.Structs.FileSystem;
 using DragonLib.Text;
+using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Cuddle.Core;
 
@@ -30,9 +31,9 @@ public sealed class PakManager : IDisposable {
         }
     }
 
-    public Memory<byte> ReadFile(string path) {
+    public MemoryOwner<byte> ReadFile(string path) {
         var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal));
-        return file == null ? Memory<byte>.Empty : file.Owner.ReadFile(file);
+        return file == null ? MemoryOwner<byte>.Empty : file.Owner.ReadFile(file);
     }
 
     public UObject? ReadExport(string path, int index) {
