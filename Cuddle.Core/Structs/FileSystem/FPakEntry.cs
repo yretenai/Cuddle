@@ -118,7 +118,7 @@ public class FPakEntry : IVFSEntry {
     public string MountedPath { get; internal set; } = "";
     public string ObjectPath { get; internal set; } = "";
     public ulong MountedHash { get; internal set; }
-    public object? Data { get; set; }
+    public IPoliteDisposable? Data { get; set; }
     public bool Disposed { get; private set; }
 
     public MemoryOwner<byte> ReadFile() => Owner.ReadFile(this);
@@ -150,19 +150,19 @@ public class FPakEntry : IVFSEntry {
 
     // ref: https://github.com/gildor2/UEViewer/blob/eaba2837228f9fe39134616d7bff734acd314ffb/Unreal/FileSystem/FileSystemUtils.cpp#L20
     public void CreateObjectPath() {
-        // Engine/Content/Stuff -> /Engine/Stuff
+        // Engine/Content/Stuff -> /Engine/Stuff -- normalize Engine
         if (MountedPath.StartsWith("Engine/Content")) {
             ObjectPath = "/Engine" + MountedPath[14..];
             return;
         }
 
-        // Engine/Plugins/Stuff -> /Engine/Plugins
+        // Engine/Plugins/Stuff -> /Plugins/Stuff -- normalize Plugins
         if (MountedPath.StartsWith("Engine/Plugins")) {
             ObjectPath = MountedPath[6..];
             return;
         }
 
-        // GameName/Content/Stuff/ -> Game/Content/Stuff 
+        // Project/Content/Stuff/ -> Game/Content/Stuff -- strip project nname  
         var index = MountedPath.IndexOf('/');
         if (index == -1) {
             return;
@@ -172,12 +172,21 @@ public class FPakEntry : IVFSEntry {
             ObjectPath = MountedPath[(index + 1)..];
         }
 
-        // Content/Stuff/ -> Stuff
+        // Content/Stuff/ -> Stuff -- strip Content directory
         if (ObjectPath.StartsWith("Content/")) {
             ObjectPath = ObjectPath[8..];
         }
 
-        // Stuff -> /Game/Stuff
+        // Stuff.uasset -> Stuff -- strip package extensions
+        var extPos = ObjectPath.LastIndexOf('.');
+        if (extPos > -1) {
+            var ext = ObjectPath[extPos..];
+            if (ext is ".uasset" or ".umap") {
+                ObjectPath = ObjectPath[..^ext.Length];
+            }
+        }
+
+        // Stuff -> /Game/Stuff -- rebuild path
         ObjectPath = "/Game/" + ObjectPath;
     }
 }

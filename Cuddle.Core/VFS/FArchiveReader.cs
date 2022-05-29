@@ -9,7 +9,7 @@ using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Cuddle.Core.VFS;
 
-public sealed class FArchiveReader : IDisposable {
+public sealed class FArchiveReader : IPoliteDisposable {
     public FArchiveReader(UAssetFile asset, MemoryOwner<byte> data) {
         Asset = asset;
         Data = data;
@@ -27,8 +27,6 @@ public sealed class FArchiveReader : IDisposable {
         Data = data;
     }
 
-    public bool Disposed { get; private set; }
-
     public EGame Game { get; set; }
     public EObjectVersion Version { get; set; }
     public UAssetFile? Asset { get; internal set; }
@@ -36,6 +34,8 @@ public sealed class FArchiveReader : IDisposable {
     public int Position { get; set; }
     public int Length => Data.Length;
     public int Remaining => Data.Length - Position;
+
+    public bool Disposed { get; private set; }
 
     public void Dispose() {
         Data.Dispose();
@@ -61,6 +61,15 @@ public sealed class FArchiveReader : IDisposable {
         var value = Read<uint>();
         if (value > 1) {
             throw new InvalidDataException($"Expected 0 or 1 for a boolean value, got {value}");
+        }
+
+        return value == 1;
+    }
+
+    public bool ReadBit() {
+        var value = Read<byte>();
+        if (value > 1) {
+            throw new InvalidDataException($"Expected 0 or 1 for a bit value, got {value}");
         }
 
         return value == 1;

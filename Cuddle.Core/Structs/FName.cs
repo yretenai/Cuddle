@@ -3,7 +3,7 @@ using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs;
 
-public class FName {
+public readonly record struct FName {
     public FName() {
         Index = -1;
         Instance = 0;
@@ -23,7 +23,15 @@ public class FName {
 
         Value = archive.Asset.Names[Index].Name;
         if (Instance > 0) {
-            Value += $".{Value}";
+            Value += $".{Instance}";
+        }
+    }
+
+    public FName(string value, int instance = 0) {
+        Value = value;
+        Instance = instance;
+        if (Instance > 0) {
+            Value += $".{Instance}";
         }
     }
 

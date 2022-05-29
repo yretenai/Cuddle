@@ -1,18 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cuddle.Core.Enums;
 using Cuddle.Core.Structs;
+using Cuddle.Core.Structs.Asset;
 using Cuddle.Core.VFS;
 using Serilog;
 
 namespace Cuddle.Core.Assets;
 
 public class UObject {
-    public UObject(FArchiveReader data) {
+    protected UObject(FArchiveReader data, FObjectExport export) {
         Owner = data.Asset!;
+        Export = export;
+        Properties = ReadProperties(data, FPropertyTagContext.Empty, GetType().Name);
+        if (!Export.ObjectFlags.HasFlag(EObjectFlags.ClassDefaultObject) && data.ReadBoolean()) {
+            Guid = data.Read<Guid>();
+        }
+    }
 
+    public FObjectExport Export { get; }
+    public Guid Guid { get; }
+
+    public UAssetFile Owner { get; }
+    public Dictionary<FPropertyTag, UProperty?> Properties { get; }
+    public UProperty? this[FName key] => Properties.FirstOrDefault(x => x.Key.Name == key).Value;
+    public UProperty? this[FName key, int index] => Properties.FirstOrDefault(x => x.Key.Name == key && x.Key.Index == index).Value;
+
+    public static Dictionary<FPropertyTag, UProperty?> ReadProperties(FArchiveReader data, FPropertyTagContext context, string name) {
+        var properties = new Dictionary<FPropertyTag, UProperty?>();
         while (data.Remaining > 0) {
-            var tag = new FPropertyTag(data);
+            var tag = new FPropertyTag(data, context);
             if (tag.Name == "None") {
                 break;
             }
@@ -21,24 +39,18 @@ public class UObject {
             var expectedEnd = start + tag.Size;
 
             try {
-                Properties[tag] = FProperty.Create(data, tag);
+                properties[tag] = UProperty.Create(data, tag, FPropertyTagContext.Empty);
             } catch (Exception e) {
-                Log.Error(e, "Error while deserializing {Type} for property {Name} in {ObjectName}", tag.Type, tag.Name, GetType().Name);
+                Log.Error(e, "Error while deserializing {Type} for property {Name} in {ObjectName}", tag.Type, tag, name);
+            } finally {
+                if (data.Position != expectedEnd) {
+                    Log.Warning("Did not deserialize {Type} for property {Name} in {ObjectName} correctly!", tag.Type, tag, name);
+                }
+
                 data.Position = expectedEnd;
-                continue;
             }
-
-            if (data.Position != expectedEnd) {
-                Log.Warning("Did not deserialize {Type} for property {Name} in {ObjectName} correctly!", tag.Type, tag.Name, GetType().Name);
-            }
-
-            data.Position = expectedEnd;
         }
+
+        return properties;
     }
-
-    public UAssetFile Owner { get; }
-
-    public Dictionary<FPropertyTag, FProperty?> Properties { get; } = new();
-    public FProperty? this[FName key] => Properties.FirstOrDefault(x => x.Key.Name == key).Value;
-    public FProperty? this[FName key, int index] => Properties.FirstOrDefault(x => x.Key.Name == key && x.Key.Index == index).Value;
 }

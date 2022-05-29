@@ -9,7 +9,7 @@ using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Cuddle.Core.VFS;
 
-public sealed class VFSManager : IDisposable {
+public sealed class VFSManager : IPoliteDisposable {
     public AESKeyStore KeyStore { get; } = new();
     public HashPathStore HashStore { get; } = new();
 

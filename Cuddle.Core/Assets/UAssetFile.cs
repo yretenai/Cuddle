@@ -7,7 +7,7 @@ using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Cuddle.Core.Assets;
 
-public class UAssetFile : IDisposable {
+public class UAssetFile : IPoliteDisposable {
     public UAssetFile(MemoryOwner<byte> uasset, MemoryOwner<byte> uexp, MemoryOwner<byte> ubulk, MemoryOwner<byte> uptnl, string name, EGame game, IVFSFile? owner, VFSManager manager) {
         Game = game;
         Name = name;
@@ -81,6 +81,10 @@ public class UAssetFile : IDisposable {
             return null;
         }
 
+        if (Summary.PackageFlags.HasFlag(EPackageFlags.UnversionedProperties)) {
+            throw new NotImplementedException();
+        }
+
         if (!export.ObjectCreated) {
             if (export.SerialOffset > 0x7FFFFFF) {
                 throw new IndexOutOfRangeException("Export is outside of reasonable range");
@@ -100,11 +104,30 @@ public class UAssetFile : IDisposable {
             return null;
         }
 
-        if (!Imports[index].ObjectCreated) {
-            throw new NotImplementedException();
+        var import = Imports[index];
+        if (import.ObjectCreated) {
+            return import.Object;
         }
 
-        return Imports[index].Object;
+        var outer = import;
+        while (!outer.PackageIndex.IsNull) {
+            outer = Imports[-outer.PackageIndex.Index - 1];
+        }
+
+        import.ObjectCreated = true;
+
+        if (outer.ObjectName.Value.StartsWith("/Script/")) {
+            // not supported.
+            return null;
+        }
+
+        if (Owner == null || outer.ObjectName.Value == "None") {
+            // no vfs or package reference is weird.
+            return null;
+        }
+
+        var asset = Owner.ReadAsset(outer.ObjectName.Value);
+        throw new NotImplementedException();
     }
 
     public UObject? GetIndex(FPackageIndex index) {

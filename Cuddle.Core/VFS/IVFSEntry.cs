@@ -1,17 +1,15 @@
-using System;
 using Cuddle.Core.Assets;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Cuddle.Core.VFS;
 
-public interface IVFSEntry : IDisposable {
+public interface IVFSEntry : IPoliteDisposable {
     IVFSFile Owner { get; }
     long Size { get; }
     string MountedPath { get; }
     string ObjectPath { get; }
     ulong MountedHash { get; }
-    object? Data { get; set; }
-    bool Disposed { get; }
+    IPoliteDisposable? Data { get; set; }
     MemoryOwner<byte> ReadFile();
     UAssetFile? ReadAsset();
     UObject? ReadAssetExport(int index);

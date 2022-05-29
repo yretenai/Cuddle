@@ -6,7 +6,7 @@ using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Cuddle.Core.VFS;
 
-public interface IVFSFile : IDisposable {
+public interface IVFSFile : IPoliteDisposable {
     string Name { get; }
     EGame Game { get; }
     Guid EncryptionGuid { get; }
@@ -14,7 +14,6 @@ public interface IVFSFile : IDisposable {
     bool HasHashes { get; }
     bool HasPaths { get; }
     IEnumerable<IVFSEntry> Entries { get; }
-    bool Disposed { get; }
     MemoryOwner<byte> ReadFile(string path);
     MemoryOwner<byte> ReadFile(ulong hash);
     MemoryOwner<byte> ReadFile(IVFSEntry entry);

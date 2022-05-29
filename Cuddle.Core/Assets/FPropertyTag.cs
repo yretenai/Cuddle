@@ -1,13 +1,20 @@
 ﻿using System;
-using Cuddle.Core.Assets;
 using Cuddle.Core.Enums;
+using Cuddle.Core.Structs;
 using Cuddle.Core.VFS;
 
-namespace Cuddle.Core.Structs;
+namespace Cuddle.Core.Assets;
 
-public class FPropertyTag {
-    public FPropertyTag(FArchiveReader data) {
-        Owner = data.Asset!;
+public readonly record struct FPropertyTag {
+    public FPropertyTag() { }
+
+    public FPropertyTag(FArchiveReader data, FPropertyTagContext context) {
+        // todo: GVAS, no Package but is serialized the same way with FName being FString.
+
+        if (context.IsGVAS) {
+            throw new NotImplementedException();
+        }
+
         Name = new FName(data);
         if (Name == "None") {
             return;
@@ -51,7 +58,7 @@ public class FPropertyTag {
         }
     }
 
-    public FName Name { get; }
+    public FName Name { get; } = FName.Null;
     public FName Type { get; } = FName.Null;
     public int Size { get; }
 
@@ -62,10 +69,9 @@ public class FPropertyTag {
     public bool BoolValue { get; }
     public FName KeyType { get; } = FName.Null;
     public FName ValueType { get; } = FName.Null;
-    public Guid StructGuid { get; }
-    public Guid Guid { get; }
-
-    public UAssetFile Owner { get; }
+    private Guid StructGuid { get; }
+    private Guid Guid { get; }
+    public static FPropertyTag Empty { get; } = new();
 
     public override int GetHashCode() => HashCode.Combine(Name, Type, Size, Index, KeyType, ValueType);
 }

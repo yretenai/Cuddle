@@ -5,7 +5,7 @@ using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs.Asset;
 
-public class FObjectExport : FObjectAbstract, IDisposable {
+public class FObjectExport : FObjectAbstract, IPoliteDisposable {
     public FObjectExport() { }
 
     public FObjectExport(FArchiveReader archive) {
@@ -58,7 +58,7 @@ public class FObjectExport : FObjectAbstract, IDisposable {
     public int CreateBeforeCreateDependencies { get; }
     public UObject? Object { get; internal set; }
     public bool ObjectCreated { get; internal set; }
-    public bool Disposed { get; protected set; }
+    public bool Disposed { get; private set; }
 
     public void Dispose() {
         if (Object is IDisposable disposable) {
