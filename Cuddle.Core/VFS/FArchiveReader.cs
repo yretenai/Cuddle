@@ -19,10 +19,7 @@ public sealed class FArchiveReader : IPoliteDisposable {
 
     public FArchiveReader(EGame game, MemoryOwner<byte> data) {
         Game = game;
-        Version = game.ToGameObjectVersion();
-        if (Version == 0) {
-            Version = game.ToObjectVersion();
-        }
+        Version = game.FindObjectVersion();
 
         Data = data;
     }
@@ -55,6 +52,16 @@ public sealed class FArchiveReader : IPoliteDisposable {
         var value = MemoryMarshal.Read<T>(Data.Span[Position..]);
         Position += Unsafe.SizeOf<T>();
         return value;
+    }
+
+    public unsafe object Read(Type t) {
+        if (!t.IsValueType) {
+            throw new NotSupportedException();
+        }
+
+        var size = Marshal.SizeOf(t);
+        using var data = Data.Memory.Slice(Position, size).Pin();
+        return Marshal.PtrToStructure((IntPtr) data.Pointer, t)!;
     }
 
     public bool ReadBoolean() {
@@ -106,11 +113,11 @@ public sealed class FArchiveReader : IPoliteDisposable {
         var value = "";
 
         switch (count) {
-            case > 1:
+            case >= 1:
                 value = Encoding.UTF8.GetString(Data.Span.Slice(Position, count.Value - 1));
                 Position += count.Value;
                 break;
-            case < -1:
+            case <= -1:
                 value = Encoding.Unicode.GetString(Data.Span.Slice(Position, (0 - count.Value - 1) * 2));
                 Position += (0 - count.Value) * 2;
                 break;

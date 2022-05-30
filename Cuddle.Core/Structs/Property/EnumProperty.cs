@@ -7,4 +7,6 @@ public class EnumProperty : UProperty {
     public EnumProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(data, tag, context) => Value = new FName(data);
 
     public FName Value { get; }
+
+    public override string ToString() => Value;
 }

@@ -5,8 +5,6 @@ using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Assets;
 
-public record FStructValue;
-
 [ObjectRegistration(Skip = true)]
 public record FTaggedStructValue : FStructValue {
     public FTaggedStructValue() { }

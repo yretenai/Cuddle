@@ -69,7 +69,7 @@ public static class FStructRegistry {
         }
 
         try {
-            return Activator.CreateInstance(structType, data) as FStructValue;
+            return (structType.IsValueType ? data.Read(structType) : Activator.CreateInstance(structType, data)) as FStructValue;
         } catch {
             return null;
         }

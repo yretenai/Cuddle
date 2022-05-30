@@ -58,14 +58,14 @@ public readonly record struct FPropertyTag {
         }
     }
 
-    public FName Name { get; } = FName.Null;
-    public FName Type { get; } = FName.Null;
-    public int Size { get; }
+    public FName Name { get; init; } = FName.Null;
+    public FName Type { get; init; } = FName.Null;
+    public int Size { get; init; }
 
     // multiple properties can have the same Name, Type, and SubTypes, when that happens it increments the ArrayIndex by one.
     // real case: FMaterialCachedParameters, "Entries" is partitioned into multiple FMaterialCachedParameterEntry values
     // they all have the same name (usually "RuntimeEntry" or "Entry") 
-    public int Index { get; }
+    public int Index { get; init; }
     public bool BoolValue { get; }
     public FName KeyType { get; } = FName.Null;
     public FName ValueType { get; } = FName.Null;
@@ -74,4 +74,8 @@ public readonly record struct FPropertyTag {
     public static FPropertyTag Empty { get; } = new();
 
     public override int GetHashCode() => HashCode.Combine(Name, Type, Size, Index, KeyType, ValueType);
+
+    public FPropertyTag AsValueTag() => new() { Type = ValueType, Name = Name, Size = -1 };
+
+    public FPropertyTag AsKeyTag() => new() { Type = KeyType, Name = Name, Size = -1 };
 }

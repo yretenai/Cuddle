@@ -31,11 +31,7 @@ public class FPackageFileSummary {
         var isUnversioned = FileVersionUE4 == 0;
         if (FileVersionUE4 == 0) {
             // https://github.com/gildor2/UEViewer/blob/60accbff70e58bfc66eaad4594416694b95422ee/Unreal/UE4Version.h#L7
-            FileVersionUE4 = archive.Game.ToGameObjectVersion();
-
-            if (FileVersionUE4 == 0) {
-                FileVersionUE4 = archive.Game.GetEngineVersion().ToObjectVersion();
-            }
+            FileVersionUE4 = archive.Game.FindObjectVersion();
         }
 
         if (FileVersionUE4 is > EObjectVersion.NEWEST_LOADABLE_PACKAGE or < EObjectVersion.OLDEST_LOADABLE_PACKAGE) {

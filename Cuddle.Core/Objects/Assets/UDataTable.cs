@@ -16,7 +16,7 @@ public class UDataTable : UObject {
         var count = data.Read<int>();
         for (var i = 0; i < count; ++i) {
             var rowName = new FName(data);
-            Rows[rowName] = ReadProperties(data, FPropertyTagContext.Empty with { StructTag = objectRef?.Tag ?? FPropertyTag.Empty }, structName ?? export.ObjectName.Value);
+            Rows[rowName] = ReadProperties(data, FPropertyTagContext.Empty with { ElementTag = objectRef?.Tag ?? FPropertyTag.Empty }, structName ?? export.ObjectName.Value);
         }
     }
 

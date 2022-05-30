@@ -7,4 +7,6 @@ public class BoolProperty : UProperty {
     public BoolProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(data, tag, context) => Value = context.ReadMode == FPropertyReadMode.Normal ? tag.BoolValue : data.ReadBit();
 
     public bool Value { get; }
+
+    public override string ToString() => Value.ToString();
 }

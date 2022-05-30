@@ -39,15 +39,17 @@ public class UObject {
             var expectedEnd = start + tag.Size;
 
             try {
-                properties[tag] = UProperty.Create(data, tag, FPropertyTagContext.Empty);
+                properties[tag] = UProperty.CreateProperty(data, tag, FPropertyTagContext.Empty);
             } catch (Exception e) {
                 Log.Error(e, "Error while deserializing {Type} for property {Name} in {ObjectName}", tag.Type, tag, name);
             } finally {
-                if (data.Position != expectedEnd) {
-                    Log.Warning("Did not deserialize {Type} for property {Name} in {ObjectName} correctly!", tag.Type, tag, name);
-                }
+                if (context.ReadMode == FPropertyReadMode.Normal) {
+                    if (data.Position != expectedEnd) {
+                        Log.Warning("Did not deserialize {Type} for property {Name} in {ObjectName} correctly!", tag.Type, tag, name);
+                    }
 
-                data.Position = expectedEnd;
+                    data.Position = expectedEnd;
+                }
             }
         }
 
