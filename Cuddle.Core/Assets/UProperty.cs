@@ -1,4 +1,5 @@
-﻿using Cuddle.Core.Structs.Property;
+﻿using System.Text.Json.Serialization;
+using Cuddle.Core.Structs.Property;
 using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Assets;
@@ -9,7 +10,10 @@ public abstract class UProperty {
         TagContext = context;
     }
 
+    [JsonIgnore]
     public FPropertyTag Tag { get; }
+
+    [JsonIgnore]
     public FPropertyTagContext TagContext { get; }
 
     public static UProperty? CreateProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) {

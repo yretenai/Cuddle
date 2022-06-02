@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using Cuddle.Core.Enums;
 using Cuddle.Core.Structs;
 using Cuddle.Core.Structs.Asset;
@@ -19,13 +20,21 @@ public class UObject {
         }
     }
 
+    [JsonIgnore]
     public FObjectExport Export { get; }
+
+    [JsonIgnore]
     public Guid Guid { get; }
 
+    [JsonIgnore]
     public UAssetFile Owner { get; }
+
+    [JsonIgnore]
     public Dictionary<FPropertyTag, UProperty?> Properties { get; }
+
     public UProperty? this[FName key] => Properties.FirstOrDefault(x => x.Key.Name == key).Value;
     public UProperty? this[FName key, int index] => Properties.FirstOrDefault(x => x.Key.Name == key && x.Key.Index == index).Value;
+    internal virtual bool SerializeProperties => true;
 
     public static Dictionary<FPropertyTag, UProperty?> ReadProperties(FArchiveReader data, FPropertyTagContext context, string name) {
         var properties = new Dictionary<FPropertyTag, UProperty?>();

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Text.Json;
 using Cuddle.Core;
 using Cuddle.Core.Enums;
+using Cuddle.Core.Json;
 using Cuddle.Core.VFS;
 using Serilog;
 
@@ -14,6 +16,7 @@ public static class Program {
         Oodle.Load(args[3]);
         using var manager = new VFSManager();
         manager.MountPakDir(new DirectoryInfo(args[0]), Enum.Parse<EGame>(args[1]));
-        manager.ReadExport(args[2], 0);
+        var export = manager.ReadExport(args[2], 0);
+        File.WriteAllText(args[4], JsonSerializer.Serialize(export, JsonSettings.Options));
     }
 }

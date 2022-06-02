@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text.Json.Serialization;
 using Cuddle.Core.Assets;
 using Cuddle.Core.VFS;
 
@@ -12,7 +13,9 @@ public class FPackageIndex {
         Asset = archive.Asset;
     }
 
+    [JsonIgnore]
     private UAssetFile? Asset { get; }
+
     public int Index { get; init; }
 
     public FObjectAbstract? Reference {
