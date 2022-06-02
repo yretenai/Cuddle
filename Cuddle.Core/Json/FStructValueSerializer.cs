@@ -30,7 +30,12 @@ public class FStructValueSerializer : JsonConverter<FStructValue> {
             }
         }
 
-        JsonSerializer.Serialize(writer, value, value.GetType(), options);
+        var element = JsonSerializer.SerializeToElement(value, value.GetType(), options);
+        foreach (var elementData in element.EnumerateObject()) {
+            writer.WritePropertyName(elementData.Name);
+            writer.WriteRawValue(elementData.Value.GetRawText());
+        }
+
         writer.WriteEndObject();
     }
 }
