@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Cuddle.Core.Objects;
 using Cuddle.Core.Structs.Asset;
+using Serilog;
 
 namespace Cuddle.Core.Assets;
 
@@ -70,7 +71,12 @@ public static class UObjectRegistry {
         }
 
         try {
-            return Activator.CreateInstance(objectType ?? typeof(UObject), data, export) as UObject;
+            var value = Activator.CreateInstance(objectType ?? typeof(UObject), data, export) as UObject;
+            if (data.Remaining > 0) {
+                Log.Debug("Did not finish reading {ClassName} for {ObjectName}, {Remaining} bytes left", className, export.ObjectName.ToString(), data.Remaining);
+            }
+
+            return value;
         } catch {
             return null;
         }

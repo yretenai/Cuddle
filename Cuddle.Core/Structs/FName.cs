@@ -17,7 +17,7 @@ public readonly record struct FName {
             return;
         }
 
-        if (Index > archive.Asset.Names.Length) {
+        if (Index >= archive.Asset.Names.Length || Index < 0) {
             throw new IndexOutOfRangeException($"FName index {Index} is out of range!");
         }
 

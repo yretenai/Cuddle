@@ -11,7 +11,8 @@ using Serilog;
 namespace Cuddle.Core.Assets;
 
 public class UObject {
-    protected UObject(FArchiveReader data, FObjectExport export) {
+    // ReSharper disable once MemberCanBeProtected.Global
+    public UObject(FArchiveReader data, FObjectExport export) {
         Owner = data.Asset!;
         Export = export;
         Properties = ReadProperties(data, FPropertyTagContext.Empty, GetType().Name);
@@ -46,15 +47,17 @@ public class UObject {
 
             var start = data.Position;
             var expectedEnd = start + tag.Size;
+            var errored = false;
 
             try {
                 properties[tag] = UProperty.CreateProperty(data, tag, FPropertyTagContext.Empty);
             } catch (Exception e) {
-                Log.Error(e, "Error while deserializing {Type} for property {Name} in {ObjectName}", tag.Type, tag, name);
+                Log.Error(e, "Error while deserializing {Type} for property {Name} ({Context}) in {ObjectName}", tag.Type, tag, context, name);
+                errored = true;
             } finally {
                 if (context.ReadMode == FPropertyReadMode.Normal) {
-                    if (data.Position != expectedEnd) {
-                        Log.Warning("Did not deserialize {Type} for property {Name} in {ObjectName} correctly!", tag.Type, tag, name);
+                    if (data.Position != expectedEnd && !errored) {
+                        Log.Warning("Did not deserialize {Type} for property {Name} ({Context}) in {ObjectName} correctly!", tag.Type, tag, context, name);
                     }
 
                     data.Position = expectedEnd;

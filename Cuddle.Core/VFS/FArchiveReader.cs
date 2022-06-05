@@ -61,6 +61,7 @@ public sealed class FArchiveReader : IPoliteDisposable {
 
         var size = Marshal.SizeOf(t);
         using var data = Data.Memory.Slice(Position, size).Pin();
+        Position += size;
         return Marshal.PtrToStructure((IntPtr) data.Pointer, t)!;
     }
 

@@ -9,8 +9,9 @@ public class ArrayProperty : UProperty {
 
         var arrayContext = context with { ElementTag = tag, ReadMode = FPropertyReadMode.Array };
         var deserializeTag = tag.AsValueTag();
-        if (deserializeTag.Type.Value == "StructProperty") {
+        if (deserializeTag.Type.Value is "StructProperty" or "ArrayProperty") {
             deserializeTag = new FPropertyTag(data, context);
+            arrayContext = arrayContext with { ContextTag = deserializeTag };
         }
 
         Value = new UProperty[count];

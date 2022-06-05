@@ -17,15 +17,15 @@ public class MapProperty : UProperty {
         var count = data.Read<int>();
         var keyTag = tag.AsKeyTag();
         for (var i = 0; i < count; ++i) {
-            var key = CreateProperty(data, keyTag, arrayContext);
+            var key = CreateProperty(data, keyTag, arrayContext with { ContextTag = keyTag });
             Value.Add(new KeyValuePair<UProperty?, UProperty?>(key, null));
         }
 
         count = data.Read<int>();
         var valueTag = tag.AsValueTag();
         for (var i = 0; i < count; ++i) {
-            var key = CreateProperty(data, keyTag, arrayContext);
-            var value = CreateProperty(data, valueTag, arrayContext);
+            var key = CreateProperty(data, keyTag, arrayContext with { ContextTag = keyTag });
+            var value = CreateProperty(data, valueTag, arrayContext with { ContextTag = valueTag });
             Value.Add(new KeyValuePair<UProperty?, UProperty?>(key, value));
         }
     }

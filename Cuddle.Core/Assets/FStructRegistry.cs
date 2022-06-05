@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Cuddle.Core.Objects;
 using Cuddle.Core.VFS;
+using Serilog;
 
 namespace Cuddle.Core.Assets;
 
@@ -13,7 +15,13 @@ public static class FStructRegistry {
         LoadTypes(typeof(FStructValue).Assembly);
     }
 
-    private static Dictionary<string, Type> StructTypes { get; } = new();
+    private static Dictionary<string, Type> StructTypes { get; } = new() {
+        { "Guid", typeof(Guid) },
+        { "Vector", typeof(Vector3) },
+        { "Vector2D", typeof(Vector2) },
+        { "Quat", typeof(Quaternion) },
+    };
+
     private static Dictionary<Regex, Type> RegexStructTypes { get; } = new();
 
     public static void LoadTypes(Assembly assembly) {
@@ -50,7 +58,7 @@ public static class FStructRegistry {
         }
     }
 
-    public static FStructValue? Create(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) {
+    public static object? Create(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) {
         var className = tag.ValueType.Value;
 
         if (!StructTypes.TryGetValue(className, out var structType)) {
@@ -65,11 +73,16 @@ public static class FStructRegistry {
         }
 
         if (structType == null) {
-            return new FTaggedStructValue(data, new FPropertyTagContext(tag, FPropertyReadMode.Normal, context.IsGVAS), tag.Name);
+            try {
+                return new FTaggedStructValue(data, new FPropertyTagContext(tag, null, FPropertyReadMode.Normal, context.IsGVAS), tag.Name);
+            } catch (Exception e) {
+                Log.Error(e, "Error while deserializing {Type} for property {Name} for context {Context}", className, tag, context);
+                throw;
+            }
         }
 
         try {
-            return (structType.IsValueType ? data.Read(structType) : Activator.CreateInstance(structType, data)) as FStructValue;
+            return structType.IsValueType ? data.Read(structType) : Activator.CreateInstance(structType, data);
         } catch {
             return null;
         }
