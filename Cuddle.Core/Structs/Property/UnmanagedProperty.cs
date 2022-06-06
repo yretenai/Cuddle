@@ -9,4 +9,5 @@ public class UnmanagedProperty<T> : UProperty where T : unmanaged {
     public T Value { get; }
 
     public override string ToString() => Value.ToString()!;
+    public override object GetValue() => Value;
 }

@@ -10,7 +10,7 @@ using Serilog;
 
 namespace Cuddle.Core.Assets;
 
-public class UObject {
+public record UObject : PropertyOwner {
     // ReSharper disable once MemberCanBeProtected.Global
     public UObject(FArchiveReader data, FObjectExport export) {
         Owner = data.Asset!;
@@ -29,9 +29,6 @@ public class UObject {
 
     [JsonIgnore]
     public UAssetFile Owner { get; }
-
-    [JsonIgnore]
-    public Dictionary<FPropertyTag, UProperty?> Properties { get; }
 
     public UProperty? this[FName key] => Properties.FirstOrDefault(x => x.Key.Name == key).Value;
     public UProperty? this[FName key, int index] => Properties.FirstOrDefault(x => x.Key.Name == key && x.Key.Index == index).Value;

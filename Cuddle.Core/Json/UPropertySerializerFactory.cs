@@ -13,7 +13,7 @@ public class UPropertySerializerFactory : JsonConverterFactory {
         public override UProperty Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) => throw new NotSupportedException();
 
         public override void Write(Utf8JsonWriter writer, UProperty? value, JsonSerializerOptions options) {
-            var innerValue = value?.GetType().GetProperty("Value")?.GetValue(value);
+            var innerValue = value?.GetValue();
             if (innerValue == null) {
                 writer.WriteNullValue();
             } else {

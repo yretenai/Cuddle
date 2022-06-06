@@ -14,11 +14,12 @@ public class ArrayProperty : UProperty {
             arrayContext = arrayContext with { ContextTag = deserializeTag };
         }
 
-        Value = new UProperty[count];
+        Value = new UProperty?[count];
         for (var i = 0; i < count; ++i) {
             Value[i] = CreateProperty(data, deserializeTag, arrayContext);
         }
     }
 
     public UProperty?[] Value { get; }
+    public override object GetValue() => Value;
 }

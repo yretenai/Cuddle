@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs;
@@ -28,6 +29,7 @@ public readonly record struct FName {
     }
 
     public FName(string value, int instance = 0) {
+        Index = -1;
         Value = value;
         Instance = instance;
         if (Instance > 0) {
@@ -40,6 +42,8 @@ public readonly record struct FName {
     public int Index { get; private init; }
     public int Instance { get; }
     public string Value { get; } = "None";
+
+    public bool Equals(FName other) => EqualityComparer<int>.Default.Equals(Instance, other.Instance) && EqualityComparer<string>.Default.Equals(Value, other.Value);
 
     public static implicit operator string(FName? name) => name?.Value ?? "None";
 

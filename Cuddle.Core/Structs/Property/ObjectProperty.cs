@@ -8,4 +8,5 @@ public class ObjectProperty : UProperty {
     public ObjectProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(data, tag, context) => Value = new FPackageIndex(data);
 
     public FPackageIndex Value { get; }
+    public override object GetValue() => Value;
 }

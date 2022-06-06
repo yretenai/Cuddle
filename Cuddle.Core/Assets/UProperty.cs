@@ -55,4 +55,6 @@ public abstract class UProperty {
             _ => null,
         };
     }
+
+    public abstract object? GetValue();
 }

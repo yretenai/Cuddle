@@ -9,4 +9,5 @@ public class BoolProperty : UProperty {
     public bool Value { get; }
 
     public override string ToString() => Value.ToString();
+    public override object GetValue() => Value;
 }

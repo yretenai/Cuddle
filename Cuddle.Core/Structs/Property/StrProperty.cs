@@ -9,4 +9,5 @@ public class StrProperty : UProperty {
     public string Value { get; }
 
     public override string ToString() => Value;
+    public override object GetValue() => Value;
 }

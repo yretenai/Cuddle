@@ -31,4 +31,5 @@ public class MapProperty : UProperty {
     }
 
     public List<KeyValuePair<UProperty?, UProperty?>> Value { get; } = new();
+    public override object GetValue() => Value;
 }

@@ -9,7 +9,7 @@ using Cuddle.Core.VFS;
 namespace Cuddle.Core.Objects.Assets;
 
 [ObjectRegistration(Expression = ".*DataTable")]
-public class UDataTable : UObject {
+public record UDataTable : UObject {
     public UDataTable(FArchiveReader data, FObjectExport export) : base(data, export) {
         var objectRef = Properties.Values.FirstOrDefault() as ObjectProperty;
         var structName = objectRef?.Value.Reference?.ObjectName.Value;

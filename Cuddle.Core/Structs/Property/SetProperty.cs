@@ -25,4 +25,5 @@ public class SetProperty : UProperty {
     }
 
     public List<UProperty?> Value { get; } = new();
+    public override object GetValue() => Value;
 }

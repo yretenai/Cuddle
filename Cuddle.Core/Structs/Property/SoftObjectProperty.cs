@@ -10,4 +10,5 @@ public class SoftObjectProperty : UProperty {
     public SoftObjectPath Value { get; }
 
     public override string ToString() => Value.Path + "/" + Value.SubPath;
+    public override object GetValue() => Value;
 }

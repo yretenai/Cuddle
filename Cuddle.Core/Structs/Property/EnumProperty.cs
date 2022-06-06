@@ -9,4 +9,5 @@ public class EnumProperty : UProperty {
     public FName Value { get; }
 
     public override string ToString() => Value;
+    public override object GetValue() => Value;
 }

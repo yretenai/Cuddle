@@ -14,4 +14,5 @@ public class ByteProperty : UProperty {
     public byte Value { get; }
 
     public override string ToString() => Value.ToString();
+    public override object GetValue() => Value;
 }
