@@ -84,46 +84,53 @@ public record PropertyOwner {
             return false;
         }
 
+        if (t.IsInstanceOfType(property)) {
+            v = property;
+            return true;
+        }
+
         var propertyValue = property.GetValue();
         if (t.IsAssignableFrom(propertyValue?.GetType())) {
             v = propertyValue;
             return true;
         }
 
-        if (propertyValue is List<UProperty?> list) {
-            var arr = (Array) Activator.CreateInstance(t, list.Count)!;
-            for (var index = 0; index < list.Count; index++) {
-                var entry = list[index];
-                if (entry != null && TryUnwindProperty(t.GetElementType()!, entry, out var entryValue)) {
-                    arr.SetValue(entryValue, index);
+        switch (propertyValue) {
+            case List<UProperty?> list: {
+                var arr = (Array) Activator.CreateInstance(t, list.Count)!;
+                for (var index = 0; index < list.Count; index++) {
+                    var entry = list[index];
+                    if (entry != null && TryUnwindProperty(t.GetElementType()!, entry, out var entryValue)) {
+                        arr.SetValue(entryValue, index);
+                    }
                 }
+
+                v = arr;
+                return true;
             }
+            case List<KeyValuePair<UProperty?, UProperty?>> dictionary: // maps are lists, because i don't trust something funky happening with keys
+            {
+                var dict = (IDictionary) Activator.CreateInstance(t, dictionary.Count)!;
+                var keyType = t.GetGenericArguments()[0];
+                var valueType = t.GetGenericArguments()[1];
+                foreach (var entry in dictionary) {
+                    if (entry.Key == null || !TryUnwindProperty(keyType, entry.Key, out var key) || key == null) {
+                        continue;
+                    }
 
-            v = arr;
-            return true;
-        }
+                    if (entry.Value == null || !TryUnwindProperty(valueType, entry.Value, out var value)) {
+                        value = valueType.IsValueType ? Activator.CreateInstance(valueType) : null;
+                    }
 
-        if (propertyValue is List<KeyValuePair<UProperty?, UProperty?>> dictionary) {
-            var dict = (IDictionary) Activator.CreateInstance(t, dictionary.Count)!;
-            var keyType = t.GetGenericArguments()[0];
-            var valueType = t.GetGenericArguments()[1];
-            foreach (var entry in dictionary) {
-                if (entry.Key == null || !TryUnwindProperty(keyType, entry.Key, out var key) || key == null) {
-                    continue;
+                    dict.Add(key, value);
                 }
 
-                if (entry.Value == null || !TryUnwindProperty(valueType, entry.Value, out var value)) {
-                    value = valueType.IsValueType ? Activator.CreateInstance(valueType) : null;
-                }
-
-                dict.Add(key, value);
+                v = dict;
+                return true;
             }
-
-            v = dict;
-            return true;
+            default:
+                v = null;
+                return false;
         }
-
-        v = null;
-        return false;
     }
 }
