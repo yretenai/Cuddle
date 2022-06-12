@@ -137,4 +137,20 @@ public class UAssetFile : IPoliteDisposable {
 
         return index.IsExport ? GetExport(index.Index - 1) : GetImport(0 - index.Index - 1);
     }
+
+    public string? GetFullPath(FObjectAbstract? reference) {
+        if(reference is FObjectExport export) {
+            if(export.OuterIndex.Reference == reference) {
+                return reference.ObjectName;
+            }
+            return GetFullPath(export.OuterIndex.Reference) + "." + reference.ObjectName;
+        } else if(reference is FObjectImport import) {
+            if(import.PackageIndex.Reference == reference) {
+                return reference.ObjectName;
+            }
+            return GetFullPath(import.PackageIndex.Reference) + "." + reference.ObjectName;
+        } else {
+            return reference?.ObjectName;
+        }
+    }
 }

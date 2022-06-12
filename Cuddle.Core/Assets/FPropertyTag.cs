@@ -67,8 +67,8 @@ public readonly record struct FPropertyTag {
     // they all have the same name (usually "RuntimeEntry" or "Entry") 
     public int Index { get; init; }
     public bool BoolValue { get; }
-    public FName KeyType { get; } = FName.Null;
-    public FName ValueType { get; } = FName.Null;
+    public FName KeyType { get; init; } = FName.Null;
+    public FName ValueType { get; init; } = FName.Null;
     private Guid StructGuid { get; }
     private Guid Guid { get; }
     public static FPropertyTag Empty { get; } = new();

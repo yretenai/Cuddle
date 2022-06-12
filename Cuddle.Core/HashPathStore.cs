@@ -8,7 +8,7 @@ using DragonLib.Hash.Basis;
 
 namespace Cuddle.Core;
 
-public class HashPathStore {
+public class HashPathStore : IArchiveSerializable {
     public HashPathStore() { }
 
     public HashPathStore(FArchiveReader archive) {
@@ -50,13 +50,16 @@ public class HashPathStore {
 
     public ReadOnlyMemory<byte> Serialize() {
         var writer = new FArchiveWriter();
+        Serialize(writer);
+        return writer.Data;
+    }
+
+    public void Serialize(FArchiveWriter writer) {
         writer.Write(Paths.Count);
 
         foreach (var (hash, path) in Paths) {
             writer.Write(hash);
             writer.Write(path);
         }
-
-        return writer.Data;
     }
 }

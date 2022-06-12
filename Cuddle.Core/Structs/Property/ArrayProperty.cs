@@ -1,4 +1,5 @@
 using Cuddle.Core.Assets;
+using Cuddle.Core.Enums;
 using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs.Property;
@@ -9,7 +10,7 @@ public class ArrayProperty : UProperty {
 
         var arrayContext = context with { ElementTag = tag, ReadMode = FPropertyReadMode.Array };
         var deserializeTag = tag.AsValueTag();
-        if (deserializeTag.Type.Value is "StructProperty" or "ArrayProperty") {
+        if (deserializeTag.Type.Value is "StructProperty" && data.Version >= EObjectVersion.INNER_ARRAY_TAG_INFO) {
             deserializeTag = new FPropertyTag(data, context);
             arrayContext = arrayContext with { ContextTag = deserializeTag };
         }

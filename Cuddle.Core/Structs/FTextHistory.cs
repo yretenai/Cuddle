@@ -100,7 +100,7 @@ public abstract class FTextHistory {
         public FNumberFormattingOptions? FormatOptions { get; }
         public string TargetCulture { get; }
 
-        public override string BuildDisplayString() => FormatOptions?.Format(SourceValue.Value) ?? SourceValue.Value?.ToString() ?? "None";
+        public override string BuildDisplayString() => (FormatOptions ?? FNumberFormattingOptions.DefaultNoGrouping).Format(SourceValue.Value);
     }
 
     public class AsCurrency : FTextHistory {
@@ -123,7 +123,7 @@ public abstract class FTextHistory {
         public string TargetCulture { get; }
 
         // todo: format currency, use simoleons for now.
-        public override string BuildDisplayString() => "§" + (FormatOptions?.Format(Convert.ToDouble(SourceValue.Value)) ?? SourceValue.Value?.ToString() ?? "None");
+        public override string BuildDisplayString() => "§" + (FormatOptions ?? FNumberFormattingOptions.DefaultNoGrouping).Format(SourceValue.Value);
     }
 
     public class AsPercent : FTextHistory {
@@ -140,7 +140,7 @@ public abstract class FTextHistory {
         public FNumberFormattingOptions? FormatOptions { get; }
         public string TargetCulture { get; }
 
-        public override string BuildDisplayString() => "%" + (FormatOptions?.Format(Convert.ToDouble(SourceValue.Value)) ?? SourceValue.Value?.ToString() ?? "None");
+        public override string BuildDisplayString() => (FormatOptions ?? FNumberFormattingOptions.DefaultNoGrouping).Format(SourceValue.Value) + "%";
     }
 
     public class AsDate : FTextHistory {

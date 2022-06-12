@@ -10,6 +10,19 @@ public record struct FNumberFormattingOptions : FStructValue {
         // todo: this is a lot of branching conditions and I don't have the patience to write a float formatter.
         value?.ToString() ?? "0";
 
+    public static FNumberFormattingOptions Default =>
+        new() {
+            AlwaysSign = false,
+            UseGrouping = true,
+            RoundingMode = ERoundingMode.HalfToEven,
+            MinimumIntegralDigits = 1,
+            MaximumIntegralDigits = 308 + 15 + 1,
+            MinimumFractionalDigits = 0,
+            MaximumFractionalDigits = 3,
+        };
+
+    public static FNumberFormattingOptions DefaultNoGrouping => Default with { UseGrouping = false };
+
     // @formatter:off
     [MarshalAs(UnmanagedType.I4)] public bool AlwaysSign;
     [MarshalAs(UnmanagedType.I4)] public bool UseGrouping;

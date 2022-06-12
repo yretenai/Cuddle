@@ -15,7 +15,7 @@ public record UObject : PropertyOwner {
     public UObject(FArchiveReader data, FObjectExport export) {
         Owner = data.Asset!;
         Export = export;
-        Properties = ReadProperties(data, FPropertyTagContext.Empty, GetType().Name);
+        Properties = ReadProperties(data, new FPropertyTagContext { ElementTag = new FPropertyTag { Name = new FName(GetType().Name) }}, GetType().Name);
         if (!Export.ObjectFlags.HasFlag(EObjectFlags.ClassDefaultObject) && data.ReadBoolean()) {
             Guid = data.Read<Guid>();
         }
@@ -47,7 +47,7 @@ public record UObject : PropertyOwner {
             var errored = false;
 
             try {
-                properties[tag] = UProperty.CreateProperty(data, tag, FPropertyTagContext.Empty);
+                properties[tag] = UProperty.CreateProperty(data, tag, context);
             } catch (Exception e) {
                 Log.Error(e, "Error while deserializing {Type} for property {Name} ({Context}) in {ObjectName}", tag.Type, tag, context, name);
                 errored = true;
