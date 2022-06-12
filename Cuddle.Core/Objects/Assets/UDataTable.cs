@@ -21,4 +21,6 @@ public record UDataTable : UObject {
     }
 
     public Dictionary<FName, Dictionary<FPropertyTag, UProperty?>> Rows { get; } = new();
+
+    internal override bool SerializeProperties => false;
 }

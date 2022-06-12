@@ -69,8 +69,8 @@ public readonly record struct FPropertyTag {
     public bool BoolValue { get; }
     public FName KeyType { get; init; } = FName.Null;
     public FName ValueType { get; init; } = FName.Null;
-    private Guid StructGuid { get; }
-    private Guid Guid { get; }
+    public Guid StructGuid { get; }
+    public Guid Guid { get; }
     public static FPropertyTag Empty { get; } = new();
 
     public override int GetHashCode() => HashCode.Combine(Name, Type, Size, Index, KeyType, ValueType);

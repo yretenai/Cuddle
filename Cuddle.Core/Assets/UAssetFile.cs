@@ -138,14 +138,14 @@ public class UAssetFile : IPoliteDisposable {
         return index.IsExport ? GetExport(index.Index - 1) : GetImport(0 - index.Index - 1);
     }
 
-    public string? GetFullPath(FObjectAbstract? reference) {
+    public static string? GetFullPath(FObjectAbstract? reference) {
         switch(reference) {
             case FObjectExport export: {
                 if(export.OuterIndex.IsNull || export.OuterIndex.Reference == reference) {
                     return reference.ObjectName;
                 }
                 var path = GetFullPath(export.OuterIndex.Reference);
-                if(string.IsNullOrEmpty(path)) {
+                if(path.IsNullOrNone()) {
                     return reference.ObjectName;
                 }
                 return path + "." + reference.ObjectName;
@@ -155,7 +155,7 @@ public class UAssetFile : IPoliteDisposable {
                     return reference.ObjectName;
                 }
                 var path = GetFullPath(import.PackageIndex.Reference);
-                if(string.IsNullOrEmpty(path)) {
+                if(path.IsNullOrNone()) {
                     return reference.ObjectName;
                 }
                 return path + "." + reference.ObjectName;

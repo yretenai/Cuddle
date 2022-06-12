@@ -41,7 +41,7 @@ public abstract class FTextHistory {
         public string Key { get; }
         public string SourceString { get; }
 
-        public override string BuildDisplayString() => string.IsNullOrEmpty(SourceString) && SourceString != "None" ? $"{Namespace}_{Key}" : SourceString;
+        public override string BuildDisplayString() => SourceString.IsNullOrNone() ? $"{Namespace}_{Key}" : SourceString;
     }
 
     public class NamedFormat : FTextHistory {

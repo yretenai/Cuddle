@@ -5,7 +5,7 @@ using Cuddle.Core.VFS;
 namespace Cuddle.Core.Structs.Property;
 
 public class SoftObjectProperty : UProperty {
-    public SoftObjectProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(data, tag, context) => Value = new SoftObjectPath(data);
+    public SoftObjectProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(tag, context) => Value = new SoftObjectPath(data);
 
     public SoftObjectPath Value { get; }
 

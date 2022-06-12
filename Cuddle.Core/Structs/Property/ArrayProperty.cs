@@ -5,7 +5,7 @@ using Cuddle.Core.VFS;
 namespace Cuddle.Core.Structs.Property;
 
 public class ArrayProperty : UProperty {
-    public ArrayProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(data, tag, context) {
+    public ArrayProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(tag, context) {
         var count = data.Read<int>();
 
         var arrayContext = context with { ElementTag = tag, ReadMode = FPropertyReadMode.Array };

@@ -8,7 +8,7 @@ namespace Cuddle.Core.Json;
 public class FPropertyTagSerializerFactory : JsonConverterFactory {
     public override bool CanConvert(Type typeToConvert) => typeToConvert.IsAssignableTo(typeof(FPropertyTag));
 
-    public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options) => new Serializer();
+    public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options) => new Serializer();
 
     private class Serializer : JsonConverter<FPropertyTag> {
         public override FPropertyTag Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) => throw new NotSupportedException();

@@ -4,7 +4,7 @@ using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs;
 
-public readonly record struct FName {
+public readonly record struct FName : IEquatable<string?> {
     public FName() {
         Index = -1;
         Instance = 0;
@@ -23,30 +23,28 @@ public readonly record struct FName {
         }
 
         Value = archive.Asset.Names[Index].Name;
-        if (Instance > 0) {
-            Value += $".{Instance}";
-        }
     }
 
     public FName(string value, int instance = 0) {
         Index = -1;
         Value = value;
         Instance = instance;
-        if (Instance > 0) {
-            Value += $".{Instance}";
-        }
     }
 
     public static FName Null { get; } = new() { Index = -1 };
 
     public int Index { get; private init; }
+    // Deduplication instance. 1 = first entry, 0 = no duplicates allowed.
     public int Instance { get; }
     public string Value { get; } = "None";
+    public string InstanceValue => Instance > 1 ? $"{Value}:{Instance}" : Value;
 
     public bool Equals(FName other) => EqualityComparer<int>.Default.Equals(Instance, other.Instance) && EqualityComparer<string>.Default.Equals(Value, other.Value);
 
     public static implicit operator string(FName? name) => name?.Value ?? "None";
 
     public override string ToString() => Value;
+    public bool Equals(string? other) => Instance < 2 && EqualityComparer<string>.Default.Equals(Value, other);
+    public bool Equals(string? other, int instance) => EqualityComparer<int>.Default.Equals(Instance, instance) && EqualityComparer<string>.Default.Equals(Value, other);
     public override int GetHashCode() => Value.GetHashCode();
 }

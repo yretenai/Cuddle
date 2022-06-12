@@ -5,7 +5,7 @@ using Cuddle.Core.VFS;
 namespace Cuddle.Core.Assets;
 
 public abstract class UProperty {
-    protected UProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) {
+    protected UProperty(FPropertyTag tag, FPropertyTagContext context) {
         Tag = tag;
         TagContext = context;
     }

@@ -11,7 +11,7 @@ namespace Cuddle.Core.Assets;
 
 public static class UObjectRegistry {
     static UObjectRegistry() {
-        LoadTypes(typeof(UObject).Assembly);
+        LoadTypes(Assembly.GetExecutingAssembly());
     }
 
     private static Dictionary<string, Type> ObjectTypes { get; } = new();
@@ -54,7 +54,7 @@ public static class UObjectRegistry {
     public static UObject? Create(string? className, FObjectExport export, UAssetFile uasset) {
         using var data = uasset.ExportData.Partition((int) export.SerialOffset, (int) export.SerialSize);
 
-        if (string.IsNullOrEmpty(className)) {
+        if (className.IsNullOrNone()) {
             className = "Object";
         }
 

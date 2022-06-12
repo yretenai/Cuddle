@@ -1,11 +1,9 @@
 ﻿using System.Numerics;
-using System.Runtime.InteropServices;
 using Cuddle.Core.Assets;
 using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs.Math;
 
-[StructLayout(LayoutKind.Sequential, Pack = 1, Size = 0x1C)]
 public record FCapsuleShape : FTaggedStructValue {
     public FCapsuleShape() : this(Vector3.Zero, 0f, Vector3.Zero, 0f) { }
 
@@ -27,6 +25,7 @@ public record FCapsuleShape : FTaggedStructValue {
     public float Radius { get; init; }
     public Vector3 Orientation { get; init; }
     public float Length { get; init; }
+    internal override bool SerializeProperties => false;
 
     public void Deconstruct(out Vector3 center, out float radius, out Vector3 orientation, out float length) {
         center = Center;

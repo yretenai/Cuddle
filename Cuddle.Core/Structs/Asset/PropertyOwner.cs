@@ -78,7 +78,7 @@ public record PropertyOwner {
 
     public bool TryGetProperty<T>(string name, int instance, [MaybeNullWhen(false)] out T o) => TryGetProperty(new FName(name, instance), out o);
 
-    private static bool TryUnwindProperty(Type? t, UProperty? property, [MaybeNullWhen(false)] out object? v) {
+    private static bool TryUnwindProperty(Type? t, UProperty? property, out object? v) {
         if (t == null || property == null) {
             v = default;
             return false;

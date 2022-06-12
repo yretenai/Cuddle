@@ -1,4 +1,5 @@
-﻿using Cuddle.Core.Enums;
+﻿using System.Diagnostics.CodeAnalysis;
+using Cuddle.Core.Enums;
 
 namespace Cuddle.Core;
 
@@ -100,4 +101,6 @@ public static class Extensions {
             EGame.UE4_27 => EEditorObjectVersion.SkeletalMeshSourceDataSupport16bitOfMaterialNumber,
             _ => EEditorObjectVersion.LatestVersion,
         };
+
+    public static bool IsNullOrNone([NotNullWhen(false)] this string? value) => string.IsNullOrEmpty(value) || value == "None";
 }

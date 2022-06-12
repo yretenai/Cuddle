@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using Cuddle.Core;
 using Cuddle.Core.Enums;
@@ -11,12 +12,22 @@ namespace Cuddle.Headless;
 
 public static class Program {
     public static void Main(string[] args) {
-        Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateLogger();
-
-        Oodle.Load(args[3]);
+        Log.Logger = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.Console().CreateLogger();
+        Oodle.Load(args[2]);
         using var manager = new VFSManager();
         manager.MountPakDir(new DirectoryInfo(args[0]), Enum.Parse<EGame>(args[1]));
-        var export = manager.ReadExport(args[2], 0);
-        File.WriteAllText(args[4], JsonSerializer.Serialize(export, JsonSettings.Options));
+        foreach (var file in manager.UniqueFilesPath.Where(x => x.MountedPath.EndsWith(".uasset") && !x.MountedPath.Contains("/Audio/"))) {
+            try {
+                using var asset = file.ReadAsset();
+                if (asset == null) {
+                    continue;
+                }
+
+                var objects = asset.GetExports();
+                var test = JsonSerializer.Serialize(objects, JsonSettings.Options);
+            } catch (Exception e) {
+                Log.Error(e, "Failure deserializing {Path}", file.ObjectPath);
+            }
+        }
     }
 }
