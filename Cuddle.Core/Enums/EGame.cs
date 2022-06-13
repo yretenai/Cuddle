@@ -38,11 +38,11 @@ public enum EGame {
     UE4_24 = UE4_0 + (24 << 16),
     UE4_25 = UE4_0 + (25 << 16),
         GAME_Valorant_Episode_2 = UE4_25 + 1,
-        UE4_25Plus = UE4_25 + 65535
+        UE4_25Plus = UE4_25 + 65535,
     UE4_26 = UE4_0 + (26 << 16),
         GAME_Dauntless = UE4_26 + 1,
     UE4_27 = UE4_0 + (27 << 16),
-        UE4_27Plus= UE4_27 + 65535
+        UE4_27Plus= UE4_27 + 65535,
     UE4_28 = UE4_0 + (28 << 16),
 
     UE5_0 = 5 << 24, // 0b00000101 00000000 00000000 00000000
