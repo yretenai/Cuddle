@@ -8,8 +8,8 @@
 // very unlikely that versions will ever go over 255, but more likely that games go over 255 given enough time.
 // max: 255.255.65535
 // special versions: 
-//      4.25.32768 = Plus PS5/XSX UE5 backport 
-//      4.27.32768 = Plus Ray Tracing UE5 backport
+//      4.25.32768 = Plus PS5/XSX support 
+//      4.27.32768 = Plus Ray Tracing support
 public enum EGame {
     UE4_0 = 4 << 24, // 0b00000100 00000000 00000000 00000000
     UE4_1 = UE4_0 + (1 << 16),
