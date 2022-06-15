@@ -1,5 +1,6 @@
 ﻿namespace Cuddle.Core.Enums;
 
+// @formatter:off
 // largely based on https://github.com/gildor2/UEViewer/blob/60accbff70e58bfc66eaad4594416694b95422ee/Unreal/UnCore.h#L344
 
 // 32-bits 
@@ -47,7 +48,7 @@ public enum EGame {
     UE4_26 = UE4_0 + (26 << 16),
         GAME_Dauntless = UE4_26 + 1,
     UE4_27 = UE4_0 + (27 << 16),
-    UE4_27Plus= UE4_27 + (1 << 15), // 0b00000100 00011011 10000000 00000000
+    UE4_27Plus = UE4_27 + (1 << 15), // 0b00000100 00011011 10000000 00000000
     UE4_28 = UE4_0 + (28 << 16),
 
     UE5_0 = 5 << 24, // 0b00000101 00000000 00000000 00000000
@@ -56,3 +57,4 @@ public enum EGame {
     UE4_MAX = UE4_28,
     UE5_MAX = UE5_1,
 }
+// @formatter:on
