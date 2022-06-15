@@ -36,13 +36,18 @@ public enum EGame {
     UE4_22 = UE4_0 + (22 << 16),
     UE4_23 = UE4_0 + (23 << 16),
     UE4_24 = UE4_0 + (24 << 16),
+        GAME_Ares = UE4_24 + 1, // valorant beta.
     UE4_25 = UE4_0 + (25 << 16),
-        GAME_Valorant_Episode_2 = UE4_25 + 1,
-    UE4_25Plus = UE4_25 + (1 << 15),
+        GAME_Valorant = GAME_Valorant_Episode_4, // latest version for convenience.
+            GAME_Valorant_Episode_1 = UE4_25 + 1, // todo: check if there are ep-to-ep changes.
+            GAME_Valorant_Episode_2 = UE4_25 + 2,
+            GAME_Valorant_Episode_3 = UE4_25 + 3,
+            GAME_Valorant_Episode_4 = UE4_25 + 4,
+    UE4_25Plus = UE4_25 + (1 << 15), // 0b00000100 00011001 10000000 00000000
     UE4_26 = UE4_0 + (26 << 16),
         GAME_Dauntless = UE4_26 + 1,
     UE4_27 = UE4_0 + (27 << 16),
-    UE4_27Plus= UE4_27 + (1 << 15),
+    UE4_27Plus= UE4_27 + (1 << 15), // 0b00000100 00011011 10000000 00000000
     UE4_28 = UE4_0 + (28 << 16),
 
     UE5_0 = 5 << 24, // 0b00000101 00000000 00000000 00000000
