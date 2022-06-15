@@ -1,10 +1,47 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Text;
 using Cuddle.Core.Enums;
 
 namespace Cuddle.Core;
 
 public static class Extensions {
     public static EGame GetEngineVersion(this EGame game) => (EGame) ((uint) game & 0xFFFF0000);
+    public static bool IsCustom(this EGame game) => ((uint) game & 0xFFFF) != 0;
+    public static bool IsGame(this EGame game) => ((uint) game & 0x7FFF) != 0;
+    public static bool IsBranch(this EGame game) => ((uint) game & 0x8000) != 0;
+
+    public static string AsFormattedString(this EGame game) {
+        var sb = new StringBuilder();
+        var value = (uint) game;
+        sb.Append(value >> 24);
+        sb.Append('.');
+        var minor = (value >> 16) & 0xFF;
+        sb.Append(minor);
+        if (!game.IsCustom()) {
+            return sb.ToString();
+        }
+
+        sb.Append('.');
+
+        var text = Enum.GetNames<EGame>().Zip(Enum.GetValues<EGame>()).Where(x => x.Second == game).Select(x => x.First.ToString()).MaxBy(x => x.Length);
+        if (game.IsBranch() && !string.IsNullOrEmpty(text)) {
+            var index = text.IndexOf('_');
+            if (index > -1) {
+                sb.Append(text[(index + 1 + (minor > 9 ? 2 : 1))..]);
+                return sb.ToString();
+            }
+        }
+
+        if (string.IsNullOrEmpty(text) || !text.StartsWith("GAME_")) {
+            sb.Append(value & 0x7FFF);
+            return sb.ToString();
+        }
+
+        sb.Append(text[5..].Replace('_', '-'));
+        return sb.ToString();
+    }
 
     public static EObjectVersion FindObjectVersion(this EGame game) {
         var version = game.ToGameObjectVersion();
@@ -18,6 +55,7 @@ public static class Extensions {
     public static EObjectVersion ToGameObjectVersion(this EGame game) =>
         game switch {
             EGame.UE4_25Plus => EObjectVersion.ADDED_PACKAGE_OWNER,
+            EGame.UE4_27Plus => EObjectVersion.CORRECT_LICENSEE_FLAG,
             _ => 0,
         };
 

@@ -4,13 +4,15 @@
 // largely based on https://github.com/gildor2/UEViewer/blob/60accbff70e58bfc66eaad4594416694b95422ee/Unreal/UnCore.h#L344
 
 // 32-bits 
-// 00000000 00000000 00000000 00000000
+// 00000000 00000000 X0000000 00000000
 // ue_major ue_minor ue_game  ue_game
+// X = Bit flag for if it's an official branch.
 // very unlikely that versions will ever go over 255, but more likely that games go over 255 given enough time.
-// max: 255.255.65535
+// written format: MAJOR.MINOR.GAME
+// max: 255.255.32767
 // special versions: 
-//      4.25.32768 = Plus PS5/XSX support 
-//      4.27.32768 = Plus Ray Tracing support
+//      4.25.32768 = 4.25.plus = Plus PS5/XSX support 
+//      4.27.32768 = 4.27.plus = Plus Ray Tracing support
 public enum EGame {
     UE4_0 = 4 << 24, // 0b00000100 00000000 00000000 00000000
     UE4_1 = UE4_0 + (1 << 16),

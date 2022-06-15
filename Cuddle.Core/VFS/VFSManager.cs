@@ -6,6 +6,7 @@ using Cuddle.Core.Assets;
 using Cuddle.Core.Enums;
 using DragonLib.Text;
 using Microsoft.Toolkit.HighPerformance.Buffers;
+using Serilog;
 
 namespace Cuddle.Core.VFS;
 
@@ -40,6 +41,7 @@ public sealed class VFSManager : IPoliteDisposable {
     }
 
     public void MountPakDir(DirectoryInfo dir, EGame game) {
+        Log.Information("Loading directory {Directory} with game {Game}", dir.Name, game.AsFormattedString());
         // this natural language sort is an easy hack to get pak ordering correctly.
         foreach (var pakPath in dir.GetFiles("*.pak", SearchOption.TopDirectoryOnly).OrderBy(x => x.Name.Replace('.', '_'), new NaturalStringComparer(StringComparison.OrdinalIgnoreCase))) {
             Containers.Add(new UPakFile(pakPath.FullName, game, Path.GetFileNameWithoutExtension(pakPath.Name), KeyStore, HashStore, this));
