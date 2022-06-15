@@ -10,7 +10,7 @@ public record UStreamableRenderAsset : UObject {
         NeverStream = GetProperty<bool>(nameof(NeverStream));
         bGlobalForceMipLevelsToBeResident = GetProperty<bool>(nameof(bGlobalForceMipLevelsToBeResident));
     }
-    
+
     public int NumCinematicMipLevels { get; init; }
     public bool NeverStream { get; init; }
     public bool bGlobalForceMipLevelsToBeResident { get; init; }

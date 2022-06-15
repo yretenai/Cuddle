@@ -9,7 +9,7 @@ public class MapProperty : UProperty {
     public MapProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(tag, context) {
         var keyTag = tag.AsKeyTag();
         var valueTag = tag.AsValueTag();
-        
+
         // Unreal gets this data from the UField constructor, we don't have this data per-se.
         // todo: investigate if we can deserialize UField/UStruct/UClass.
         if (tag.KeyType.Value == "StructProperty") {

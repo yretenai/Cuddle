@@ -21,6 +21,15 @@ public class HashPathStore : IArchiveSerializable {
 
     public Dictionary<ulong, string> Paths { get; } = new();
 
+    public void Serialize(FArchiveWriter writer) {
+        writer.Write(Paths.Count);
+
+        foreach (var (hash, path) in Paths) {
+            writer.Write(hash);
+            writer.Write(path);
+        }
+    }
+
     public ulong AddPath(string relativePath, string absolutePath, ulong seed, bool bugged) {
         var lowercaseRelativePath = relativePath.ToLower();
         var basis = 0xcbf29ce484222325UL;
@@ -52,14 +61,5 @@ public class HashPathStore : IArchiveSerializable {
         var writer = new FArchiveWriter();
         Serialize(writer);
         return writer.Data;
-    }
-
-    public void Serialize(FArchiveWriter writer) {
-        writer.Write(Paths.Count);
-
-        foreach (var (hash, path) in Paths) {
-            writer.Write(hash);
-            writer.Write(path);
-        }
     }
 }

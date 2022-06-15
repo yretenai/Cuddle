@@ -12,10 +12,10 @@ public record FTaggedStructValue : PropertyOwner, FStructValue {
 
     public FTaggedStructValue(FArchiveReader data, FPropertyTagContext context, FName name) => Properties = UObject.ReadProperties(data, context, name);
 
-    public virtual void ProcessProperties(PropertyOwner owner) { }
-
     [JsonIgnore]
     public PropertyOwner? Owner { get; init; }
 
     internal virtual bool SerializeProperties => Owner == null;
+
+    public virtual void ProcessProperties(PropertyOwner owner) { }
 }

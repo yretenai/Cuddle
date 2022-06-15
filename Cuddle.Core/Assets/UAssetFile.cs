@@ -139,28 +139,33 @@ public class UAssetFile : IPoliteDisposable {
     }
 
     public static string? GetFullPath(FObjectAbstract? reference) {
-        switch(reference) {
+        switch (reference) {
             case FObjectExport export: {
-                if(export.OuterIndex.IsNull || export.OuterIndex.Reference == reference) {
+                if (export.OuterIndex.IsNull || export.OuterIndex.Reference == reference) {
                     return reference.ObjectName;
                 }
+
                 var path = GetFullPath(export.OuterIndex.Reference);
-                if(path.IsNullOrNone()) {
+                if (path.IsNullOrNone()) {
                     return reference.ObjectName;
                 }
+
                 return path + "." + reference.ObjectName;
             }
             case FObjectImport import: {
-                if(import.PackageIndex.IsNull || import.PackageIndex.Reference == reference) {
+                if (import.PackageIndex.IsNull || import.PackageIndex.Reference == reference) {
                     return reference.ObjectName;
                 }
+
                 var path = GetFullPath(import.PackageIndex.Reference);
-                if(path.IsNullOrNone()) {
+                if (path.IsNullOrNone()) {
                     return reference.ObjectName;
                 }
+
                 return path + "." + reference.ObjectName;
             }
-            default: return null;
+            default:
+                return null;
         }
     }
 }

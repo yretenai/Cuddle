@@ -6,10 +6,6 @@ namespace Cuddle.Core.Structs.Intl;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public record struct FNumberFormattingOptions : FStructValue {
-    public string Format(object? value) =>
-        // todo: this is a lot of branching conditions and I don't have the patience to write a float formatter.
-        value?.ToString() ?? "0";
-
     public static FNumberFormattingOptions Default =>
         new() {
             AlwaysSign = false,
@@ -22,6 +18,10 @@ public record struct FNumberFormattingOptions : FStructValue {
         };
 
     public static FNumberFormattingOptions DefaultNoGrouping => Default with { UseGrouping = false };
+
+    public string Format(object? value) =>
+        // todo: this is a lot of branching conditions and I don't have the patience to write a float formatter.
+        value?.ToString() ?? "0";
 
     // @formatter:off
     [MarshalAs(UnmanagedType.I4)] public bool AlwaysSign;
