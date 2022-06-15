@@ -120,7 +120,7 @@ public sealed class UPakFile : IVFSFile {
         Index = new FPakIndex(indexReader, this, hashStore);
 
         if (IsIndexEncrypted || EncryptionGuid != Guid.Empty) {
-            Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, key {EncryptionGuid:n} which is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionGuid, EncryptionKey == null ? "not present" : "present");
+            Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, key {EncryptionGuid:n} which is {Present})", Name, Index?.MountPoint ?? "None", Index?.Files?.Count ?? -1, EncryptionGuid, EncryptionKey == null ? "not present" : "present");
         } else {
             Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files)", Name, Index.MountPoint, Index.Files.Count);
         }
@@ -134,8 +134,7 @@ public sealed class UPakFile : IVFSFile {
     public ushort SubVersion { get; }
     public byte[]? IndexHash { get; }
     public bool IndexIsFrozen { get; }
-    public FPakIndex Index { get; } = null!;
-
+    public FPakIndex? Index { get; }
     public VFSManager Manager { get; }
 
     public string Name { get; }
@@ -144,10 +143,10 @@ public sealed class UPakFile : IVFSFile {
     public byte[]? EncryptionKey { get; set; }
     public bool HasHashes => Version >= EPakVersion.PathHashIndex;
     public bool HasPaths => true;
-    public IEnumerable<IVFSEntry> Entries => Index.Files;
+    public IEnumerable<IVFSEntry> Entries => Index?.Files ?? new List<FPakEntry>();
 
     public MemoryOwner<byte> ReadFile(string path) {
-        var index = Index.Files.FirstOrDefault(x => x.MountedPath == path || x.ObjectPath.EndsWith(path, StringComparison.Ordinal));
+        var index = Index?.Files.FirstOrDefault(x => x.MountedPath == path || x.ObjectPath.EndsWith(path, StringComparison.Ordinal));
         return index == null ? MemoryOwner<byte>.Empty : ReadFile(index);
     }
 
@@ -156,7 +155,7 @@ public sealed class UPakFile : IVFSFile {
             return MemoryOwner<byte>.Empty;
         }
 
-        var index = Index.Files.FirstOrDefault(x => x.MountedHash == hash);
+        var index = Index?.Files.FirstOrDefault(x => x.MountedHash == hash);
         return index == null ? MemoryOwner<byte>.Empty : ReadFile(index);
     }
 
@@ -283,7 +282,7 @@ public sealed class UPakFile : IVFSFile {
             return null;
         }
 
-        var index = Index.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.EndsWith(path, StringComparison.Ordinal));
+        var index = Index?.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.EndsWith(path, StringComparison.Ordinal));
         return index == null ? null : ReadAsset(index);
     }
 
@@ -292,7 +291,7 @@ public sealed class UPakFile : IVFSFile {
             return null;
         }
 
-        var index = Index.Files.FirstOrDefault(x => x.MountedHash == hash);
+        var index = Index?.Files.FirstOrDefault(x => x.MountedHash == hash);
         return index == null ? null : ReadAsset(index);
     }
 
@@ -322,7 +321,7 @@ public sealed class UPakFile : IVFSFile {
             return null;
         }
 
-        var index = Index.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.EndsWith(path, StringComparison.Ordinal));
+        var index = Index?.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.EndsWith(path, StringComparison.Ordinal));
         return index == null ? null : ReadAssetExport(index, export);
     }
 
@@ -331,7 +330,7 @@ public sealed class UPakFile : IVFSFile {
             return null;
         }
 
-        var index = Index.Files.FirstOrDefault(x => x.MountedHash == hash);
+        var index = Index?.Files.FirstOrDefault(x => x.MountedHash == hash);
         return index == null ? null : ReadAssetExport(index, export);
     }
 
@@ -342,7 +341,7 @@ public sealed class UPakFile : IVFSFile {
             return Array.Empty<UObject>();
         }
 
-        var index = Index.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.EndsWith(path, StringComparison.Ordinal));
+        var index = Index?.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.EndsWith(path, StringComparison.Ordinal));
         return index == null ? Array.Empty<UObject>() : ReadAssetExports(index);
     }
 
@@ -351,7 +350,7 @@ public sealed class UPakFile : IVFSFile {
             return Array.Empty<UObject>();
         }
 
-        var index = Index.Files.FirstOrDefault(x => x.MountedHash == hash);
+        var index = Index?.Files.FirstOrDefault(x => x.MountedHash == hash);
         return index == null ? Array.Empty<UObject>() : ReadAssetExports(index);
     }
 
