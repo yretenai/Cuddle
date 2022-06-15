@@ -15,7 +15,7 @@ public record PropertyOwner {
 
     public T? GetProperty<T>(FName name, T? defaultValue = default) => GetProperty(name.Value, name.Instance, defaultValue);
 
-    public T? GetProperty<T>(string name, int instance, T? defaultValue = default) => !TryGetProperty<T>(name, instance, out var value) ? defaultValue : value;
+    public T? GetProperty<T>(string name, int instance = 0, T? defaultValue = default) => !TryGetProperty<T>(name, instance, out var value) ? defaultValue : value;
 
     public bool TryGetProperty<T>(FName name, [MaybeNullWhen(false)] out T v) {
         var properties = Properties.Where(x => x.Key.Name == name).ToArray();

@@ -1,4 +1,5 @@
-﻿using Cuddle.Core.Objects;
+﻿using System.Text.Json.Serialization;
+using Cuddle.Core.Objects;
 using Cuddle.Core.Structs;
 using Cuddle.Core.Structs.Asset;
 using Cuddle.Core.VFS;
@@ -11,5 +12,10 @@ public record FTaggedStructValue : PropertyOwner, FStructValue {
 
     public FTaggedStructValue(FArchiveReader data, FPropertyTagContext context, FName name) => Properties = UObject.ReadProperties(data, context, name);
 
-    internal virtual bool SerializeProperties => true;
+    public virtual void ProcessProperties(PropertyOwner owner) { }
+
+    [JsonIgnore]
+    public PropertyOwner? Owner { get; init; }
+
+    internal virtual bool SerializeProperties => Owner == null;
 }

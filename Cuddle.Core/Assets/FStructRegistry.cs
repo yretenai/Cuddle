@@ -81,8 +81,14 @@ public static class FStructRegistry {
             }
         }
 
+        if (structType.IsValueType) {
+            return data.Read(structType);
+        }
+
         try {
-            return structType.IsValueType ? data.Read(structType) : Activator.CreateInstance(structType, data);
+            var value = Activator.CreateInstance(structType, data) as FTaggedStructValue;
+            value?.ProcessProperties(value);
+            return value;
         } catch {
             return null;
         }
