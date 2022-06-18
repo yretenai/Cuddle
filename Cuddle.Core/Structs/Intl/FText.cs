@@ -2,7 +2,7 @@
 using Cuddle.Core.Enums;
 using Cuddle.Core.VFS;
 
-namespace Cuddle.Core.Structs;
+namespace Cuddle.Core.Structs.Intl;
 
 public class FText {
     public FText(FArchiveReader data) {

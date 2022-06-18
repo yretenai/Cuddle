@@ -5,7 +5,7 @@ using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs.Asset;
 
-public class FObjectExport : FObjectAbstract, IPoliteDisposable {
+public class FObjectExport : FObjectAbstract, IResettable {
     public FObjectExport() { }
 
     public FObjectExport(FArchiveReader archive) {
@@ -65,6 +65,8 @@ public class FObjectExport : FObjectAbstract, IPoliteDisposable {
             disposable.Dispose();
         }
 
+        Object = null;
+
         ObjectCreated = false;
 
         if (Disposed) {
@@ -73,6 +75,21 @@ public class FObjectExport : FObjectAbstract, IPoliteDisposable {
 
         GC.SuppressFinalize(this);
         Disposed = true;
+    }
+
+    public void Reset() {
+        if (Object is IDisposable disposable) {
+            disposable.Dispose();
+        }
+
+        Object = null;
+
+        ObjectCreated = false;
+
+        if (Disposed) {
+            GC.ReRegisterForFinalize(this);
+            Disposed = false;
+        }
     }
 
     ~FObjectExport() {

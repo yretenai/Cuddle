@@ -10,7 +10,7 @@ using Serilog;
 
 namespace Cuddle.Core.VFS;
 
-public sealed class VFSManager : IPoliteDisposable {
+public sealed class VFSManager : IResettable {
     public AESKeyStore KeyStore { get; } = new();
     public HashPathStore HashStore { get; } = new();
 
@@ -34,6 +34,19 @@ public sealed class VFSManager : IPoliteDisposable {
 
         GC.SuppressFinalize(this);
         Disposed = true;
+    }
+
+    public void Reset() {
+        foreach (var vfs in Containers) {
+            vfs.Dispose();
+        }
+
+        Containers.Clear();
+
+        if (Disposed) {
+            GC.ReRegisterForFinalize(this);
+            Disposed = false;
+        }
     }
 
     ~VFSManager() {

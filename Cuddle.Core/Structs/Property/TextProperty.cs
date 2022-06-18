@@ -1,4 +1,5 @@
 ﻿using Cuddle.Core.Assets;
+using Cuddle.Core.Structs.Intl;
 using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs.Property;

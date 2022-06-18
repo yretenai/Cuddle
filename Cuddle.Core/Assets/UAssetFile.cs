@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Cuddle.Core.Enums;
 using Cuddle.Core.Structs.Asset;
@@ -8,7 +9,7 @@ using Microsoft.Toolkit.HighPerformance.Buffers;
 namespace Cuddle.Core.Assets;
 
 public class UAssetFile : IPoliteDisposable {
-    public UAssetFile(MemoryOwner<byte> uasset, MemoryOwner<byte> uexp, MemoryOwner<byte> ubulk, MemoryOwner<byte> uptnl, string name, EGame game, IVFSFile? owner, VFSManager manager) {
+    public UAssetFile(MemoryOwner<byte> uasset, MemoryOwner<byte> uexp, string name, EGame game, IVFSFile? owner, VFSManager manager) {
         Game = game;
         Name = name;
         Owner = owner;
@@ -32,9 +33,6 @@ public class UAssetFile : IPoliteDisposable {
         uasset.Memory.CopyTo(combined.Memory);
         uexp.Memory.CopyTo(combined.Memory[Summary.TotalHeaderSize..]);
         ExportData = new FArchiveReader(this, combined);
-        BulkData = new FArchiveReader(this, ubulk);
-        OptionalData = new FArchiveReader(this, uptnl);
-
         uasset.Dispose();
         uexp.Dispose();
     }
@@ -48,15 +46,11 @@ public class UAssetFile : IPoliteDisposable {
     public FObjectImport[] Imports { get; }
     public FObjectExport[] Exports { get; }
     public FArchiveReader ExportData { get; }
-    public FArchiveReader BulkData { get; }
-    public FArchiveReader OptionalData { get; }
 
     public bool Disposed { get; private set; }
 
     public void Dispose() {
         ExportData.Dispose();
-        BulkData.Dispose();
-        OptionalData.Dispose();
 
         foreach (var export in Exports) {
             export.Dispose();
@@ -78,7 +72,7 @@ public class UAssetFile : IPoliteDisposable {
 
     private UObject? GetExport(FObjectExport export) {
         if (export.Disposed) {
-            return null;
+            export.Reset();
         }
 
         if (Summary.PackageFlags.HasFlag(EPackageFlags.UnversionedProperties)) {
@@ -167,5 +161,31 @@ public class UAssetFile : IPoliteDisposable {
             default:
                 return null;
         }
+    }
+
+    public bool TryOpenBulk([MaybeNullWhen(false)] out FArchiveReader reader) {
+        reader = null;
+
+        var bulk = Manager.ReadFile(Name + ".ubulk");
+        if (bulk.Length == 0) {
+            bulk.Dispose();
+            return false;
+        }
+
+        reader = new FArchiveReader(Game, bulk);
+        return true;
+    }
+
+    public bool TryOpenOptional([MaybeNullWhen(false)] out FArchiveReader reader) {
+        reader = null;
+
+        var ptnl = Manager.ReadFile(Name + ".uptnl");
+        if (ptnl.Length == 0) {
+            ptnl.Dispose();
+            return false;
+        }
+
+        reader = new FArchiveReader(Game, ptnl);
+        return true;
     }
 }

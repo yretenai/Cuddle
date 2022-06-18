@@ -134,12 +134,27 @@ public class FPakEntry : IVFSEntry {
             disposable.Dispose();
         }
 
+        Data = null;
+
         if (Disposed) {
             return;
         }
 
         GC.SuppressFinalize(this);
         Disposed = true;
+    }
+
+    public void Reset() {
+        if (Data is IDisposable disposable) {
+            disposable.Dispose();
+        }
+
+        Data = null;
+
+        if (Disposed) {
+            GC.ReRegisterForFinalize(this);
+            Disposed = false;
+        }
     }
 
     ~FPakEntry() {

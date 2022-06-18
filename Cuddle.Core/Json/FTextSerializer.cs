@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Cuddle.Core.Structs;
+using Cuddle.Core.Structs.Intl;
 
 namespace Cuddle.Core.Json;
 

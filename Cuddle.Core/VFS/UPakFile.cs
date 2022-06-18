@@ -296,8 +296,12 @@ public sealed class UPakFile : IVFSFile {
     }
 
     public UAssetFile? ReadAsset(IVFSEntry entry) {
-        if (Disposed || entry.Disposed) {
+        if (Disposed) {
             return null;
+        }
+
+        if (entry.Disposed) {
+            entry.Reset();
         }
 
         if (entry.Data is null) {
@@ -307,10 +311,7 @@ public sealed class UPakFile : IVFSFile {
             }
 
             var uexp = ReadFile(Path.ChangeExtension(entry.MountedPath, ".uexp"));
-            var ubulk = ReadFile(Path.ChangeExtension(entry.MountedPath, ".ubulk"));
-            var uptnl = ReadFile(Path.ChangeExtension(entry.MountedPath, ".uptnl"));
-
-            entry.Data = new UAssetFile(data, uexp, ubulk, uptnl, Path.GetFileNameWithoutExtension(entry.MountedPath), Game, this, Manager);
+            entry.Data = new UAssetFile(data, uexp, Path.GetFileNameWithoutExtension(entry.MountedPath), Game, this, Manager);
         }
 
         return (UAssetFile) entry.Data;

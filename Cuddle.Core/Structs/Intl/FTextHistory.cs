@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using Cuddle.Core.Enums;
-using Cuddle.Core.Structs.Intl;
 using Cuddle.Core.VFS;
 
-namespace Cuddle.Core.Structs;
+namespace Cuddle.Core.Structs.Intl;
 
 public abstract class FTextHistory {
     // todo: localization provider.
