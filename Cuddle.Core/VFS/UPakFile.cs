@@ -120,7 +120,7 @@ public sealed class UPakFile : IVFSFile {
         Index = new FPakIndex(indexReader, this, hashStore);
 
         if (IsIndexEncrypted || EncryptionGuid != Guid.Empty) {
-            Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, key {EncryptionGuid:n} which is {Present})", Name, Index?.MountPoint ?? "None", Index?.Files?.Count ?? -1, EncryptionGuid, EncryptionKey == null ? "not present" : "present");
+            Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, key {EncryptionGuid:n} which is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionGuid, EncryptionKey == null ? "not present" : "present");
         } else {
             Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files)", Name, Index.MountPoint, Index.Files.Count);
         }
@@ -430,7 +430,9 @@ public sealed class UPakFile : IVFSFile {
         }
 
         using var cipher = Aes.Create();
+#pragma warning disable CA5358
         cipher.Mode = CipherMode.ECB;
+#pragma warning restore CA5358
         cipher.Padding = PaddingMode.None;
         cipher.BlockSize = 128;
         cipher.Key = EncryptionKey;

@@ -71,7 +71,7 @@ public class FPakIndex {
                         var fileName = dirReader.ReadString();
                         var entryLoc = dirReader.Read<int>();
                         switch (entryLoc) {
-                            case int.MaxValue or int.MinValue: // Invalid, Unused 
+                            case int.MaxValue or int.MinValue: // Invalid, Unused
                                 continue;
                             case < 0:
                                 entryLoc = Count + -(entryLoc + 1);
@@ -97,7 +97,7 @@ public class FPakIndex {
                     var hash = hashReader.Read<ulong>();
                     var entryLoc = hashReader.Read<int>();
                     switch (entryLoc) {
-                        case int.MaxValue or int.MinValue: // Invalid, Unused 
+                        case int.MaxValue or int.MinValue: // Invalid, Unused
                             continue;
                         case < 0:
                             entryLoc = Count + -(entryLoc + 1);

@@ -67,7 +67,9 @@ public record PropertyOwner {
 
         if (TryUnwindProperty(t, property, out var genericValue)) {
             v = genericValue is not T value ? default : value;
+#pragma warning disable CA1508
             return v != null;
+#pragma warning restore CA1508
         }
 
         v = default;

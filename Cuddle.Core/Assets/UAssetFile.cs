@@ -8,7 +8,7 @@ using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Cuddle.Core.Assets;
 
-public class UAssetFile : IPoliteDisposable {
+public sealed class UAssetFile : IPoliteDisposable {
     public UAssetFile(MemoryOwner<byte> uasset, MemoryOwner<byte> uexp, string name, EGame game, IVFSFile? owner, VFSManager manager) {
         Game = game;
         Name = name;
@@ -115,8 +115,8 @@ public class UAssetFile : IPoliteDisposable {
             return null;
         }
 
-        if (Owner == null || outer.ObjectName.Value == "None") {
-            // no vfs or package reference is weird.
+        if (outer.ObjectName.Value == "None") {
+            // package reference is weird.
             return null;
         }
 

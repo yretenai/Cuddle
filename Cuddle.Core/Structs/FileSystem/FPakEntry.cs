@@ -8,7 +8,7 @@ using Microsoft.Toolkit.HighPerformance.Buffers;
 namespace Cuddle.Core.Structs.FileSystem;
 
 // umodel reference: https://github.com/gildor2/UEViewer/blob/c444911a6ad65bff5266f273dd5bdf7dd6fb506e/Unreal/FileSystem/UnArchivePak.h#L69
-public class FPakEntry : IVFSEntry {
+public sealed class FPakEntry : IVFSEntry {
     public FPakEntry() => Hash = new byte[0x14];
 
     public FPakEntry(FArchiveReader archive, UPakFile owner, bool isCompressed) {
@@ -177,7 +177,7 @@ public class FPakEntry : IVFSEntry {
             return;
         }
 
-        // Project/Content/Stuff/ -> Game/Content/Stuff -- strip project nname  
+        // Project/Content/Stuff/ -> Game/Content/Stuff -- strip project nname
         var index = MountedPath.IndexOf('/');
         if (index == -1) {
             return;

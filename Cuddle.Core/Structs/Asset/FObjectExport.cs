@@ -5,7 +5,7 @@ using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs.Asset;
 
-public class FObjectExport : FObjectAbstract, IResettable {
+public sealed class FObjectExport : FObjectAbstract, IResettable {
     public FObjectExport() { }
 
     public FObjectExport(FArchiveReader archive) {

@@ -9,11 +9,16 @@ public static class Oodle {
 
     private static OodleLZ_Decompress? DecompressDelegate { get; set; }
 
-    [DllImport("kernel32", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern IntPtr LoadLibraryW(string dllname);
+    private static class NativeMethods {
 
-    [DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true)]
-    private static extern IntPtr GetProcAddress(IntPtr hModule, string procname);
+        [DllImport("kernel32", CharSet = CharSet.Unicode, SetLastError = true), DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        public static extern IntPtr LoadLibraryW(string dllname);
+
+#pragma warning disable CA2101
+        [DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true), DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        public static extern IntPtr GetProcAddress(IntPtr hModule, string procname);
+#pragma warning restore CA2101
+    }
 
     public static int Decompress(Memory<byte> input, Memory<byte> output) {
         if (DecompressDelegate == null) {
@@ -46,12 +51,12 @@ public static class Oodle {
             return false;
         }
 
-        var handle = LoadLibraryW(path);
+        var handle = NativeMethods.LoadLibraryW(path);
         if (handle == IntPtr.Zero) {
             return false;
         }
 
-        var address = GetProcAddress(handle, "OodleLZ_Decompress");
+        var address = NativeMethods.GetProcAddress(handle, "OodleLZ_Decompress");
         if (address == IntPtr.Zero) {
             return false;
         }

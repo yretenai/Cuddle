@@ -6,7 +6,7 @@ using Cuddle.Core.Enums;
 
 namespace Cuddle.Core;
 
-public static class Extensions {
+public static class CuddleExtensions {
     public static EGame GetEngineVersion(this EGame game) => (EGame) ((uint) game & 0xFFFF0000);
     public static bool IsCustom(this EGame game) => ((uint) game & 0xFFFF) != 0;
     public static bool IsGame(this EGame game) => ((uint) game & 0x7FFF) != 0;

@@ -12,11 +12,15 @@ namespace Cuddle.Headless;
 
 public static class Program {
     public static void Main(string[] args) {
+        if (args == null) {
+            throw new ArgumentNullException(nameof(args));
+        }
+
         Log.Logger = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.Console().CreateLogger();
         Oodle.Load(args[2]);
         using var manager = new VFSManager();
         manager.MountPakDir(new DirectoryInfo(args[0]), Enum.Parse<EGame>(args[1]));
-        foreach (var file in manager.UniqueFilesPath.Where(x => x.MountedPath.EndsWith(".uasset") && !x.MountedPath.Contains("/Audio/"))) {
+        foreach (var file in manager.UniqueFilesPath.Where(x => x.MountedPath.EndsWith(".uasset") && !x.MountedPath.Contains("/Audio/", StringComparison.OrdinalIgnoreCase))) {
             try {
                 using var asset = file.ReadAsset();
                 if (asset == null) {

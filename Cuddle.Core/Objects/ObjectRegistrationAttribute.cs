@@ -3,7 +3,7 @@
 namespace Cuddle.Core.Objects;
 
 [AttributeUsage(AttributeTargets.Class)]
-public class ObjectRegistrationAttribute : Attribute {
+public sealed class ObjectRegistrationAttribute : Attribute {
     public ObjectRegistrationAttribute() { }
 
     public ObjectRegistrationAttribute(params string[] names) => Names = names;

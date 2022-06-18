@@ -30,6 +30,9 @@ public record UObject : PropertyOwner {
     [JsonIgnore]
     public UAssetFile Owner { get; }
 
+    public UProperty? this[string key] => Properties.FirstOrDefault(x => x.Key.Name.Value == key).Value;
+    public UProperty? this[string key, int index] => Properties.FirstOrDefault(x => x.Key.Name.Value == key && x.Key.Index == index).Value;
+    public UProperty? this[string key, int index, int instance] => Properties.FirstOrDefault(x => x.Key.Name.Value == key && x.Key.Name.Instance == instance && x.Key.Index == index).Value;
     public UProperty? this[FName key] => Properties.FirstOrDefault(x => x.Key.Name == key).Value;
     public UProperty? this[FName key, int index] => Properties.FirstOrDefault(x => x.Key.Name == key && x.Key.Index == index).Value;
     internal virtual bool SerializeProperties => true;
