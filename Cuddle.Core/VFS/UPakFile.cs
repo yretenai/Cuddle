@@ -120,7 +120,11 @@ public sealed class UPakFile : IVFSFile {
         Index = new FPakIndex(indexReader, this, hashStore);
 
         if (IsIndexEncrypted || EncryptionGuid != Guid.Empty) {
-            Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, key {EncryptionGuid:n} which is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionGuid, EncryptionKey == null ? "not present" : "present");
+            if (EncryptionGuid == Guid.Empty) {
+                Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, encryption key is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionKey == null ? "not present" : "present");
+            } else {
+                Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, encryption key 0x{EncryptionGuid:n} is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionGuid, EncryptionKey == null ? "not present" : "present");
+            }
         } else {
             Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files)", Name, Index.MountPoint, Index.Files.Count);
         }

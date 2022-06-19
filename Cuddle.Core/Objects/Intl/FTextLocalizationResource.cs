@@ -8,7 +8,8 @@ using Microsoft.Toolkit.HighPerformance.Buffers;
 namespace Cuddle.Core.Objects.Intl;
 
 public class FTextLocalizationResource {
-    public FTextLocalizationResource(FArchiveReader reader) {
+    public FTextLocalizationResource(MemoryOwner<byte> data) {
+        using var reader = new FArchiveReader(data);
         var guid = reader.Read<Guid>();
         if (guid == Magic) {
             Version = reader.Read<ELocResVersion>();
@@ -59,13 +60,8 @@ public class FTextLocalizationResource {
     }
 
     public ELocResVersion Version { get; }
-    public static Guid Magic { get; } = new(new byte[] { 0x0E, 0x14, 0x74, 0x75, 0x67, 0x4A, 0x03, 0xFC, 0x4A, 0x15, 0x90, 0x95, 0xC3, 0x37, 0x7F, 0x1B });
+    public static Guid Magic { get; } = new(new byte[] { 0x0E, 0x14, 0x74, 0x75, 0x67, 0x4A, 0x03, 0xFC, 0x4A, 0x15, 0x90, 0x9D, 0xC3, 0x37, 0x7F, 0x1B });
 
     // double map since we don't have a fancy bucketing technique to improve lookup time, so this is a workaround.
     public Dictionary<FTextKey, Dictionary<FTextKey, FTextKey>> Entries { get; } = new();
-
-    public static FTextLocalizationResource Create(MemoryOwner<byte> data) {
-        using var reader = new FArchiveReader(data);
-        return new FTextLocalizationResource(reader);
-    }
 }
