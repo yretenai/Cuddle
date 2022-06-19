@@ -9,17 +9,6 @@ public static class Oodle {
 
     private static OodleLZ_Decompress? DecompressDelegate { get; set; }
 
-    private static class NativeMethods {
-
-        [DllImport("kernel32", CharSet = CharSet.Unicode, SetLastError = true), DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        public static extern IntPtr LoadLibraryW(string dllname);
-
-#pragma warning disable CA2101
-        [DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true), DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        public static extern IntPtr GetProcAddress(IntPtr hModule, string procname);
-#pragma warning restore CA2101
-    }
-
     public static int Decompress(Memory<byte> input, Memory<byte> output) {
         if (DecompressDelegate == null) {
             return -1;
@@ -63,6 +52,16 @@ public static class Oodle {
 
         DecompressDelegate = Marshal.GetDelegateForFunctionPointer<OodleLZ_Decompress>(address);
         return true;
+    }
+
+    private static class NativeMethods {
+        [DllImport("kernel32", CharSet = CharSet.Unicode, SetLastError = true), DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        public static extern IntPtr LoadLibraryW(string dllname);
+
+#pragma warning disable CA2101
+        [DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true), DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        public static extern IntPtr GetProcAddress(IntPtr hModule, string procname);
+#pragma warning restore CA2101
     }
 
     private delegate int OodleLZ_Decompress(IntPtr srcBuf, int srcSize, IntPtr dstBuf, int dstSize, int fuzz, int crc, int verbose, IntPtr dstBase, int dstBaseSize, IntPtr cb, IntPtr cbContext, IntPtr scratch, uint scratchSize, uint threadPhase);

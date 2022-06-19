@@ -5,4 +5,4 @@ public enum ELocResVersion : byte {
     Compact = 1,
     CRC32 = 2,
     CityHash64 = 3,
-};
+}

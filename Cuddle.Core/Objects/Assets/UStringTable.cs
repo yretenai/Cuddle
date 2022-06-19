@@ -33,6 +33,6 @@ public record UStringTable : UObject {
     }
 
     public Dictionary<string, string> Keys { get; } = new();
-    public Dictionary<string, Dictionary<FName, string>> Metadata = new();
+    public Dictionary<string, Dictionary<FName, string>> Metadata { get; } = new();
     public string TableNamespace { get; set; }
 }

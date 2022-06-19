@@ -25,9 +25,7 @@ public sealed class FArchiveReader : IPoliteDisposable {
         Data = data;
     }
 
-    public FArchiveReader(MemoryOwner<byte> data) {
-        Data = data;
-    }
+    public FArchiveReader(MemoryOwner<byte> data) => Data = data;
 
     public EGame Game { get; set; }
     public EObjectVersion Version { get; set; }
