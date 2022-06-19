@@ -4,7 +4,8 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using Cuddle.Core.Assets;
-using Cuddle.Core.Enums;
+using Cuddle.Core.Structs;
+using Cuddle.Core.Structs.Asset;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Cuddle.Core.VFS;
@@ -21,6 +22,10 @@ public sealed class FArchiveReader : IPoliteDisposable {
         Game = game;
         Version = game.FindObjectVersion();
 
+        Data = data;
+    }
+
+    public FArchiveReader(MemoryOwner<byte> data) {
         Data = data;
     }
 

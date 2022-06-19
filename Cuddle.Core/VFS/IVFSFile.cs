@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Cuddle.Core.Assets;
-using Cuddle.Core.Enums;
+using Cuddle.Core.Structs;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Cuddle.Core.VFS;

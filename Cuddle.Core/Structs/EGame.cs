@@ -1,4 +1,4 @@
-﻿namespace Cuddle.Core.Enums;
+﻿namespace Cuddle.Core.Structs;
 
 // @formatter:off
 // largely based on https://github.com/gildor2/UEViewer/blob/60accbff70e58bfc66eaad4594416694b95422ee/Unreal/UnCore.h#L344

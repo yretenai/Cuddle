@@ -6,7 +6,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
 using Cuddle.Core.Assets;
-using Cuddle.Core.Enums;
+using Cuddle.Core.Structs;
 using Cuddle.Core.Structs.FileSystem;
 using DragonLib;
 using K4os.Compression.LZ4;

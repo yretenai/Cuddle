@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
-using Cuddle.Core.Enums;
 using Cuddle.Core.Structs;
 using Cuddle.Core.Structs.Asset;
 using Cuddle.Core.VFS;
@@ -10,7 +9,7 @@ using Serilog;
 
 namespace Cuddle.Core.Assets;
 
-public record UObject : PropertyOwner {
+public record UObject : FPropertyOwner {
     // ReSharper disable once MemberCanBeProtected.Global
     public UObject(FArchiveReader data, FObjectExport export) {
         Owner = data.Asset!;

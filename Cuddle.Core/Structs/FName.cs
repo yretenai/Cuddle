@@ -47,5 +47,5 @@ public readonly record struct FName : IEquatable<string?> {
 
     public override string ToString() => Value;
     public bool Equals(string? other, int instance) => EqualityComparer<int>.Default.Equals(Instance, instance) && EqualityComparer<string>.Default.Equals(Value, other);
-    public override int GetHashCode() => Value.GetHashCode();
+    public override int GetHashCode() => HashCode.Combine(Value, Instance);
 }

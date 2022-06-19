@@ -2,7 +2,8 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
-using Cuddle.Core.Enums;
+using Cuddle.Core.Structs;
+using Cuddle.Core.Structs.Asset;
 
 namespace Cuddle.Core;
 

@@ -1,6 +1,5 @@
 ﻿using System;
 using Cuddle.Core.Assets;
-using Cuddle.Core.Enums;
 using Cuddle.Core.VFS;
 using DragonLib;
 using Microsoft.Toolkit.HighPerformance.Buffers;

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cuddle.Core.Enums;
+namespace Cuddle.Core.Structs.Asset;
 
 [Flags]
 public enum EObjectFlags : uint {

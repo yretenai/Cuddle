@@ -1,4 +1,4 @@
-﻿namespace Cuddle.Core.Enums;
+﻿namespace Cuddle.Core.Structs.Asset;
 
 public enum ELegacyFileVersion {
     OLDEST_LOADABLE_PACKAGE = -2,

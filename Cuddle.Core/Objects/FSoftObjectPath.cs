@@ -5,8 +5,8 @@ using Cuddle.Core.VFS;
 namespace Cuddle.Core.Objects;
 
 [ObjectRegistration("StringAssetReference", "StringClassReference", "SoftClassPath")]
-public record SoftObjectPath : FStructValue {
-    public SoftObjectPath(FArchiveReader data) {
+public record FSoftObjectPath : FStructValue {
+    public FSoftObjectPath(FArchiveReader data) {
         Path = new FName(data);
         SubPath = data.ReadString();
     }

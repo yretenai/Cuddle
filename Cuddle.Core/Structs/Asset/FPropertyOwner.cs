@@ -9,7 +9,7 @@ using Cuddle.Core.Structs.Property;
 
 namespace Cuddle.Core.Structs.Asset;
 
-public record PropertyOwner {
+public record FPropertyOwner {
     [JsonIgnore]
     public Dictionary<FPropertyTag, UProperty?> Properties { get; protected init; } = new();
 

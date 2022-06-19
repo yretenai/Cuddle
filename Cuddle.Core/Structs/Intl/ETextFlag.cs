@@ -1,4 +1,4 @@
-﻿namespace Cuddle.Core.Enums;
+﻿namespace Cuddle.Core.Structs.Intl;
 
 public enum ETextFlag : uint {
     Transient = 1,

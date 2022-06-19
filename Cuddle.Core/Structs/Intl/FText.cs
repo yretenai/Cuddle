@@ -1,5 +1,5 @@
 ﻿using System;
-using Cuddle.Core.Enums;
+using Cuddle.Core.Structs.Asset;
 using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs.Intl;

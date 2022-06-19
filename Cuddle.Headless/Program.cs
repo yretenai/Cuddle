@@ -3,8 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Cuddle.Core;
-using Cuddle.Core.Enums;
 using Cuddle.Core.Json;
+using Cuddle.Core.Structs;
 using Cuddle.Core.VFS;
 using Serilog;
 

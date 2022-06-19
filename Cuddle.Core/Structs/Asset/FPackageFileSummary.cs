@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using Cuddle.Core.Enums;
 using Cuddle.Core.VFS;
 using Serilog;
 

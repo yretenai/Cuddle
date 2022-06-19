@@ -7,7 +7,7 @@ namespace Cuddle.Core.Structs.Math;
 public record FCapsuleShape : FTaggedStructValue {
     public FCapsuleShape() : this(Vector3.Zero, 0f, Vector3.Zero, 0f) { }
 
-    public FCapsuleShape(PropertyOwner owner) => Owner = owner;
+    public FCapsuleShape(FPropertyOwner owner) => Owner = owner;
 
     public FCapsuleShape(Vector3 center, float radius, Vector3 orientation, float length) {
         Center = center;
@@ -22,7 +22,7 @@ public record FCapsuleShape : FTaggedStructValue {
     public float Length { get; set; }
     internal override bool SerializeProperties => false;
 
-    public override void ProcessProperties(PropertyOwner owner) {
+    public override void ProcessProperties(FPropertyOwner owner) {
         Center = owner.GetProperty<Vector3>(nameof(Center));
         Radius = owner.GetProperty<float>(nameof(Radius));
         Orientation = owner.GetProperty<Vector3>(nameof(Orientation));

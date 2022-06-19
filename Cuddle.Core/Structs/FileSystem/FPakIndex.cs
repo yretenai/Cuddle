@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Cuddle.Core.Enums;
 using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs.FileSystem;

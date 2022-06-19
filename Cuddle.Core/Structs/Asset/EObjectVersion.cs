@@ -1,4 +1,4 @@
-﻿namespace Cuddle.Core.Enums;
+﻿namespace Cuddle.Core.Structs.Asset;
 
 // UE4 reference: EUnrealEngineObjectUE4Version (ObjectVersion.h)
 public enum EObjectVersion {

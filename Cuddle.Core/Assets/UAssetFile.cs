@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Cuddle.Core.Enums;
+using Cuddle.Core.Structs;
 using Cuddle.Core.Structs.Asset;
 using Cuddle.Core.VFS;
 using Microsoft.Toolkit.HighPerformance.Buffers;

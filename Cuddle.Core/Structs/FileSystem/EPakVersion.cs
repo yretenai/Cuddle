@@ -1,4 +1,4 @@
-﻿namespace Cuddle.Core.Enums;
+﻿namespace Cuddle.Core.Structs.FileSystem;
 
 public enum EPakVersion : short {
     Initial = 1,

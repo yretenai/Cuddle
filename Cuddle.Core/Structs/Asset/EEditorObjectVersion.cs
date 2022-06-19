@@ -1,4 +1,4 @@
-namespace Cuddle.Core.Enums;
+namespace Cuddle.Core.Structs.Asset;
 
 public enum EEditorObjectVersion {
     // Before any version changes were made

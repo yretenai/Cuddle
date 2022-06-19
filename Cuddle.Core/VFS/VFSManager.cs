@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Cuddle.Core.Assets;
-using Cuddle.Core.Enums;
+using Cuddle.Core.Structs;
 using DragonLib.Text;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 using Serilog;

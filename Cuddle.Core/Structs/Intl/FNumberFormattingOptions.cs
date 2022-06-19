@@ -1,6 +1,5 @@
 ﻿using System.Runtime.InteropServices;
 using Cuddle.Core.Assets;
-using Cuddle.Core.Enums;
 
 namespace Cuddle.Core.Structs.Intl;
 
