@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs.FileSystem;
@@ -47,14 +48,9 @@ public class FPakIndex {
             FullDirectoryIndexHash = hasFullDirectoryIndex ? archive.ReadArray<byte>(0x14).ToArray() : null;
 
             using var encodedReader = archive.Partition();
-            Files.EnsureCapacity(Count);
-            var encodedMap = new Dictionary<int, int>(Count);
-            for (var index = 0; index < Count; ++index) {
-                encodedMap[encodedReader.Position] = index;
-                Files.Add(new FPakEntry(encodedReader, Owner, true));
-            }
 
-            Files.AddRange(archive.ReadClassArray<FPakEntry>(null, owner, false));
+            var frozen = archive.ReadClassArray<FPakEntry>(null, owner, false);
+            Files.EnsureCapacity(Count + frozen.Length);
 
             if (hasFullDirectoryIndex) { // we have paths, yay.
                 using var dirReader = new FArchiveReader(encodedReader.Game, owner.ReadBytes(fullDirectoryIndexOffset, fullDirectoryIndexSize, owner.IsIndexEncrypted));
@@ -69,20 +65,24 @@ public class FPakIndex {
                     for (var fileIndex = 0; fileIndex < fileCount; ++fileIndex) {
                         var fileName = dirReader.ReadString();
                         var entryLoc = dirReader.Read<int>();
+                        FPakEntry entry;
                         switch (entryLoc) {
                             case int.MaxValue or int.MinValue: // Invalid, Unused
                                 continue;
                             case < 0:
-                                entryLoc = Count + -(entryLoc + 1);
+                                entry = frozen[-(entryLoc + 1)] with { };
                                 break;
-                            default:
-                                entryLoc = encodedMap[entryLoc];
+                            default: {
+                                encodedReader.Position = entryLoc;
+                                entry = new FPakEntry(encodedReader, Owner, true);
                                 break;
+                            }
                         }
 
-                        Files[entryLoc].Path = dirName + fileName;
-                        Files[entryLoc].MountedPath = MountPoint + Files[entryLoc].Path;
-                        Files[entryLoc].CreateObjectPath();
+                        entry.Path = dirName + fileName;
+                        entry.MountedPath = MountPoint + entry.Path;
+                        entry.CreateObjectPath();
+                        Files.Add(entry);
                         // note: figure out what value gets passed to FPakFile::HashPath and store the value in hashStore.
                     }
                 }
@@ -95,15 +95,18 @@ public class FPakIndex {
                 for (var index = 0; index < count; ++index) {
                     var hash = hashReader.Read<ulong>();
                     var entryLoc = hashReader.Read<int>();
+                    FPakEntry entry;
                     switch (entryLoc) {
                         case int.MaxValue or int.MinValue: // Invalid, Unused
                             continue;
                         case < 0:
-                            entryLoc = Count + -(entryLoc + 1);
+                            entry = frozen[-(entryLoc + 1)] with { };
                             break;
-                        default:
-                            entryLoc = encodedMap[entryLoc];
+                        default: {
+                            encodedReader.Position = entryLoc;
+                            entry = new FPakEntry(encodedReader, Owner, true);
                             break;
+                        }
                     }
 
                     if (!hasFullDirectoryIndex) {
@@ -114,23 +117,19 @@ public class FPakIndex {
                             path = mountPath[MountPoint.Length..];
                         }
 
-                        Files[entryLoc].Path = path;
-                        Files[entryLoc].MountedPath = mountPath;
-                        Files[entryLoc].CreateObjectPath();
+                        entry.Path = path;
+                        entry.MountedPath = mountPath;
+                        entry.CreateObjectPath();
                     }
 
-                    Files[entryLoc].MountedHash = hash;
+                    entry.MountedHash = hash;
+                    Files.Add(entry);
                 }
             }
 
             // we have nothing :hollow:
             if (!hasFullDirectoryIndex && !hasPathHashIndex) {
-                // realistically, should never happen.
-                for (var index = 0; index < Files.Count; index++) {
-                    var file = Files[index];
-                    file.Path = index.ToString("x8");
-                    file.MountedPath = file.ObjectPath = MountPoint + file.Path;
-                }
+                throw new InvalidDataException();
             }
         }
     }

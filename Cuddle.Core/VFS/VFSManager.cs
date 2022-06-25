@@ -53,10 +53,29 @@ public sealed class VFSManager : IResettable {
         Dispose();
     }
 
-    public void MountPakDir(DirectoryInfo dir, EGame game) {
+    public void MountDir(DirectoryInfo dir, EGame game) {
         Log.Information("Loading directory {Directory} with game {Game}", dir.Name, game.AsFormattedString());
         // this natural language sort is an easy hack to get pak ordering correctly.
-        foreach (var pakPath in dir.GetFiles("*.pak", SearchOption.TopDirectoryOnly).OrderBy(x => x.Name.Replace('.', '_'), new NaturalStringComparer(StringComparison.OrdinalIgnoreCase))) {
+        var keyFile = dir.EnumerateFiles("key.txt", SearchOption.AllDirectories).FirstOrDefault();
+        var gameFile = dir.EnumerateFiles("game.txt", SearchOption.AllDirectories).FirstOrDefault();
+        if (keyFile != null) {
+            Log.Information("Found key file, attempting to parse...");
+            foreach (var key in File.ReadAllLines(keyFile.FullName)) {
+                KeyStore.AddKey(key);
+            }
+        }
+
+        KeyStore.Dump();
+
+        if (gameFile != null) {
+            Log.Information("Found game file, attempting to parse...");
+            if (Enum.TryParse<EGame>(File.ReadAllText(gameFile.FullName), out var tmpGame)) {
+                Log.Information("  {Game} -> {NewGame}", game, tmpGame);
+                game = tmpGame;
+            }
+        }
+
+        foreach (var pakPath in dir.EnumerateFiles("*.pak", SearchOption.AllDirectories).OrderBy(x => x.Name.Replace('.', '_'), new NaturalStringComparer(StringComparison.OrdinalIgnoreCase))) {
             Containers.Add(new UPakFile(pakPath.FullName, game, Path.GetFileNameWithoutExtension(pakPath.Name), KeyStore, HashStore, this));
         }
     }

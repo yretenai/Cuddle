@@ -123,7 +123,7 @@ public sealed class UPakFile : IVFSFile {
             if (EncryptionGuid == Guid.Empty) {
                 Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, encryption key is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionKey == null ? "not present" : "present");
             } else {
-                Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, encryption key 0x{EncryptionGuid:n} is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionGuid, EncryptionKey == null ? "not present" : "present");
+                Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, encryption key {EncryptionGuid:n} is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionGuid, EncryptionKey == null ? "not present" : "present");
             }
         } else {
             Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files)", Name, Index.MountPoint, Index.Files.Count);
@@ -369,7 +369,7 @@ public sealed class UPakFile : IVFSFile {
 
         foreach (var unknownKey in aesKey.NullKeys) {
             EncryptionKey = unknownKey;
-            var data = Decrypt(test, true);
+            using var data = Decrypt(test, true, false);
             if (Math.Abs(BinaryPrimitives.ReadInt32LittleEndian(data.Span)) < 255) {
                 aesKey.Keys[EncryptionGuid] = EncryptionKey;
                 return true;
@@ -425,10 +425,10 @@ public sealed class UPakFile : IVFSFile {
             readOffset += amount;
         }
 
-        return Decrypt(data, isEncrypted)[..(int) count];
+        return Decrypt(data, isEncrypted, true)[..(int) count];
     }
 
-    private MemoryOwner<byte> Decrypt(MemoryOwner<byte> data, bool isEncrypted) {
+    private MemoryOwner<byte> Decrypt(MemoryOwner<byte> data, bool isEncrypted, bool dispose) {
         if (!isEncrypted || EncryptionKey == null) {
             return data;
         }
@@ -443,7 +443,10 @@ public sealed class UPakFile : IVFSFile {
         cipher.IV = new byte[16];
         var decryptedOwner = MemoryOwner<byte>.Allocate(data.Length);
         var size = cipher.DecryptEcb(data.Span, decryptedOwner.Span, cipher.Padding);
-        data.Dispose();
+        if (dispose) {
+            data.Dispose();
+        }
+
         return decryptedOwner[..size];
     }
 }
