@@ -26,6 +26,7 @@ public interface IVFSFile : IPoliteDisposable {
     UObject?[] ReadAssetExports(string path);
     UObject?[] ReadAssetExports(ulong hash);
     UObject?[] ReadAssetExports(IVFSEntry entry);
+    MemoryOwner<byte> ReadBytes(long offset, long count, bool isEncrypted);
     bool FindEncryptionKey(AESKeyStore aesKey, MemoryOwner<byte> test);
     void ClearCaches();
 }

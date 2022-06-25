@@ -8,7 +8,7 @@ namespace Cuddle.Core.Structs.FileSystem;
 
 // umodel reference: https://github.com/gildor2/UEViewer/blob/c444911a6ad65bff5266f273dd5bdf7dd6fb506e/Unreal/FileSystem/UnArchivePak.h#L69
 public sealed record FPakEntry : IVFSEntry {
-    public FPakEntry() => Hash = new byte[0x14];
+    public FPakEntry() => Hash = new Lazy<byte[]>(new byte[0x14]);
 
     public FPakEntry(FArchiveReader archive, UPakFile owner, bool isCompressed) {
         Owner = owner;
@@ -30,9 +30,10 @@ public sealed record FPakEntry : IVFSEntry {
             Size = CompressionMethod > 0 ? fields.SizeIs32BitSafe ? archive.Read<uint>() : archive.Read<long>() : UncompressedSize;
             IsEncrypted = fields.Encrypted;
 
-            // read hash from lead-in struct
-            using var hash = owner.ReadBytes(Pos, 0x30, IsEncrypted)[^0x14..];
-            Hash = hash.Span.ToArray();
+            Hash = new Lazy<byte[]>(() => {
+                using var hash = Owner.ReadBytes(Pos, 0x30, IsEncrypted)[^0x14..];
+                return hash.Span.ToArray();
+            });
 
             // we read the entire data block from after the lead-in struct.
             Pos += 53; // no version checks because this can only exist after UE 4.23
@@ -71,7 +72,7 @@ public sealed record FPakEntry : IVFSEntry {
             UncompressedSize = archive.Read<long>();
             CompressionMethod = archive.Game.GetEngineVersion() is EGame.UE4_22 ? archive.Read<byte>() : archive.Read<int>();
             Timestamp = owner.Version < EPakVersion.NoTimestamps ? archive.Read<long>() : 0;
-            Hash = archive.ReadArray<byte>(0x14).ToArray();
+            Hash = new Lazy<byte[]>(archive.ReadArray<byte>(0x14).ToArray());
 
             if (owner.Version >= EPakVersion.CompressionEncryption) {
                 if (CompressionMethod > 0) {
@@ -106,7 +107,7 @@ public sealed record FPakEntry : IVFSEntry {
     public long UncompressedSize { get; }
     public int CompressionMethod { get; }
     public long Timestamp { get; }
-    public byte[] Hash { get; }
+    public Lazy<byte[]> Hash { get; }
     public FPakCompressedBlock[] CompressionBlocks { get; } = Array.Empty<FPakCompressedBlock>();
     public bool IsEncrypted { get; }
     public uint CompressionBlockSize { get; }

@@ -405,11 +405,7 @@ public sealed class UPakFile : IVFSFile {
         Disposed = true;
     }
 
-    ~UPakFile() {
-        Dispose();
-    }
-
-    internal MemoryOwner<byte> ReadBytes(long offset, long count, bool isEncrypted) {
+    public MemoryOwner<byte> ReadBytes(long offset, long count, bool isEncrypted) {
         using var stream = new FileStream(FullPath, FileMode.Open, FileAccess.ReadWrite);
 
         // aes needs 16 byte aligned data.
@@ -426,6 +422,10 @@ public sealed class UPakFile : IVFSFile {
         }
 
         return Decrypt(data, isEncrypted, true)[..(int) count];
+    }
+
+    ~UPakFile() {
+        Dispose();
     }
 
     private MemoryOwner<byte> Decrypt(MemoryOwner<byte> data, bool isEncrypted, bool dispose) {
