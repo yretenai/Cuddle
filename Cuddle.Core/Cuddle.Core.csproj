@@ -6,6 +6,8 @@
         <LangVersion>preview</LangVersion>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <WarningsAsErrors>CA2000</WarningsAsErrors>
+        <ProductName>Cuddle</ProductName>
+        <Version>0.0.4.1</Version>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -33,6 +35,12 @@
 
     <Target Name="CustomAfterBuild" AfterTargets="AfterBuild">
         <Copy SourceFiles="..\ATTRIBUTION.txt" DestinationFolder="$(TargetDir)" ContinueOnError="true" />
+    </Target>
+    
+    <Target Name="SetSourceRevisionId" BeforeTargets="BeforeBuild">
+        <Exec Command="git describe --long --always --dirty --exclude=* --abbrev=8" ConsoleToMSBuild="True" IgnoreExitCode="False" ContinueOnError="True">
+            <Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput" />
+        </Exec>
     </Target>
 
 </Project>

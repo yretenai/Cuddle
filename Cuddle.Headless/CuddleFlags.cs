@@ -21,6 +21,12 @@ public record CuddleFlags : CommandLineFlags {
     [Flag("game", Help = "Unreal Version to use", Default = EGame.UE4_MAX, Category = "Cuddle", EnumPrefix = new[] { "GAME_", "UE" }, ReplaceDashes = '_', ReplaceDots = '_')]
     public EGame Game { get; set; } = EGame.UE4_MAX;
 
+    [Flag("mode", Default = CuddleMode.Extract, Help = "Operation mode", Category = "Cuddle", Hidden = true)]
+    public CuddleMode Mode { get; set; } = CuddleMode.Extract;
+
+    [Flag("profiling", Hidden = true)]
+    public bool Profiling { get; set; }
+
     [Flag("filter", Help = "Path filters", Category = "Cuddle")]
     public List<Regex> Filters { get; set; } = new();
 
@@ -32,7 +38,4 @@ public record CuddleFlags : CommandLineFlags {
 
     [Flag("output-path", IsRequired = true, Positional = 1, Help = "Path to where to save files", Category = "Cuddle")]
     public string OutputPath { get; set; } = null!;
-
-    [Flag("profiling", Hidden = true)]
-    public bool Profiling { get; set; }
 }

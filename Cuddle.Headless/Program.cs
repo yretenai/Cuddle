@@ -1,13 +1,17 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using Cuddle.Core;
 using Cuddle.Core.Json;
 using Cuddle.Core.VFS;
+using Cuddle.Headless.Mode;
 using DragonLib;
 using DragonLib.CommandLine;
 using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace Cuddle.Headless;
 
@@ -19,58 +23,33 @@ public static class Program {
             return;
         }
 
-        Log.Logger = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.Console().CreateLogger();
+        Console.OutputEncoding = Encoding.UTF8;
+
+        Log.Logger = new LoggerConfiguration()
+                        .MinimumLevel.Information()
+                        .WriteTo.Console(theme: AnsiConsoleTheme.Literate)
+                        .MinimumLevel.Debug()
+                        .WriteTo.File(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "Logs", $"{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}.log"), encoding: Encoding.UTF8)
+                        .CreateLogger();
+        SystemManagement.DescribeLog();
         Oodle.Load(flags.OodlePath);
+        Log.Debug("{Flags}", flags.ToString());
+        Log.Debug("Args: {Args}", string.Join(' ', Environment.GetCommandLineArgs()[1..]));
 
         using var manager = new VFSManager();
         manager.MountDir(new DirectoryInfo(flags.PakPath), flags.Game);
-        if (flags.Profiling) {
-            return;
-        }
 
-        foreach (var file in manager.UniqueFilesPath) {
-            try {
-                if (flags.Filters.Count > 0 && !flags.Filters.Any(x => x.IsMatch(file.MountedPath))) {
-                    continue;
-                }
-
-                var result = Path.Combine(flags.OutputPath, file.MountedPath[0] == '/' ? file.MountedPath[1..] : file.MountedPath);
-                var ext = Path.GetExtension(file.MountedPath).ToLower();
-                if (ext is ".uasset" or ".umap") {
-                    try {
-                        using var asset = file.ReadAsset();
-                        if (asset == null) {
-                            continue;
-                        }
-
-                        Log.Information("{Path} -> uasset", file.MountedPath);
-
-                        if (!flags.NoJSON) {
-                            var objects = asset.GetExports();
-                            var json = JsonSerializer.Serialize(objects, JsonSettings.Options);
-                            result.EnsureDirectoryExists();
-                            File.WriteAllText(Path.ChangeExtension(result, ".json"), json);
-                        }
-                    } catch (Exception e) {
-                        Log.Error(e, "Failed to process uasset {Path}", file.MountedPath);
-                    }
-                }
-
-                if (flags.Raw) {
-                    using var data = file.ReadFile();
-                    if (data.Length == 0) {
-                        continue;
-                    }
-
-                    Log.Information("{Path} -> Raw", file.MountedPath);
-                    result.EnsureDirectoryExists();
-                    using var stream = File.OpenWrite(result);
-                    stream.SetLength(0);
-                    stream.Write(data.Span);
-                }
-            } catch (Exception e) {
-                Log.Error(e, "Failure processing {Path}", file.ObjectPath);
-            }
+        switch (flags.Mode) {
+            case CuddleMode.Extract:
+                ExtractMode.Do(flags, manager);
+                break;
+            case CuddleMode.List:
+                ListMode.Do(flags, manager);
+                break;
+            case CuddleMode.DEBUG_Profiling:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
         }
     }
 }
