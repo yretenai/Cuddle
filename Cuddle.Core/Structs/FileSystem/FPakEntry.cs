@@ -15,7 +15,7 @@ public sealed record FPakEntry : IVFSEntry {
 
         if (isCompressed) {
             // var fields = BitPacked.Unpack<FPakEntryFlags>(archive.Read<uint>());
-            var fields = new FPakEntryFlags(archive.Read<uint>());
+            var fields = new FPakEntryEncodedFlags(archive.Read<uint>());
 
             if (fields.CompressionBlockSize == 0x3F) {
                 CompressionBlockSize = archive.Read<uint>();
@@ -79,7 +79,9 @@ public sealed record FPakEntry : IVFSEntry {
                     CompressionBlocks = archive.ReadArray<FPakCompressedBlock>().ToArray();
                 }
 
-                IsEncrypted = archive.Read<byte>() == 1;
+                var flags = archive.Read<FPakEntryFlags>();
+                IsEncrypted = flags.HasFlag(FPakEntryFlags.Encrypted);
+                IsDeleted = flags.HasFlag(FPakEntryFlags.Deleted);
                 CompressionBlockSize = archive.Read<uint>();
             }
 
@@ -110,6 +112,7 @@ public sealed record FPakEntry : IVFSEntry {
     public Lazy<byte[]> Hash { get; }
     public FPakCompressedBlock[] CompressionBlocks { get; } = Array.Empty<FPakCompressedBlock>();
     public bool IsEncrypted { get; }
+    public bool IsDeleted { get; }
     public uint CompressionBlockSize { get; }
     public string Path { get; internal set; } = "";
 

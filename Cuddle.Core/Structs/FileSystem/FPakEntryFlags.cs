@@ -1,23 +1,11 @@
-﻿namespace Cuddle.Core.Structs.FileSystem;
+﻿using System;
 
-// UE4 reference: FPakFile::DecodePakEntry
-public readonly record struct FPakEntryFlags {
-    public FPakEntryFlags(uint value) {
-        CompressionBlockSize = (int) (value & 0x3f);
-        CompressionBlockCount = (int) ((value >> 6) & 0xffff);
-        Encrypted = (value & 0x400000) == 400000;
-        CompressionMethod = (int) ((value >> 23) & 0x3f);
-        SizeIs32BitSafe = (value & 0x20000000) == 0x20000000;
-        UncompressedSizeIs32BitSafe = (value & 0x40000000) == 0x40000000;
-        OffsetSizeIs32BitSafe = (value & 0x80000000) == 0x80000000;
-    }
+namespace Cuddle.Core.Structs.FileSystem;
 
-    public int CompressionBlockSize { get; }
-    public int CompressionBlockCount { get; }
-    public bool Encrypted { get; }
-    public int CompressionMethod { get; }
-    public bool SizeIs32BitSafe { get; }
-    public bool UncompressedSizeIs32BitSafe { get; }
-
-    public bool OffsetSizeIs32BitSafe { get; }
+[Flags]
+// UE4 reference: FPakFile -> Flag_None, Flag_Encrypted, Flag_Deleted.
+public enum FPakEntryFlags : byte {
+    None = 0,
+    Encrypted = 1,
+    Deleted = 2,
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using Cuddle.Core.VFS;
 
@@ -52,6 +53,8 @@ public class FPakIndex {
             var frozen = archive.ReadClassArray<FPakEntry>(null, owner, false);
             Files.EnsureCapacity(Count + frozen.Length);
 
+            var entryLocCache = new Dictionary<int, int>();
+
             if (hasFullDirectoryIndex) { // we have paths, yay.
                 using var dirReader = new FArchiveReader(encodedReader.Game, owner.ReadBytes(fullDirectoryIndexOffset, fullDirectoryIndexSize, owner.IsIndexEncrypted));
                 var dirCount = dirReader.Read<int>();
@@ -73,6 +76,7 @@ public class FPakIndex {
                                 entry = frozen[-(entryLoc + 1)] with { };
                                 break;
                             default: {
+                                Debug.Assert(entryLocCache.ContainsKey(entryLoc) == false, "entryLocCache.ContainsKey(entryLoc) == false");
                                 encodedReader.Position = entryLoc;
                                 entry = new FPakEntry(encodedReader, Owner, true);
                                 break;
@@ -82,6 +86,9 @@ public class FPakIndex {
                         entry.Path = dirName + fileName;
                         entry.MountedPath = MountPoint + entry.Path;
                         entry.CreateObjectPath();
+                        if (entryLoc >= 0) {
+                            entryLocCache[entryLoc] = Files.Count;
+                        }
                         Files.Add(entry);
                         // note: figure out what value gets passed to FPakFile::HashPath and store the value in hashStore.
                     }
@@ -96,23 +103,24 @@ public class FPakIndex {
                     var hash = hashReader.Read<ulong>();
                     var entryLoc = hashReader.Read<int>();
                     FPakEntry entry;
-                    switch (entryLoc) {
-                        case int.MaxValue or int.MinValue: // Invalid, Unused
-                            continue;
-                        case < 0:
-                            entry = frozen[-(entryLoc + 1)] with { };
-                            break;
-                        default: {
-                            encodedReader.Position = entryLoc;
-                            entry = new FPakEntry(encodedReader, Owner, true);
-                            break;
-                        }
-                    }
 
-                    if (!hasFullDirectoryIndex) {
+                    if (!hasFullDirectoryIndex || !entryLocCache.TryGetValue(entryLoc, out var entryIndex)) {
+                        switch (entryLoc) {
+                            case int.MaxValue or int.MinValue: // Invalid, Unused
+                                continue;
+                            case < 0:
+                                entry = frozen[-(entryLoc + 1)] with { };
+                                break;
+                            default: {
+                                encodedReader.Position = entryLoc;
+                                entry = new FPakEntry(encodedReader, Owner, true);
+                                break;
+                            }
+                        }
+
                         var path = hash.ToString("x8");
                         if (hashStore == null || !hashStore.TryGetPath(hash, out var mountPath)) {
-                            mountPath = MountPoint + path;
+                            mountPath = MountPoint + path; // this is bad.
                         } else {
                             path = mountPath[MountPoint.Length..];
                         }
@@ -120,10 +128,12 @@ public class FPakIndex {
                         entry.Path = path;
                         entry.MountedPath = mountPath;
                         entry.CreateObjectPath();
+                        Files.Add(entry);
+                    } else {
+                        entry = Files[entryIndex];
                     }
 
                     entry.MountedHash = hash;
-                    Files.Add(entry);
                 }
             }
 

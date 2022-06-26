@@ -147,7 +147,7 @@ public sealed class UPakFile : IVFSFile {
     public byte[]? EncryptionKey { get; set; }
     public bool HasHashes => Version >= EPakVersion.PathHashIndex;
     public bool HasPaths => true;
-    public IEnumerable<IVFSEntry> Entries => Index?.Files ?? new List<FPakEntry>();
+    public IEnumerable<IVFSEntry> Entries => Index?.Files.Where(x => !x.IsDeleted) ?? new List<FPakEntry>();
 
     public MemoryOwner<byte> ReadFile(string path) {
         var index = Index?.Files.FirstOrDefault(x => x.MountedPath == path || x.ObjectPath.EndsWith(path, StringComparison.Ordinal));
