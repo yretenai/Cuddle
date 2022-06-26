@@ -5,24 +5,15 @@ using DragonLib.CommandLine;
 
 namespace Cuddle.Headless;
 
-public record CuddleFlags : CommandLineFlags {
-    [Flag("raw", Help = "Dump raw uasset files", Category = "Export")]
-    public bool Raw { get; set; }
-
-    [Flag("locres", Help = "Save localization data", Category = "Export")]
-    public bool SaveLocRes { get; set; }
-
-    [Flag("no-json", Help = "Suppress JSON generation", Category = "Export")]
-    public bool NoJSON { get; set; }
-
+public partial record CuddleFlags : CommandLineFlags {
     [Flag("aes", Aliases = new[] { "k" }, Help = "AES 0xKeyGuid=0xValue for the packages", Category = "Cuddle")]
     public List<string> Keys { get; set; } = new();
 
     [Flag("game", Help = "Unreal Version to use", Default = EGame.UE4_MAX, Category = "Cuddle", EnumPrefix = new[] { "GAME_", "UE" }, ReplaceDashes = '_', ReplaceDots = '_')]
     public EGame Game { get; set; } = EGame.UE4_MAX;
 
-    [Flag("mode", Default = CuddleMode.Extract, Help = "Operation mode", Category = "Cuddle", Hidden = true)]
-    public CuddleMode Mode { get; set; } = CuddleMode.Extract;
+    [Flag("mode", Default = CuddleMode.Export, Help = "Operation mode", Category = "Cuddle", Hidden = true)]
+    public CuddleMode Mode { get; set; } = CuddleMode.Export;
 
     [Flag("profiling", Hidden = true)]
     public bool Profiling { get; set; }

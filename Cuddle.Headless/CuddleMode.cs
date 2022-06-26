@@ -1,7 +1,7 @@
 ﻿namespace Cuddle.Headless;
 
 public enum CuddleMode {
-    Extract,
+    Export,
     List,
     DEBUG_Profiling,
 }

@@ -1,14 +1,10 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.Json;
 using Cuddle.Core;
-using Cuddle.Core.Json;
 using Cuddle.Core.VFS;
 using Cuddle.Headless.Mode;
-using DragonLib;
 using DragonLib.CommandLine;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
@@ -26,11 +22,11 @@ public static class Program {
         Console.OutputEncoding = Encoding.UTF8;
 
         Log.Logger = new LoggerConfiguration()
-                        .MinimumLevel.Information()
-                        .WriteTo.Console(theme: AnsiConsoleTheme.Literate)
-                        .MinimumLevel.Debug()
-                        .WriteTo.File(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "Logs", $"{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}.log"), encoding: Encoding.UTF8)
-                        .CreateLogger();
+            .MinimumLevel.Information()
+            .WriteTo.Console(theme: AnsiConsoleTheme.Literate)
+            .MinimumLevel.Debug()
+            .WriteTo.File(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "Logs", $"{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}.log"), encoding: Encoding.UTF8)
+            .CreateLogger();
         SystemManagement.DescribeLog();
         Oodle.Load(flags.OodlePath);
         Log.Debug("{Flags}", flags.ToString());
@@ -40,8 +36,8 @@ public static class Program {
         manager.MountDir(new DirectoryInfo(flags.PakPath), flags.Game);
 
         switch (flags.Mode) {
-            case CuddleMode.Extract:
-                ExtractMode.Do(flags, manager);
+            case CuddleMode.Export:
+                ExportMode.Do(flags, manager);
                 break;
             case CuddleMode.List:
                 ListMode.Do(flags, manager);

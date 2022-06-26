@@ -6,7 +6,11 @@ namespace Cuddle.Headless.Mode;
 public static class ListMode {
     public static void Do(CuddleFlags flags, VFSManager manager) {
         foreach (var file in manager.UniqueFilesPath) {
-            Log.Information("{Name}\t{Object}\t{FSName}", file.MountedPath, file.ObjectPath, file.Owner.Name);
+            if (flags.FullInfo) {
+                Log.Information("\t{Name}\t{ObjectName}\t{Hash:x16}\t{Size}\t{Owner}", file.MountedPath, file.ObjectPath, file.MountedHash, file.Size, file.Owner.Name);
+            } else {
+                Log.Information("\t{Name}\t{Owner}", flags.ObjectPath ? file.ObjectPath : file.MountedPath, file.Owner.Name);
+            }
         }
     }
 }

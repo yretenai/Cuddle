@@ -9,7 +9,7 @@ using Serilog;
 
 namespace Cuddle.Headless.Mode;
 
-public static class ExtractMode {
+public static class ExportMode {
     public static void Do(CuddleFlags flags, VFSManager manager) {
         foreach (var file in manager.UniqueFilesPath) {
             try {
