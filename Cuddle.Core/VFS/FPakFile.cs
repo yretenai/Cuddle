@@ -5,7 +5,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
-using Cuddle.Core.Assets;
 using Cuddle.Core.Structs;
 using Cuddle.Core.Structs.FileSystem;
 using DragonLib;
@@ -16,8 +15,8 @@ using ZstdNet;
 
 namespace Cuddle.Core.VFS;
 
-public sealed class UPakFile : IVFSFile {
-    public UPakFile(string fullPath, EGame game, string name, AESKeyStore? keyStore, HashPathStore? hashStore, VFSManager manager) {
+public sealed class FPakFile : IVFSFile {
+    public FPakFile(string fullPath, EGame game, string name, AESKeyStore? keyStore, HashPathStore? hashStore, VFSManager manager) {
         Name = name;
         Game = game;
         Manager = manager;
@@ -281,86 +280,6 @@ public sealed class UPakFile : IVFSFile {
         return outputBuffer;
     }
 
-    public UAssetFile? ReadAsset(string path) {
-        if (Disposed) {
-            return null;
-        }
-
-        var index = Index?.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.EndsWith(path, StringComparison.Ordinal));
-        return index == null ? null : ReadAsset(index);
-    }
-
-    public UAssetFile? ReadAsset(ulong hash) {
-        if (Disposed || !HasHashes) {
-            return null;
-        }
-
-        var index = Index?.Files.FirstOrDefault(x => x.MountedHash == hash);
-        return index == null ? null : ReadAsset(index);
-    }
-
-    public UAssetFile? ReadAsset(IVFSEntry entry) {
-        if (Disposed) {
-            return null;
-        }
-
-        if (entry.Disposed) {
-            entry.Reset();
-        }
-
-        if (entry.Data is null) {
-            var data = ReadFile(entry);
-            if (data.Length == 0) {
-                return null;
-            }
-
-            var uexp = ReadFile(Path.ChangeExtension(entry.MountedPath, ".uexp"));
-            entry.Data = new UAssetFile(data, uexp, Path.GetFileNameWithoutExtension(entry.MountedPath), Game, this, Manager);
-        }
-
-        return (UAssetFile) entry.Data;
-    }
-
-    public UObject? ReadAssetExport(string path, int export) {
-        if (Disposed) {
-            return null;
-        }
-
-        var index = Index?.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.EndsWith(path, StringComparison.Ordinal));
-        return index == null ? null : ReadAssetExport(index, export);
-    }
-
-    public UObject? ReadAssetExport(ulong hash, int export) {
-        if (Disposed || !HasHashes) {
-            return null;
-        }
-
-        var index = Index?.Files.FirstOrDefault(x => x.MountedHash == hash);
-        return index == null ? null : ReadAssetExport(index, export);
-    }
-
-    public UObject? ReadAssetExport(IVFSEntry entry, int export) => Disposed ? null : ReadAsset(entry)?.GetExport(export);
-
-    public UObject?[] ReadAssetExports(string path) {
-        if (Disposed) {
-            return Array.Empty<UObject>();
-        }
-
-        var index = Index?.Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.EndsWith(path, StringComparison.Ordinal));
-        return index == null ? Array.Empty<UObject>() : ReadAssetExports(index);
-    }
-
-    public UObject?[] ReadAssetExports(ulong hash) {
-        if (Disposed || !HasHashes) {
-            return Array.Empty<UObject>();
-        }
-
-        var index = Index?.Files.FirstOrDefault(x => x.MountedHash == hash);
-        return index == null ? Array.Empty<UObject>() : ReadAssetExports(index);
-    }
-
-    public UObject?[] ReadAssetExports(IVFSEntry entry) => (Disposed ? null : ReadAsset(entry)?.GetExports()) ?? Array.Empty<UObject?>();
-
     public bool FindEncryptionKey(AESKeyStore aesKey, MemoryOwner<byte> test) {
         if (aesKey.Keys.TryGetValue(EncryptionGuid, out var key)) {
             EncryptionKey = key;
@@ -424,7 +343,7 @@ public sealed class UPakFile : IVFSFile {
         return Decrypt(data, isEncrypted, true)[..(int) count];
     }
 
-    ~UPakFile() {
+    ~FPakFile() {
         Dispose();
     }
 

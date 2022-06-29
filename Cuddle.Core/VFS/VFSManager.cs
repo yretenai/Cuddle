@@ -75,9 +75,30 @@ public sealed class VFSManager : IResettable {
             }
         }
 
-        foreach (var pakPath in dir.EnumerateFiles("*.pak", SearchOption.AllDirectories).OrderBy(x => x.Name.Replace('.', '_'), new NaturalStringComparer(StringComparison.OrdinalIgnoreCase))) {
-            Containers.Add(new UPakFile(pakPath.FullName, game, Path.GetFileNameWithoutExtension(pakPath.Name), KeyStore, HashStore, this));
+        var global = dir.GetFiles("global.ucas", SearchOption.AllDirectories).FirstOrDefault();
+        var found = new HashSet<string>();
+        if (global is not null) {
+            found.Add("global");
+            Containers.Add(new FIoStore(global.FullName, game, Path.GetFileNameWithoutExtension(global.Name), KeyStore, HashStore, this) { IsGlobal = true });
         }
+
+        foreach (var pakPath in dir.EnumerateFiles("*.ucas", SearchOption.AllDirectories).OrderBy(x => x.Name.Replace('.', '_'), new NaturalStringComparer(StringComparison.OrdinalIgnoreCase))) {
+            var name = Path.GetFileNameWithoutExtension(pakPath.Name);
+            if (found.Add(name)) {
+                Containers.Add(new FIoStore(pakPath.FullName, game, name, KeyStore, HashStore, this));
+            }
+        }
+
+        foreach (var pakPath in dir.EnumerateFiles("*.pak", SearchOption.AllDirectories).OrderBy(x => x.Name.Replace('.', '_'), new NaturalStringComparer(StringComparison.OrdinalIgnoreCase))) {
+            var name = Path.GetFileNameWithoutExtension(pakPath.Name);
+            if (found.Add(name)) {
+                Containers.Add(new FPakFile(pakPath.FullName, game, name, KeyStore, HashStore, this));
+            }
+        }
+    }
+
+    public MemoryOwner<byte> ReadFile(IVFSEntry entry) {
+        return entry.ReadFile();
     }
 
     public MemoryOwner<byte> ReadFile(string path) {
@@ -90,33 +111,42 @@ public sealed class VFSManager : IResettable {
         return file == null ? MemoryOwner<byte>.Empty : file.Owner.ReadFile(file);
     }
 
+    public UAssetFile? ReadAsset(IVFSEntry? entry) {
+        if (entry == null || Disposed || entry.Owner.Disposed) {
+            return null;
+        }
+
+        if (entry.Disposed) {
+            entry.Reset();
+        }
+
+        if (entry.Data is null) {
+            var data = ReadFile(entry);
+            if (data.Length == 0) {
+                return null;
+            }
+
+            var uexp = ReadFile(Path.ChangeExtension(entry.MountedPath, ".uexp"));
+            entry.Data = new UAssetFile(data, uexp, Path.GetFileNameWithoutExtension(entry.MountedPath), entry.Owner.Game, entry.Owner, this);
+        }
+
+        return (UAssetFile)entry.Data;
+    }
+
     public UAssetFile? ReadAsset(string path) {
         var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.Equals(path, StringComparison.Ordinal));
-        return file?.Owner.ReadAsset(file);
+        return ReadAsset(file);
     }
 
     public UAssetFile? ReadAsset(ulong hash) {
         var file = Files.FirstOrDefault(x => x.MountedHash == hash);
-        return file?.Owner.ReadAsset(file);
+        return ReadAsset(file);
     }
 
-    public UObject? ReadExport(string path, int index) {
-        var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.Equals(path, StringComparison.Ordinal));
-        return file?.Owner.ReadAssetExport(file, index);
-    }
-
-    public UObject? ReadExport(ulong hash, int index) {
-        var file = Files.FirstOrDefault(x => x.MountedHash == hash);
-        return file?.Owner.ReadAssetExport(file, index);
-    }
-
-    public UObject?[] ReadExports(string path) {
-        var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.Equals(path, StringComparison.Ordinal));
-        return file == null ? Array.Empty<UObject>() : file.Owner.ReadAssetExports(file);
-    }
-
-    public UObject?[] ReadExports(ulong hash) {
-        var file = Files.FirstOrDefault(x => x.MountedHash == hash);
-        return file == null ? Array.Empty<UObject>() : file.Owner.ReadAssetExports(file);
-    }
+    public UObject? ReadExport(IVFSEntry entry, int index) => ReadAsset(entry)?.GetExport(index);
+    public UObject? ReadExport(string path, int index) => ReadAsset(path)?.GetExport(index);
+    public UObject? ReadExport(ulong hash, int index) => ReadAsset(hash)?.GetExport(index);
+    public UObject?[] ReadExports(IVFSEntry entry) => ReadAsset(entry)?.GetExports() ?? Array.Empty<UObject>();
+    public UObject?[] ReadExports(string path) => ReadAsset(path)?.GetExports() ?? Array.Empty<UObject>();
+    public UObject?[] ReadExports(ulong hash) => ReadAsset(hash)?.GetExports() ?? Array.Empty<UObject>();
 }

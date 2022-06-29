@@ -21,7 +21,7 @@ public static class ExportMode {
                 var ext = Path.GetExtension(file.MountedPath).ToLower();
                 if (ext is ".uasset" or ".umap") {
                     try {
-                        using var asset = file.ReadAsset();
+                        using var asset = manager.ReadAsset(file);
                         if (asset == null) {
                             continue;
                         }

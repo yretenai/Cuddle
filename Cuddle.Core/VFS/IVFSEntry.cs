@@ -1,4 +1,3 @@
-using Cuddle.Core.Assets;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Cuddle.Core.VFS;
@@ -11,7 +10,4 @@ public interface IVFSEntry : IResettable {
     ulong MountedHash { get; }
     IPoliteDisposable? Data { get; set; }
     MemoryOwner<byte> ReadFile();
-    UAssetFile? ReadAsset();
-    UObject? ReadAssetExport(int index);
-    UObject?[] ReadAssetExports();
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using Cuddle.Core.Assets;
 using Cuddle.Core.VFS;
 using DragonLib;
 using Microsoft.Toolkit.HighPerformance.Buffers;
@@ -10,7 +9,7 @@ namespace Cuddle.Core.Structs.FileSystem;
 public sealed record FPakEntry : IVFSEntry {
     public FPakEntry() => Hash = new Lazy<byte[]>(new byte[0x14]);
 
-    public FPakEntry(FArchiveReader archive, UPakFile owner, bool isCompressed) {
+    public FPakEntry(FArchiveReader archive, FPakFile owner, bool isCompressed) {
         Owner = owner;
 
         if (isCompressed) {
@@ -125,12 +124,6 @@ public sealed record FPakEntry : IVFSEntry {
     public bool Disposed { get; private set; }
 
     public MemoryOwner<byte> ReadFile() => Owner.ReadFile(this);
-
-    public UAssetFile? ReadAsset() => Owner.ReadAsset(this);
-
-    public UObject? ReadAssetExport(int index) => Owner.ReadAssetExport(this, index);
-
-    public UObject?[] ReadAssetExports() => Owner.ReadAssetExports(this);
 
     public void Dispose() {
         if (Data is IDisposable disposable) {

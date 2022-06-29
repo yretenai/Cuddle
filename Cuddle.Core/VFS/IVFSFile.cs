@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using Cuddle.Core.Assets;
 using Cuddle.Core.Structs;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Cuddle.Core.VFS;
 
 public interface IVFSFile : IPoliteDisposable {
+    VFSManager Manager { get; }
     string Name { get; }
     EGame Game { get; }
     Guid EncryptionGuid { get; }
@@ -17,15 +17,6 @@ public interface IVFSFile : IPoliteDisposable {
     MemoryOwner<byte> ReadFile(string path);
     MemoryOwner<byte> ReadFile(ulong hash);
     MemoryOwner<byte> ReadFile(IVFSEntry entry);
-    UAssetFile? ReadAsset(string path);
-    UAssetFile? ReadAsset(ulong hash);
-    UAssetFile? ReadAsset(IVFSEntry entry);
-    UObject? ReadAssetExport(string path, int export);
-    UObject? ReadAssetExport(ulong hash, int export);
-    UObject? ReadAssetExport(IVFSEntry entry, int export);
-    UObject?[] ReadAssetExports(string path);
-    UObject?[] ReadAssetExports(ulong hash);
-    UObject?[] ReadAssetExports(IVFSEntry entry);
     MemoryOwner<byte> ReadBytes(long offset, long count, bool isEncrypted);
     bool FindEncryptionKey(AESKeyStore aesKey, MemoryOwner<byte> test);
     void ClearCaches();

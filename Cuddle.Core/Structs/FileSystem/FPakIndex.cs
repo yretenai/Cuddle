@@ -6,7 +6,7 @@ using Cuddle.Core.VFS;
 namespace Cuddle.Core.Structs.FileSystem;
 
 public class FPakIndex {
-    public FPakIndex(FArchiveReader archive, UPakFile owner, HashPathStore? hashStore) {
+    public FPakIndex(FArchiveReader archive, FPakFile owner, HashPathStore? hashStore) {
         Owner = owner;
 
         MountPoint = archive.ReadString();
@@ -144,7 +144,7 @@ public class FPakIndex {
         }
     }
 
-    public UPakFile Owner { get; }
+    public FPakFile Owner { get; }
 
     public string MountPoint { get; }
     public int Count { get; }

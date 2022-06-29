@@ -120,7 +120,7 @@ public sealed class UAssetFile : IPoliteDisposable {
             return null;
         }
 
-        var asset = Owner.ReadAsset(outer.ObjectName.Value);
+        var asset = Owner.Manager.ReadAsset(outer.ObjectName.Value);
         throw new NotImplementedException();
     }
 
