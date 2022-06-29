@@ -22,10 +22,21 @@ public sealed class FObjectExport : FObjectAbstract, IResettable {
         ForcedExport = archive.ReadBoolean();
         NotForClient = archive.ReadBoolean();
         NotForServer = archive.ReadBoolean();
-        PackageGuid = archive.Read<Guid>();
+        if (archive.VersionUE5 < EObjectVersionUE5.REMOVE_OBJECT_EXPORT_PACKAGE_GUID) {
+            PackageGuid = archive.Read<Guid>();
+        }
+
+        if (archive.VersionUE5 >= EObjectVersionUE5.TRACK_OBJECT_EXPORT_IS_INHERITED) {
+            IsInheritedInstance = archive.ReadBoolean();
+        }
+
         PackageFlags = archive.Read<uint>();
         NotAlwaysLoadedForEditorGame = archive.Version < EObjectVersion.LOAD_FOR_EDITOR_GAME || archive.ReadBoolean();
         IsAsset = archive.Version >= EObjectVersion.COOKED_ASSETS_IN_EDITOR_SUPPORT && archive.ReadBoolean();
+
+        if (archive.VersionUE5 >= EObjectVersionUE5.OPTIONAL_RESOURCES) {
+            GeneratePublicHash = archive.ReadBoolean();
+        }
 
         if (archive.Version >= EObjectVersion.PRELOAD_DEPENDENCIES_IN_COOKED_EXPORTS) {
             FirstExportDependency = archive.Read<int>();
@@ -47,9 +58,11 @@ public sealed class FObjectExport : FObjectAbstract, IResettable {
     public bool NotForClient { get; }
     public bool NotForServer { get; }
     public Guid PackageGuid { get; }
+    public bool IsInheritedInstance { get; }
     public uint PackageFlags { get; }
     public bool NotAlwaysLoadedForEditorGame { get; }
     public bool IsAsset { get; }
+    public bool GeneratePublicHash { get; }
     public int FirstExportDependency { get; }
     public int SerializationBeforeSerializationDependencies { get; }
     public int CreateBeforeSerializationDependencies { get; }

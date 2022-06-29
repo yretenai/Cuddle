@@ -14,7 +14,7 @@ public sealed class FIoStore : IVFSFile {
         using var casStream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         using var tocStream = new FileStream(Path.ChangeExtension(fullPath, "utoc"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
-        var pakPath = Path.ChangeExtension(fullPath, "utoc");
+        var pakPath = Path.ChangeExtension(fullPath, "pak");
         if (File.Exists(pakPath)) {
             PakFile = new FPakFile(pakPath, game, name, keyStore, hashStore, manager);
         }

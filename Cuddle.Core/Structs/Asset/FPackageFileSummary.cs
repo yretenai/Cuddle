@@ -38,7 +38,15 @@ public class FPackageFileSummary {
         }
 
         if (LegacyFileVersion <= ELegacyFileVersion.ADDED_UE5_VERSION) {
-            FileVersionUE5 = archive.Read<int>();
+            FileVersionUE5 = (EObjectVersionUE5) archive.Read<int>();
+        }
+
+        if (FileVersionUE5 == 0 && archive.Game >= EGame.UE5_0) {
+            FileVersionUE5 = archive.Game.FindObjectVersionUE5();
+        }
+
+        if (FileVersionUE5 > EObjectVersionUE5.NEWEST_LOADABLE_PACKAGE) {
+            throw new NotSupportedException();
         }
 
         FileVersionLicenseeUE4 = archive.Read<int>();
@@ -134,13 +142,21 @@ public class FPackageFileSummary {
             PreloadDependencyCount = archive.Read<int>();
             PreloadDependencyOffset = archive.Read<int>();
         }
+
+        if (FileVersionUE5 >= EObjectVersionUE5.NAMES_REFERENCED_FROM_EXPORT_DATA) {
+            NamesReferencedFromExportDataCount = archive.Read<int>();
+        }
+
+        if(FileVersionUE5 >= EObjectVersionUE5.PAYLOAD_TOC) {
+            PayloadTocOffset = archive.Read<int>();
+        }
     }
 
     public uint Tag { get; }
     public ELegacyFileVersion LegacyFileVersion { get; }
     public int LegacyUE3Version { get; }
     public EObjectVersion FileVersionUE4 { get; }
-    public int FileVersionUE5 { get; }
+    public EObjectVersionUE5 FileVersionUE5 { get; }
     public int FileVersionLicenseeUE4 { get; }
     public FCustomVersion[] CustomVersions { get; } = Array.Empty<FCustomVersion>();
     public int TotalHeaderSize { get; }
@@ -177,4 +193,6 @@ public class FPackageFileSummary {
     public int[] ChunkIDs { get; } = Array.Empty<int>();
     public int PreloadDependencyCount { get; }
     public int PreloadDependencyOffset { get; }
+    public int NamesReferencedFromExportDataCount { get; }
+    public int PayloadTocOffset { get; }
 }

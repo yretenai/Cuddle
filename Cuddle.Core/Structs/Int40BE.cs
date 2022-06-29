@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace Cuddle.Core.Structs;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 5)]
-public readonly struct Int40BE : IEquatable<Int40BE>, IEquatable<int>, IEquatable<long> {
+public readonly struct Int40BE : IEquatable<Int40BE>, IEquatable<int>, IEquatable<long>, IFormattable {
     public readonly byte A;
     public readonly byte B;
     public readonly byte C;
@@ -28,6 +28,9 @@ public readonly struct Int40BE : IEquatable<Int40BE>, IEquatable<int>, IEquatabl
         };
 
     public override int GetHashCode() => ToInt64().GetHashCode();
+    public override string ToString() => ToInt64().ToString();
+
+    public string ToString(string? format, IFormatProvider? formatProvider) => ToInt64().ToString(format, formatProvider);
 
     public static bool operator ==(Int40BE left, Int40BE right) => left.Equals(right);
 

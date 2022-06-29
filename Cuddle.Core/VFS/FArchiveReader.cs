@@ -16,6 +16,7 @@ public sealed class FArchiveReader : IPoliteDisposable {
         Data = data;
         Game = asset.Game;
         Version = asset.Summary.FileVersionUE4;
+        VersionUE5 = asset.Summary.FileVersionUE5;
     }
 
     public FArchiveReader(EGame game, MemoryOwner<byte> data) {
@@ -29,6 +30,7 @@ public sealed class FArchiveReader : IPoliteDisposable {
 
     public EGame Game { get; set; }
     public EObjectVersion Version { get; set; }
+    public EObjectVersionUE5 VersionUE5 { get; set; }
     public UAssetFile? Asset { get; internal set; }
     public MemoryOwner<byte> Data { get; }
     public int Position { get; set; }

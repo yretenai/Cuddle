@@ -11,8 +11,13 @@ public class FObjectImport : FObjectAbstract {
         ClassName = new FName(archive);
         PackageIndex = new FPackageIndex(archive);
         ObjectName = new FName(archive);
+
+        if (archive.VersionUE5 >= EObjectVersionUE5.OPTIONAL_RESOURCES) {
+            ImportOptional = archive.ReadBoolean();
+        }
     }
 
+    public bool ImportOptional { get; }
     public FName ClassPackage { get; } = FName.Null;
     public FName ClassName { get; } = FName.Null;
     public FPackageIndex PackageIndex { get; protected init; } = FPackageIndex.Null;

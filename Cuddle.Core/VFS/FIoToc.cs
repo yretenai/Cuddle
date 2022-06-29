@@ -2,19 +2,19 @@
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Cuddle.Core.Structs.FileSystem;
+using Microsoft.Toolkit.HighPerformance;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Cuddle.Core.VFS;
 
 public class FIoToc {
-    public FIoToc(FIoStore store, FileStream tocStream) {
+    public FIoToc(FIoStore store, Stream stream) {
         Owner = store;
 
         Span<byte> buffer = stackalloc byte[16];
-        tocStream.ReadExactly(buffer);
+        stream.ReadExactly(buffer);
 
         if (BinaryPrimitives.ReadUInt64LittleEndian(buffer) != 0x2D3D3D2D2D3D3D2D &&
             BinaryPrimitives.ReadUInt64LittleEndian(buffer[8..]) != 0x2D3D3D2D2D3D3D2D) {
@@ -22,13 +22,13 @@ public class FIoToc {
         }
 
         buffer = stackalloc byte[8];
-        tocStream.ReadExactly(buffer);
+        stream.ReadExactly(buffer);
 
         Version = (EIoStoreTocVersion)BinaryPrimitives.ReadInt32LittleEndian(buffer);
         var TocHeaderSize = BinaryPrimitives.ReadInt32LittleEndian(buffer[4..]);
 
         buffer = stackalloc byte[TocHeaderSize - 24];
-        tocStream.ReadExactly(buffer);
+        stream.ReadExactly(buffer);
 
         var tocEntryCount = BinaryPrimitives.ReadInt32LittleEndian(buffer);
         var tocCompressedBlockEntryCount = BinaryPrimitives.ReadInt32LittleEndian(buffer[4..]);
@@ -39,40 +39,74 @@ public class FIoToc {
         var directoryIndexSize = BinaryPrimitives.ReadInt32LittleEndian(buffer[24..]);
         PartitionCount = BinaryPrimitives.ReadInt32LittleEndian(buffer[28..]);
         ContainerId = BinaryPrimitives.ReadInt64LittleEndian(buffer[32..]);
-        EncryptionGuid = MemoryMarshal.Read<Guid>(buffer[36..]);
-        ContainerFlags = BinaryPrimitives.ReadInt64LittleEndian(buffer[52..]);
-        PartitionSize = BinaryPrimitives.ReadInt64LittleEndian(buffer[56..]);
+        EncryptionGuid = MemoryMarshal.Read<Guid>(buffer[40..]);
+        ContainerFlags = (EIoContainerFlags) buffer[56];
+        // 3 bytes of padding.
+        var tocChunkPerfectHashSeedsCount = BinaryPrimitives.ReadInt32LittleEndian(buffer[60..]);
+        PartitionSize = BinaryPrimitives.ReadInt64LittleEndian(buffer[64..]);
+        var tocChunksWithoutPerfectHashCount  = BinaryPrimitives.ReadInt32LittleEndian(buffer[72..]);
 
         if (Version < EIoStoreTocVersion.PartitionSize) {
             PartitionCount = 1;
             PartitionSize = long.MaxValue;
         }
 
+        if (Version < EIoStoreTocVersion.PerfectHash) {
+            tocChunkPerfectHashSeedsCount = 0;
+        }
+
+        if (Version < EIoStoreTocVersion.PerfectHashWithOverflow) {
+            tocChunksWithoutPerfectHashCount = 0;
+        }
+
         ChunkIds = new FIoChunkId[tocEntryCount].AsMemory();
         ChunkOffsetLengths = new FIoOffsetAndLength[tocEntryCount].AsMemory();
+        HashSeeds = new int[tocChunkPerfectHashSeedsCount].AsMemory();
+        ChunkIndicesWithoutHash = new int[tocChunksWithoutPerfectHashCount].AsMemory();
         CompressionBlocks = new FIoStoreTocCompressedBlockEntry[tocCompressedBlockEntryCount].AsMemory();
-        tocStream.ReadExactly(MemoryMarshal.AsBytes(ChunkIds.Span));
-        tocStream.ReadExactly(MemoryMarshal.AsBytes(ChunkOffsetLengths.Span));
-        tocStream.ReadExactly(MemoryMarshal.AsBytes(CompressionBlocks.Span));
+        stream.ReadExactly(MemoryMarshal.AsBytes(ChunkIds.Span));
+        stream.ReadExactly(MemoryMarshal.AsBytes(ChunkOffsetLengths.Span));
+        stream.ReadExactly(MemoryMarshal.AsBytes(HashSeeds.Span));
+        stream.ReadExactly(MemoryMarshal.AsBytes(ChunkIndicesWithoutHash.Span));
+        stream.ReadExactly(MemoryMarshal.AsBytes(CompressionBlocks.Span));
 
         CompressionMethods = new List<string> {
             "None",
         };
 
         using var pooled = MemoryOwner<byte>.Allocate(compressionMethodNameLength);
-        tocStream.ReadExactly(pooled.Span);
+        stream.ReadExactly(pooled.Span);
 
         using var reader = new FArchiveReader(pooled);
         for (var i = 0; i < compressionMethodNameCount; ++i) {
             CompressionMethods.Add(reader.ReadString());
         }
+
+        if (ContainerFlags.HasFlag(EIoContainerFlags.Signed)) {
+            buffer = stackalloc byte[4];
+            stream.ReadExactly(buffer);
+            var hashSize = BinaryPrimitives.ReadInt32LittleEndian(buffer);
+            TocSignature = new byte[hashSize].AsMemory();
+            BlockSignature = new byte[hashSize].AsMemory();
+            stream.ReadExactly(MemoryMarshal.AsBytes(TocSignature.Span));
+            stream.ReadExactly(MemoryMarshal.AsBytes(BlockSignature.Span));
+            var data = new byte[20 * tocCompressedBlockEntryCount];
+            stream.ReadExactly(data);
+            ChunkSignatures = new Memory2D<byte>(data, tocCompressedBlockEntryCount, 20);
+        }
+
+        if (ContainerFlags.HasFlag(EIoContainerFlags.Indexed)) {
+            // todo: directory index
+        }
+
+        // todo: meta
     }
 
     public FIoStore Owner { get; }
     public EIoStoreTocVersion Version { get; set; }
     public int CompressionBlockSize { get; set; }
     public List<string> CompressionMethods { get; set; }
-    public long ContainerFlags { get; set; }
+    public EIoContainerFlags ContainerFlags { get; set; }
     public long ContainerId { get; set; }
     public Guid EncryptionGuid { get; set; }
     public int PartitionCount { get; set; }
@@ -80,4 +114,9 @@ public class FIoToc {
     public Memory<FIoChunkId> ChunkIds { get; set; }
     public Memory<FIoOffsetAndLength> ChunkOffsetLengths { get; set; }
     public Memory<FIoStoreTocCompressedBlockEntry> CompressionBlocks { get; set; }
+    public Memory<int> HashSeeds { get; set; }
+    public Memory<int> ChunkIndicesWithoutHash  { get; set; }
+    public Memory<byte> TocSignature { get; set; } = Memory<byte>.Empty;
+    public Memory<byte> BlockSignature { get; set; } = Memory<byte>.Empty;
+    public Memory2D<byte> ChunkSignatures { get; set; } = Memory2D<byte>.Empty;
 }

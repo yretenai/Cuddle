@@ -19,6 +19,7 @@ public sealed class UAssetFile : IPoliteDisposable {
         Summary = new FPackageFileSummary(archive, Name);
         archive.Asset = this;
         archive.Version = Summary.FileVersionUE4;
+        archive.VersionUE5 = Summary.FileVersionUE5;
 
         archive.Position = Summary.NameOffset;
         Names = archive.ReadClassArray<FNameEntry>(Summary.NameCount);

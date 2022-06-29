@@ -6,4 +6,6 @@ public enum EIoStoreTocVersion
     Initial,
     DirectoryIndex,
     PartitionSize,
+    PerfectHash,
+    PerfectHashWithOverflow,
 };

@@ -53,10 +53,24 @@ public static class CuddleExtensions {
         return version;
     }
 
+    public static EObjectVersionUE5 FindObjectVersionUE5(this EGame game) {
+        var version = game.ToGameObjectVersionUE5();
+        if (version == 0) {
+            version = game.GetEngineVersion().ToObjectVersionUE5();
+        }
+
+        return version;
+    }
+
     public static EObjectVersion ToGameObjectVersion(this EGame game) =>
         game switch {
             EGame.UE4_25Plus => EObjectVersion.ADDED_PACKAGE_OWNER,
             EGame.UE4_27Plus => EObjectVersion.CORRECT_LICENSEE_FLAG,
+            _ => 0,
+        };
+
+    public static EObjectVersionUE5 ToGameObjectVersionUE5(this EGame game) =>
+        game switch {
             _ => 0,
         };
 
@@ -90,7 +104,16 @@ public static class CuddleExtensions {
             EGame.UE4_25 => EObjectVersion.ADDED_PACKAGE_OWNER,
             EGame.UE4_26 => EObjectVersion.CORRECT_LICENSEE_FLAG,
             EGame.UE4_27 => EObjectVersion.CORRECT_LICENSEE_FLAG,
+            EGame.UE5_0 => EObjectVersion.CORRECT_LICENSEE_FLAG,
+            EGame.UE5_1 => EObjectVersion.CORRECT_LICENSEE_FLAG,
             _ => EObjectVersion.NEWEST_LOADABLE_PACKAGE,
+        };
+
+    public static EObjectVersionUE5 ToObjectVersionUE5(this EGame game) =>
+        game switch {
+            EGame.UE5_0 => EObjectVersionUE5.LARGE_WORLD_COORDINATES,
+            EGame.UE5_1 => EObjectVersionUE5.TRACK_OBJECT_EXPORT_IS_INHERITED,
+            _ => EObjectVersionUE5.NEWEST_LOADABLE_PACKAGE,
         };
 
     public static EEditorObjectVersion FindEditorVersion(this EGame game) {
@@ -105,6 +128,7 @@ public static class CuddleExtensions {
     public static EEditorObjectVersion ToGameEditorVersion(this EGame game) =>
         game switch {
             EGame.UE4_25Plus => EEditorObjectVersion.SkeletalMeshBuildRefactor,
+            EGame.UE4_27Plus => EEditorObjectVersion.SkeletalMeshSourceDataSupport16bitOfMaterialNumber,
             _ => 0,
         };
 
@@ -138,6 +162,8 @@ public static class CuddleExtensions {
             EGame.UE4_25 => EEditorObjectVersion.SkeletalMeshMoveEditorSourceDataToPrivateAsset,
             EGame.UE4_26 => EEditorObjectVersion.SkeletalMeshSourceDataSupport16bitOfMaterialNumber,
             EGame.UE4_27 => EEditorObjectVersion.SkeletalMeshSourceDataSupport16bitOfMaterialNumber,
+            EGame.UE5_0 => EEditorObjectVersion.SkeletalMeshSourceDataSupport16bitOfMaterialNumber,
+            EGame.UE5_1 => EEditorObjectVersion.SkeletalMeshSourceDataSupport16bitOfMaterialNumber,
             _ => EEditorObjectVersion.LatestVersion,
         };
 

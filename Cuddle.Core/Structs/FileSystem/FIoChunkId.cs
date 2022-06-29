@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace Cuddle.Core.Structs.FileSystem;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 12)]
-public readonly record struct FIoChunkId(ulong Id, ushort ChunkIdBE, byte ChunkType) {
+public readonly record struct FIoChunkId(ulong Id, ushort ChunkIdBE, byte Reserved, byte ChunkType) {
     public ushort ChunkId => BinaryPrimitives.ReverseEndianness(ChunkIdBE);
 }
 
@@ -12,4 +12,4 @@ public readonly record struct FIoChunkId(ulong Id, ushort ChunkIdBE, byte ChunkT
 public readonly record struct FIoOffsetAndLength(Int40BE Offset, Int40BE Length);
 
 [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 12)]
-public readonly record struct FIoStoreTocCompressedBlockEntry(Int40 Offset, Int20 Size, Int20 UncompressedSize, byte CompressionMethod);
+public readonly record struct FIoStoreTocCompressedBlockEntry(Int40 Offset, Int24 Size, Int24 UncompressedSize, byte CompressionMethod);
