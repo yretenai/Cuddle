@@ -14,27 +14,21 @@ public class FIoToc {
         Owner = store;
 
         Span<byte> buffer = stackalloc byte[16];
-        if (tocStream.Read(buffer) != 16) {
-            throw new InvalidDataException("Toc stream is too short");
-        }
+        tocStream.ReadExactly(buffer);
 
         if (BinaryPrimitives.ReadUInt64LittleEndian(buffer) != 0x2D3D3D2D2D3D3D2D &&
             BinaryPrimitives.ReadUInt64LittleEndian(buffer[8..]) != 0x2D3D3D2D2D3D3D2D) {
-            throw new InvalidDataException("Toc stream is not a valid TOC");
+            throw new InvalidDataException("Toc stream is not valid");
         }
 
         buffer = stackalloc byte[8];
-        if (tocStream.Read(buffer) != 8) {
-            throw new InvalidDataException("Toc stream is too short");
-        }
+        tocStream.ReadExactly(buffer);
 
         Version = (EIoStoreTocVersion)BinaryPrimitives.ReadInt32LittleEndian(buffer);
         var TocHeaderSize = BinaryPrimitives.ReadInt32LittleEndian(buffer[4..]);
 
         buffer = stackalloc byte[TocHeaderSize - 24];
-        if (tocStream.Read(buffer) != buffer.Length) {
-            throw new InvalidDataException("Toc stream is too short");
-        }
+        tocStream.ReadExactly(buffer);
 
         var tocEntryCount = BinaryPrimitives.ReadInt32LittleEndian(buffer);
         var tocCompressedBlockEntryCount = BinaryPrimitives.ReadInt32LittleEndian(buffer[4..]);
@@ -57,27 +51,16 @@ public class FIoToc {
         ChunkIds = new FIoChunkId[tocEntryCount].AsMemory();
         ChunkOffsetLengths = new FIoOffsetAndLength[tocEntryCount].AsMemory();
         CompressionBlocks = new FIoStoreTocCompressedBlockEntry[tocCompressedBlockEntryCount].AsMemory();
-
-        if (tocStream.Read(MemoryMarshal.AsBytes(ChunkIds.Span)) != tocEntryCount * Unsafe.SizeOf<FIoChunkId>()) {
-            throw new InvalidDataException("Toc stream is too short");
-        }
-
-        if (tocStream.Read(MemoryMarshal.AsBytes(ChunkOffsetLengths.Span)) != tocEntryCount * Unsafe.SizeOf<FIoOffsetAndLength>()) {
-            throw new InvalidDataException("Toc stream is too short");
-        }
-
-        if (tocStream.Read(MemoryMarshal.AsBytes(CompressionBlocks.Span)) != tocCompressedBlockEntryCount * Unsafe.SizeOf<FIoStoreTocCompressedBlockEntry>()) {
-            throw new InvalidDataException("Toc stream is too short");
-        }
+        tocStream.ReadExactly(MemoryMarshal.AsBytes(ChunkIds.Span));
+        tocStream.ReadExactly(MemoryMarshal.AsBytes(ChunkOffsetLengths.Span));
+        tocStream.ReadExactly(MemoryMarshal.AsBytes(CompressionBlocks.Span));
 
         CompressionMethods = new List<string> {
             "None",
         };
 
         using var pooled = MemoryOwner<byte>.Allocate(compressionMethodNameLength);
-        if (tocStream.Read(pooled.Span) != compressionMethodNameLength) {
-            throw new InvalidDataException("Toc stream is too short");
-        }
+        tocStream.ReadExactly(pooled.Span);
 
         using var reader = new FArchiveReader(pooled);
         for (var i = 0; i < compressionMethodNameCount; ++i) {

@@ -41,10 +41,7 @@ public sealed class FPakFile : IVFSFile {
 
         using var buffer = MemoryOwner<byte>.Allocate(offset);
         stream.Seek(-offset, SeekOrigin.End);
-        if (stream.Read(buffer.Span) != offset) {
-            Log.Error("Failed to read PakFile header for {PakName}! Stream is too small", Name);
-            return;
-        }
+        stream.ReadExactly(buffer.Span);
 
         using var header = new FArchiveReader(game, buffer);
 
@@ -103,11 +100,7 @@ public sealed class FPakFile : IVFSFile {
         if (IsIndexEncrypted || EncryptionGuid != Guid.Empty) {
             using var testBlock = MemoryOwner<byte>.Allocate(16);
             stream.Position = indexOffset;
-            if (stream.Read(testBlock.Span) != 16) {
-                Log.Error("Failed reading encryption test block for PAK {PakName}", Name);
-                // ????
-                return;
-            }
+            stream.ReadExactly(testBlock.Span);
 
             if (keyStore == null || !FindEncryptionKey(keyStore, testBlock)) {
                 Log.Error("Can't find encryption key that suits Encryption Key GUID {KeyGuid} for PAK {PakName}", EncryptionGuid, Name);
@@ -215,16 +208,7 @@ public sealed class FPakFile : IVFSFile {
                     using var dataStream = new UnmanagedMemoryStream((byte*) dataPin.Pointer, blockChunk.Length);
                     dataStream.Position = 2;
                     using var zlib = new DeflateStream(dataStream, CompressionMode.Decompress);
-                    var offset = 0;
-                    while (size - offset > 0) {
-                        var amount = zlib.Read(blockData[offset..].Span);
-                        if (amount == 0) {
-                            break;
-                        }
-
-                        offset += amount;
-                    }
-
+                    zlib.ReadExactly(blockData.Span);
                     break;
                 }
                 case "zstd": {
@@ -240,15 +224,7 @@ public sealed class FPakFile : IVFSFile {
                     using var dataStream = new UnmanagedMemoryStream((byte*) dataPin.Pointer, blockChunk.Length);
                     dataStream.Position = 2;
                     using var zlib = new GZipStream(dataStream, CompressionMode.Decompress);
-                    var offset = 0;
-                    while (size - offset > 0) {
-                        var amount = zlib.Read(blockData[offset..].Span);
-                        if (amount == 0) {
-                            break;
-                        }
-
-                        offset += amount;
-                    }
+                    zlib.ReadExactly(blockData.Span);
 
                     break;
                 }
@@ -330,16 +306,7 @@ public sealed class FPakFile : IVFSFile {
         // aes needs 16 byte aligned data.
         var data = MemoryOwner<byte>.Allocate((int) count.Align(16));
         stream.Position = offset;
-        var readOffset = 0;
-        while (count - readOffset > 0) {
-            var amount = stream.Read(data.Span[readOffset..]);
-            if (amount == 0) {
-                break; // can't read anymore.
-            }
-
-            readOffset += amount;
-        }
-
+        stream.ReadExactly(data.Span);
         return Decrypt(data, isEncrypted, true)[..(int) count];
     }
 
