@@ -95,9 +95,10 @@ public sealed class FIoToc : IPoliteDisposable {
             ChunkSignatures = new Memory2D<byte>(data, tocCompressedBlockEntryCount, 20);
         }
 
-        if (ContainerFlags.HasFlag(EIoContainerFlags.Indexed)) {
+        if (Version >= EIoStoreTocVersion.DirectoryIndex && ContainerFlags.HasFlag(EIoContainerFlags.Indexed)) {
             DirectoryIndexBuffer = MemoryOwner<byte>.Allocate(directoryIndexSize);
             stream.ReadExactly(DirectoryIndexBuffer.Span);
+            // replicate unreal behavior, since it can be encrypted and decryption is handled in FIoStore.
         }
 
         // todo: meta

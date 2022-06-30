@@ -22,17 +22,23 @@ public sealed class FIoStore : IVFSFile {
 
         Toc = new FIoToc(this, tocStream, keyStore);
 
-        if (Toc.DirectoryIndexBuffer != null) {
-            if (Toc.ContainerFlags.HasFlag(EIoContainerFlags.Encrypted)) {
-                if (keyStore == null || !FindEncryptionKey(keyStore, Toc.DirectoryIndexBuffer.Span[..16])) {
-                    Log.Error("Can't find encryption key that suits Encryption Key GUID {KeyGuid} for IoStore {StoreName}", EncryptionGuid, Name);
-                    return;
+        if (Toc.Version >= EIoStoreTocVersion.DirectoryIndex) {
+            if (Toc.DirectoryIndexBuffer != null) {
+                if (Toc.ContainerFlags.HasFlag(EIoContainerFlags.Encrypted)) {
+                    if (keyStore == null || !FindEncryptionKey(keyStore, Toc.DirectoryIndexBuffer.Span[..16])) {
+                        Log.Error("Can't find encryption key that suits Encryption Key GUID {KeyGuid} for IoStore {StoreName}", EncryptionGuid, Name);
+                        return;
+                    }
                 }
-            }
 
-            using var directoryReader = new FArchiveReader(Decrypt(Toc.DirectoryIndexBuffer, Toc.ContainerFlags.HasFlag(EIoContainerFlags.Encrypted)));
-            Directory = new FIoDirectory(directoryReader, this);
+                using var directoryReader = new FArchiveReader(Decrypt(Toc.DirectoryIndexBuffer, Toc.ContainerFlags.HasFlag(EIoContainerFlags.Encrypted)));
+                Directory = new FIoDirectory(directoryReader, this);
+
+                Toc.DirectoryIndexBuffer.Dispose();
+                Toc.DirectoryIndexBuffer = null;
+            }
         }
+        // if there is no directory index, load pak for the FPakIndex. idk if anything will ever use this version.
     }
 
     public FIoToc Toc { get; set; }
