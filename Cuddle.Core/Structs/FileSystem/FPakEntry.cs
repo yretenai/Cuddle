@@ -18,8 +18,9 @@ public sealed record FPakEntry : IVFSEntry {
 
             if (fields.CompressionBlockSize == 0x3F) {
                 CompressionBlockSize = archive.Read<uint>();
-            } else {
-                CompressionBlockSize = (uint) fields.CompressionBlockSize << 11;
+            }
+            else {
+                CompressionBlockSize = (uint)fields.CompressionBlockSize << 11;
             }
 
             CompressionMethod = fields.CompressionMethod;
@@ -45,12 +46,13 @@ public sealed record FPakEntry : IVFSEntry {
             CompressionBlocks = new FPakCompressedBlock[fields.CompressionBlockCount];
             if (fields.CompressionBlockCount > 0) {
                 if (UncompressedSize < CompressionBlockSize || fields.CompressionBlockSize < 0x3F && UncompressedSize < 0x10000) {
-                    CompressionBlockSize = (uint) UncompressedSize;
+                    CompressionBlockSize = (uint)UncompressedSize;
                 }
 
                 if (fields.CompressionBlockCount == 1) {
                     CompressionBlocks[0] = new FPakCompressedBlock { CompressedStart = 0, CompressedEnd = Size };
-                } else {
+                }
+                else {
                     var current = 0L;
                     for (var index = 0; index < fields.CompressionBlockCount; ++index) {
                         var size = archive.Read<uint>();
@@ -63,7 +65,8 @@ public sealed record FPakEntry : IVFSEntry {
                     }
                 }
             }
-        } else {
+        }
+        else {
             var start = archive.Position;
 
             Pos = archive.Read<long>();
@@ -94,7 +97,8 @@ public sealed record FPakEntry : IVFSEntry {
                     CompressionBlocks[index].CompressedStart -= delta;
                     CompressionBlocks[index].CompressedEnd -= delta;
                 }
-            } else {
+            }
+            else {
                 // subtract global offset
                 for (var index = 0; index < CompressionBlocks.Length; ++index) {
                     CompressionBlocks[index].CompressedStart -= Pos;
@@ -160,44 +164,43 @@ public sealed record FPakEntry : IVFSEntry {
     public override string ToString() => MountedPath;
 
     // ref: https://github.com/gildor2/UEViewer/blob/eaba2837228f9fe39134616d7bff734acd314ffb/Unreal/FileSystem/FileSystemUtils.cpp#L20
-    public void CreateObjectPath() {
+    public static string CreateObjectPath(string mountedPath) {
         // Engine/Content/Stuff -> /Engine/Stuff -- normalize Engine
-        if (MountedPath.StartsWith("Engine/Content")) {
-            ObjectPath = "/Engine" + MountedPath[14..];
-            return;
+        if (mountedPath.StartsWith("Engine/Content")) {
+            return "/Engine" + mountedPath[14..];
         }
 
         // Engine/Plugins/Stuff -> /Plugins/Stuff -- normalize Plugins
-        if (MountedPath.StartsWith("Engine/Plugins")) {
-            ObjectPath = MountedPath[6..];
-            return;
+        if (mountedPath.StartsWith("Engine/Plugins")) {
+            return mountedPath[6..];
         }
 
         // Project/Content/Stuff/ -> Game/Content/Stuff -- strip project nname
-        var index = MountedPath.IndexOf('/');
+        var index = mountedPath.IndexOf('/');
         if (index == -1) {
-            return;
+            return mountedPath;
         }
 
-        if (MountedPath[..index] != "Game") {
-            ObjectPath = MountedPath[(index + 1)..];
+        var objectPath = mountedPath;
+        if (mountedPath[..index] != "Game") {
+            objectPath = mountedPath[(index + 1)..];
         }
 
         // Content/Stuff/ -> Stuff -- strip Content directory
-        if (ObjectPath.StartsWith("Content/")) {
-            ObjectPath = ObjectPath[8..];
+        if (objectPath.StartsWith("Content/")) {
+            objectPath = objectPath[8..];
         }
 
         // Stuff.uasset -> Stuff -- strip package extensions
-        var extPos = ObjectPath.LastIndexOf('.');
+        var extPos = objectPath.LastIndexOf('.');
         if (extPos > -1) {
-            var ext = ObjectPath[extPos..];
+            var ext = objectPath[extPos..];
             if (ext is ".uasset" or ".umap") {
-                ObjectPath = ObjectPath[..^ext.Length];
+                objectPath = objectPath[..^ext.Length];
             }
         }
 
         // Stuff -> /Game/Stuff -- rebuild path
-        ObjectPath = "/Game/" + ObjectPath;
+        return "/Game/" + objectPath;
     }
 }

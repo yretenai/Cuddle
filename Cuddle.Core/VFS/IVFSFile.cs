@@ -18,6 +18,5 @@ public interface IVFSFile : IPoliteDisposable {
     MemoryOwner<byte> ReadFile(ulong hash);
     MemoryOwner<byte> ReadFile(IVFSEntry entry);
     MemoryOwner<byte> ReadBytes(long offset, long count, bool isEncrypted);
-    bool FindEncryptionKey(AESKeyStore aesKey, MemoryOwner<byte> test);
     void ClearCaches();
 }

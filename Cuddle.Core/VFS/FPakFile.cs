@@ -82,7 +82,8 @@ public sealed class FPakFile : IVFSFile {
                 "Custom", // This was never defined, but some games defined it as Oodle.
                 "Custom", // COMPRESS_Custom, but it's probably Oodle (that's what the UE source assumes.) -- Validate headers, if nothing works it's probably LZ4
             };
-        } else {
+        }
+        else {
             CompressionMethods = new List<string> {
                 "None",
             };
@@ -98,9 +99,9 @@ public sealed class FPakFile : IVFSFile {
         }
 
         if (IsIndexEncrypted || EncryptionGuid != Guid.Empty) {
-            using var testBlock = MemoryOwner<byte>.Allocate(16);
+            var testBlock = new byte[16].AsSpan();
             stream.Position = indexOffset;
-            stream.ReadExactly(testBlock.Span);
+            stream.ReadExactly(testBlock);
 
             if (keyStore == null || !FindEncryptionKey(keyStore, testBlock)) {
                 Log.Error("Can't find encryption key that suits Encryption Key GUID {KeyGuid} for PAK {PakName}", EncryptionGuid, Name);
@@ -114,10 +115,12 @@ public sealed class FPakFile : IVFSFile {
         if (IsIndexEncrypted || EncryptionGuid != Guid.Empty) {
             if (EncryptionGuid == Guid.Empty) {
                 Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, encryption key is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionKey == null ? "not present" : "present");
-            } else {
+            }
+            else {
                 Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, encryption key {EncryptionGuid:n} is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionGuid, EncryptionKey == null ? "not present" : "present");
             }
-        } else {
+        }
+        else {
             Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files)", Name, Index.MountPoint, Index.Files.Count);
         }
     }
@@ -156,18 +159,21 @@ public sealed class FPakFile : IVFSFile {
     }
 
     public unsafe MemoryOwner<byte> ReadFile(IVFSEntry vfsIndex) {
-        var index = (FPakEntry) vfsIndex;
+        if (vfsIndex is not FPakEntry index) {
+            throw new InvalidOperationException();
+        }
+
         var dataBuffer = ReadBytes(index.Pos, index.Size, index.IsEncrypted);
 
         if (index.CompressionMethod == 0) {
             return dataBuffer;
         }
 
-        var outputBuffer = MemoryOwner<byte>.Allocate((int) index.UncompressedSize);
+        var outputBuffer = MemoryOwner<byte>.Allocate((int)index.UncompressedSize);
 
         var lastBlockIndex = index.CompressionBlocks.Length - 1;
         var outputOffset = 0L;
-        using var blockDataRoot = MemoryOwner<byte>.Allocate((int) index.CompressionBlockSize);
+        using var blockDataRoot = MemoryOwner<byte>.Allocate((int)index.CompressionBlockSize);
         for (var i = 0; i < index.CompressionBlocks.Length; i++) {
             var block = index.CompressionBlocks[i];
             var size = i == lastBlockIndex ? index.UncompressedSize - outputOffset : index.CompressionBlockSize;
@@ -175,19 +181,22 @@ public sealed class FPakFile : IVFSFile {
                 throw new InvalidOperationException();
             }
 
-            var blockData = blockDataRoot.Memory[..(int) size];
-            var blockChunk = dataBuffer.Memory[(int) block.CompressedStart..(int) block.CompressedEnd];
+            var blockData = blockDataRoot.Memory[..(int)size];
+            var blockChunk = dataBuffer.Memory[(int)block.CompressedStart..(int)block.CompressedEnd];
 
             var compressionType = CompressionMethods[index.CompressionMethod].ToLower();
 
             if (compressionType == "magic") {
                 if ((BinaryPrimitives.ReadUInt16LittleEndian(blockChunk.Span) & 0xFFFFFF) == 0xb52ffd) {
                     compressionType = "zstd";
-                } else if (blockChunk.Span[0] == 0b1111000) {
+                }
+                else if (blockChunk.Span[0] == 0b1111000) {
                     compressionType = "zlib";
-                } else if (BinaryPrimitives.ReadUInt16LittleEndian(blockChunk.Span) == 0x8b1f) {
+                }
+                else if (BinaryPrimitives.ReadUInt16LittleEndian(blockChunk.Span) == 0x8b1f) {
                     compressionType = "gzip";
-                } else if ((blockChunk.Span[0] & 0x7F) == 0b1100 && (blockChunk.Span[1] & 0x7F) < 15) {
+                }
+                else if ((blockChunk.Span[0] & 0x7F) == 0b1100 && (blockChunk.Span[1] & 0x7F) < 15) {
                     // Oodle compression magic:
                     // 7654 3210 | 7654 3210
                     // ABBB CCCC | DEEE EEEE
@@ -197,7 +206,8 @@ public sealed class FPakFile : IVFSFile {
                     // D = use checksums
                     // E = encoder 0~14 { LZH, LZHLW, LZNIB, None, LZB16, LZBLW, LZA, LZNA, Kraken, Mermaid, BitKnit, Selkie, Hydra, Leviathan, Akkorokamui } as of oo2core_9
                     compressionType = "oodle";
-                } else {
+                }
+                else {
                     compressionType = "lz4";
                 }
             }
@@ -205,7 +215,7 @@ public sealed class FPakFile : IVFSFile {
             switch (compressionType) {
                 case "zlib": {
                     using var dataPin = blockChunk.Pin();
-                    using var dataStream = new UnmanagedMemoryStream((byte*) dataPin.Pointer, blockChunk.Length);
+                    using var dataStream = new UnmanagedMemoryStream((byte*)dataPin.Pointer, blockChunk.Length);
                     dataStream.Position = 2;
                     using var zlib = new DeflateStream(dataStream, CompressionMode.Decompress);
                     zlib.ReadExactly(blockData.Span);
@@ -221,7 +231,7 @@ public sealed class FPakFile : IVFSFile {
                 }
                 case "gzip": {
                     using var dataPin = blockChunk.Pin();
-                    using var dataStream = new UnmanagedMemoryStream((byte*) dataPin.Pointer, blockChunk.Length);
+                    using var dataStream = new UnmanagedMemoryStream((byte*)dataPin.Pointer, blockChunk.Length);
                     dataStream.Position = 2;
                     using var zlib = new GZipStream(dataStream, CompressionMode.Decompress);
                     zlib.ReadExactly(blockData.Span);
@@ -248,31 +258,12 @@ public sealed class FPakFile : IVFSFile {
                 }
             }
 
-            blockData.CopyTo(outputBuffer.Memory[(int) outputOffset..]);
+            blockData.CopyTo(outputBuffer.Memory[(int)outputOffset..]);
             outputOffset += size;
         }
 
         dataBuffer.Dispose();
         return outputBuffer;
-    }
-
-    public bool FindEncryptionKey(AESKeyStore aesKey, MemoryOwner<byte> test) {
-        if (aesKey.Keys.TryGetValue(EncryptionGuid, out var key)) {
-            EncryptionKey = key;
-            return true;
-        }
-
-        foreach (var unknownKey in aesKey.NullKeys) {
-            EncryptionKey = unknownKey;
-            using var data = Decrypt(test, true, false);
-            if (Math.Abs(BinaryPrimitives.ReadInt32LittleEndian(data.Span)) < 255) {
-                aesKey.Keys[EncryptionGuid] = EncryptionKey;
-                return true;
-            }
-        }
-
-        EncryptionKey = null;
-        return false;
     }
 
     public void ClearCaches() {
@@ -304,35 +295,60 @@ public sealed class FPakFile : IVFSFile {
         using var stream = new FileStream(FullPath, FileMode.Open, FileAccess.ReadWrite);
 
         // aes needs 16 byte aligned data.
-        var data = MemoryOwner<byte>.Allocate((int) count.Align(16));
+        var data = MemoryOwner<byte>.Allocate((int)count.Align(16));
         stream.Position = offset;
         stream.ReadExactly(data.Span);
-        return Decrypt(data, isEncrypted, true)[..(int) count];
+        return Decrypt(data, isEncrypted)[..(int)count];
+    }
+
+    private bool FindEncryptionKey(AESKeyStore aesKey, Span<byte> test) {
+        if (EncryptionKey != null) {
+            return true;
+        }
+
+        if (aesKey.Keys.TryGetValue(EncryptionGuid, out var key)) {
+            EncryptionKey = key;
+            return true;
+        }
+
+        var dec = new byte[16].AsSpan();
+        foreach (var unknownKey in aesKey.NullKeys) {
+            EncryptionKey = unknownKey;
+            DecryptInner(new Span<byte>(test.ToArray()), dec);
+            if (Math.Abs(BinaryPrimitives.ReadInt32LittleEndian(dec)) < 255) {
+                aesKey.Keys[EncryptionGuid] = EncryptionKey;
+                return true;
+            }
+        }
+
+        EncryptionKey = null;
+        return false;
     }
 
     ~FPakFile() {
         Dispose();
     }
 
-    private MemoryOwner<byte> Decrypt(MemoryOwner<byte> data, bool isEncrypted, bool dispose) {
+    private MemoryOwner<byte> Decrypt(MemoryOwner<byte> data, bool isEncrypted) {
         if (!isEncrypted || EncryptionKey == null) {
             return data;
         }
 
+        var decryptedOwner = MemoryOwner<byte>.Allocate(data.Length);
+        var size = DecryptInner(data.Span, decryptedOwner.Span);
+        data.Dispose();
+        return decryptedOwner[..size];
+    }
+
+    private int DecryptInner(Span<byte> enc, Span<byte> dec) {
         using var cipher = Aes.Create();
 #pragma warning disable CA5358
         cipher.Mode = CipherMode.ECB;
 #pragma warning restore CA5358
         cipher.Padding = PaddingMode.None;
         cipher.BlockSize = 128;
-        cipher.Key = EncryptionKey;
+        cipher.Key = EncryptionKey!;
         cipher.IV = new byte[16];
-        var decryptedOwner = MemoryOwner<byte>.Allocate(data.Length);
-        var size = cipher.DecryptEcb(data.Span, decryptedOwner.Span, cipher.Padding);
-        if (dispose) {
-            data.Dispose();
-        }
-
-        return decryptedOwner[..size];
+        return cipher.DecryptEcb(enc, dec, cipher.Padding);
     }
 }

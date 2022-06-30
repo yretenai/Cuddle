@@ -82,10 +82,10 @@ public sealed class VFSManager : IResettable {
             Containers.Add(new FIoStore(global.FullName, game, Path.GetFileNameWithoutExtension(global.Name), KeyStore, HashStore, this) { IsGlobal = true });
         }
 
-        foreach (var pakPath in dir.EnumerateFiles("*.ucas", SearchOption.AllDirectories).OrderBy(x => x.Name.Replace('.', '_'), new NaturalStringComparer(StringComparison.OrdinalIgnoreCase))) {
-            var name = Path.GetFileNameWithoutExtension(pakPath.Name);
+        foreach (var casPath in dir.EnumerateFiles("*.ucas", SearchOption.TopDirectoryOnly).OrderBy(x => x.Name.Replace('.', '_'), new NaturalStringComparer(StringComparison.OrdinalIgnoreCase))) {
+            var name = Path.GetFileNameWithoutExtension(casPath.Name);
             if (found.Add(name)) {
-                Containers.Add(new FIoStore(pakPath.FullName, game, name, KeyStore, HashStore, this));
+                Containers.Add(new FIoStore(casPath.FullName, game, name, KeyStore, HashStore, this));
             }
         }
 
@@ -97,9 +97,7 @@ public sealed class VFSManager : IResettable {
         }
     }
 
-    public MemoryOwner<byte> ReadFile(IVFSEntry entry) {
-        return entry.ReadFile();
-    }
+    public MemoryOwner<byte> ReadFile(IVFSEntry entry) => entry.ReadFile();
 
     public MemoryOwner<byte> ReadFile(string path) {
         var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.Equals(path, StringComparison.Ordinal));

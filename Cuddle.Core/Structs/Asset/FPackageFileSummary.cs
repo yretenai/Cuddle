@@ -27,7 +27,7 @@ public class FPackageFileSummary {
         };
 
         FileVersionUE4 = archive.Read<EObjectVersion>();
-        var isUnversioned = FileVersionUE4 == 0;
+        IsUnversioned = FileVersionUE4 == 0;
         if (FileVersionUE4 == 0) {
             // https://github.com/gildor2/UEViewer/blob/60accbff70e58bfc66eaad4594416694b95422ee/Unreal/UE4Version.h#L7
             FileVersionUE4 = archive.Game.FindObjectVersion();
@@ -38,7 +38,7 @@ public class FPackageFileSummary {
         }
 
         if (LegacyFileVersion <= ELegacyFileVersion.ADDED_UE5_VERSION) {
-            FileVersionUE5 = (EObjectVersionUE5) archive.Read<int>();
+            FileVersionUE5 = (EObjectVersionUE5)archive.Read<int>();
         }
 
         if (FileVersionUE5 == 0 && archive.Game >= EGame.UE5_0) {
@@ -60,10 +60,10 @@ public class FPackageFileSummary {
         TotalHeaderSize = archive.Read<int>();
         FolderName = archive.ReadString();
         PackageFlags = archive.Read<EPackageFlags>();
-        var hasEditorData = !(isUnversioned || PackageFlags.HasFlag(EPackageFlags.FilterEditorOnly));
+        HasEditorData = !(IsUnversioned || PackageFlags.HasFlag(EPackageFlags.FilterEditorOnly));
         NameCount = archive.Read<int>();
         NameOffset = archive.Read<int>();
-        if (FileVersionUE4 >= EObjectVersion.ADDED_PACKAGE_SUMMARY_LOCALIZATION_ID && hasEditorData) {
+        if (FileVersionUE4 >= EObjectVersion.ADDED_PACKAGE_SUMMARY_LOCALIZATION_ID && HasEditorData) {
             LocalizationId = archive.ReadString();
         }
 
@@ -90,7 +90,7 @@ public class FPackageFileSummary {
         ThumbnailTableOffset = archive.Read<int>();
         Guid = archive.Read<Guid>();
 
-        if (hasEditorData) {
+        if (HasEditorData) {
             if (FileVersionUE4 >= EObjectVersion.ADDED_PACKAGE_OWNER) {
                 PersistentGuid = archive.Read<Guid>();
 
@@ -147,12 +147,15 @@ public class FPackageFileSummary {
             NamesReferencedFromExportDataCount = archive.Read<int>();
         }
 
-        if(FileVersionUE5 >= EObjectVersionUE5.PAYLOAD_TOC) {
+        if (FileVersionUE5 >= EObjectVersionUE5.PAYLOAD_TOC) {
             PayloadTocOffset = archive.Read<int>();
         }
     }
 
     public uint Tag { get; }
+
+    public bool IsUnversioned { get; }
+    public bool HasEditorData { get; }
     public ELegacyFileVersion LegacyFileVersion { get; }
     public int LegacyUE3Version { get; }
     public EObjectVersion FileVersionUE4 { get; }

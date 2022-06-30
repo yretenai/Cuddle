@@ -30,6 +30,15 @@ public sealed class UAssetFile : IPoliteDisposable {
         archive.Position = Summary.ExportOffset;
         Exports = archive.ReadClassArray<FObjectExport>(Summary.ExportCount);
 
+        // todo: GatherableTextDataMap EDITOR_ONLY
+        // todo: SoftPackageReferenceList -> FName or FString depending on ADDED_SOFT_OBJECT_PATH
+        // todo: DependsMap -> FPackageIndex[ExportCount][]
+        // todo: SearchableNamesMap -> Map<FPackageIndex, FName[]>
+        // todo: ThumbnailCache -> read inline -> int * [fstirng, fstring, int]
+        // todo: WorldTileInfoDataOffset -> FWorldTileInfo
+        // todo: PreloadDependencies -> FPackageIndex
+        // todo: PayloadToc -> FPackageTrailer
+
         var combined = MemoryOwner<byte>.Allocate(uasset.Length + uexp.Length);
         uasset.Memory.CopyTo(combined.Memory);
         uexp.Memory.CopyTo(combined.Memory[Summary.TotalHeaderSize..]);

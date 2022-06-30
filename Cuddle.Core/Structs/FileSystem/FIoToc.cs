@@ -3,14 +3,15 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
-using Cuddle.Core.Structs.FileSystem;
+using Cuddle.Core.VFS;
+using DragonLib;
 using Microsoft.Toolkit.HighPerformance;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 
-namespace Cuddle.Core.VFS;
+namespace Cuddle.Core.Structs.FileSystem;
 
-public class FIoToc {
-    public FIoToc(FIoStore store, Stream stream) {
+public sealed class FIoToc : IPoliteDisposable {
+    public FIoToc(FIoStore store, Stream stream, AESKeyStore? keyStore) {
         Owner = store;
 
         Span<byte> buffer = stackalloc byte[16];
@@ -40,11 +41,11 @@ public class FIoToc {
         PartitionCount = BinaryPrimitives.ReadInt32LittleEndian(buffer[28..]);
         ContainerId = BinaryPrimitives.ReadInt64LittleEndian(buffer[32..]);
         EncryptionGuid = MemoryMarshal.Read<Guid>(buffer[40..]);
-        ContainerFlags = (EIoContainerFlags) buffer[56];
+        ContainerFlags = (EIoContainerFlags)buffer[56];
         // 3 bytes of padding.
         var tocChunkPerfectHashSeedsCount = BinaryPrimitives.ReadInt32LittleEndian(buffer[60..]);
         PartitionSize = BinaryPrimitives.ReadInt64LittleEndian(buffer[64..]);
-        var tocChunksWithoutPerfectHashCount  = BinaryPrimitives.ReadInt32LittleEndian(buffer[72..]);
+        var tocChunksWithoutPerfectHashCount = BinaryPrimitives.ReadInt32LittleEndian(buffer[72..]);
 
         if (Version < EIoStoreTocVersion.PartitionSize) {
             PartitionCount = 1;
@@ -74,12 +75,11 @@ public class FIoToc {
             "None",
         };
 
-        using var pooled = MemoryOwner<byte>.Allocate(compressionMethodNameLength);
+        using var pooled = MemoryOwner<byte>.Allocate(compressionMethodNameLength * compressionMethodNameCount);
         stream.ReadExactly(pooled.Span);
 
-        using var reader = new FArchiveReader(pooled);
         for (var i = 0; i < compressionMethodNameCount; ++i) {
-            CompressionMethods.Add(reader.ReadString());
+            CompressionMethods.Add(pooled.Span[(i * compressionMethodNameLength)..].ReadString() ?? throw new InvalidDataException());
         }
 
         if (ContainerFlags.HasFlag(EIoContainerFlags.Signed)) {
@@ -96,11 +96,14 @@ public class FIoToc {
         }
 
         if (ContainerFlags.HasFlag(EIoContainerFlags.Indexed)) {
-            // todo: directory index
+            DirectoryIndexBuffer = MemoryOwner<byte>.Allocate(directoryIndexSize);
+            stream.ReadExactly(DirectoryIndexBuffer.Span);
         }
 
         // todo: meta
     }
+
+    public MemoryOwner<byte>? DirectoryIndexBuffer { get; set; }
 
     public FIoStore Owner { get; }
     public EIoStoreTocVersion Version { get; set; }
@@ -115,8 +118,19 @@ public class FIoToc {
     public Memory<FIoOffsetAndLength> ChunkOffsetLengths { get; set; }
     public Memory<FIoStoreTocCompressedBlockEntry> CompressionBlocks { get; set; }
     public Memory<int> HashSeeds { get; set; }
-    public Memory<int> ChunkIndicesWithoutHash  { get; set; }
+    public Memory<int> ChunkIndicesWithoutHash { get; set; }
     public Memory<byte> TocSignature { get; set; } = Memory<byte>.Empty;
     public Memory<byte> BlockSignature { get; set; } = Memory<byte>.Empty;
     public Memory2D<byte> ChunkSignatures { get; set; } = Memory2D<byte>.Empty;
+
+    public void Dispose() {
+        if (Disposed) {
+            return;
+        }
+
+        DirectoryIndexBuffer?.Dispose();
+        Disposed = true;
+    }
+
+    public bool Disposed { get; private set; }
 }

@@ -10,6 +10,7 @@ public class FPakIndex {
         Owner = owner;
 
         MountPoint = archive.ReadString();
+        OriginalMountPoint = MountPoint;
         if (MountPoint.StartsWith("../../../")) {
             MountPoint = MountPoint[8..];
         }
@@ -18,12 +19,14 @@ public class FPakIndex {
             MountPoint = "";
         }
 
-        if (MountPoint.StartsWith("/")) {
-            MountPoint = MountPoint[1..];
-        }
+        if (MountPoint.Length > 1) {
+            if (MountPoint.StartsWith("/")) {
+                MountPoint = MountPoint[1..];
+            }
 
-        if (!MountPoint.EndsWith("/")) {
-            MountPoint += '/';
+            if (!MountPoint.EndsWith("/")) {
+                MountPoint += '/';
+            }
         }
 
         Count = archive.Read<int>();
@@ -35,7 +38,8 @@ public class FPakIndex {
                 var mounted = MountPoint + path;
                 Files.Add(new FPakEntry(archive, Owner, false) { Path = path, MountedPath = mounted });
             }
-        } else {
+        }
+        else {
             PathHashSeed = archive.Read<ulong>();
 
             var hasPathHashIndex = archive.ReadBoolean();
@@ -85,10 +89,11 @@ public class FPakIndex {
 
                         entry.Path = dirName + fileName;
                         entry.MountedPath = MountPoint + entry.Path;
-                        entry.CreateObjectPath();
+                        entry.ObjectPath = FPakEntry.CreateObjectPath(entry.MountedPath);
                         if (entryLoc >= 0) {
                             entryLocCache[entryLoc] = Files.Count;
                         }
+
                         Files.Add(entry);
                         // note: figure out what value gets passed to FPakFile::HashPath and store the value in hashStore.
                     }
@@ -121,15 +126,17 @@ public class FPakIndex {
                         var path = hash.ToString("x8");
                         if (hashStore == null || !hashStore.TryGetPath(hash, out var mountPath)) {
                             mountPath = MountPoint + path; // this is bad.
-                        } else {
+                        }
+                        else {
                             path = mountPath[MountPoint.Length..];
                         }
 
                         entry.Path = path;
                         entry.MountedPath = mountPath;
-                        entry.CreateObjectPath();
+                        entry.ObjectPath = FPakEntry.CreateObjectPath(entry.MountedPath);
                         Files.Add(entry);
-                    } else {
+                    }
+                    else {
                         entry = Files[entryIndex];
                     }
 
@@ -147,6 +154,7 @@ public class FPakIndex {
     public FPakFile Owner { get; }
 
     public string MountPoint { get; }
+    public string OriginalMountPoint { get; }
     public int Count { get; }
     public ulong PathHashSeed { get; } // PathHashSeed = FCrc::StrCrc32(*LowercasePakFilename);
     public byte[]? PathHashIndexHash { get; }
