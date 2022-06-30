@@ -12,4 +12,4 @@ public enum EIoChunkType : byte {
     LoaderGlobalNames,
     LoaderGlobalNameHashes,
     ContainerHeader,
-};
+}

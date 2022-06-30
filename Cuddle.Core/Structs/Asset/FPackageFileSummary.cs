@@ -38,7 +38,7 @@ public class FPackageFileSummary {
         }
 
         if (LegacyFileVersion <= ELegacyFileVersion.ADDED_UE5_VERSION) {
-            FileVersionUE5 = (EObjectVersionUE5)archive.Read<int>();
+            FileVersionUE5 = (EObjectVersionUE5) archive.Read<int>();
         }
 
         if (FileVersionUE5 == 0 && archive.Game >= EGame.UE5_0) {

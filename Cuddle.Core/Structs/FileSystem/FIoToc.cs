@@ -25,7 +25,7 @@ public sealed class FIoToc : IPoliteDisposable {
         buffer = stackalloc byte[8];
         stream.ReadExactly(buffer);
 
-        Version = (EIoStoreTocVersion)BinaryPrimitives.ReadInt32LittleEndian(buffer);
+        Version = (EIoStoreTocVersion) BinaryPrimitives.ReadInt32LittleEndian(buffer);
         var TocHeaderSize = BinaryPrimitives.ReadInt32LittleEndian(buffer[4..]);
 
         buffer = stackalloc byte[TocHeaderSize - 24];
@@ -41,7 +41,7 @@ public sealed class FIoToc : IPoliteDisposable {
         PartitionCount = BinaryPrimitives.ReadInt32LittleEndian(buffer[28..]);
         ContainerId = BinaryPrimitives.ReadInt64LittleEndian(buffer[32..]);
         EncryptionGuid = MemoryMarshal.Read<Guid>(buffer[40..]);
-        ContainerFlags = (EIoContainerFlags)buffer[56];
+        ContainerFlags = (EIoContainerFlags) buffer[56];
         // 3 bytes of padding.
         var tocChunkPerfectHashSeedsCount = BinaryPrimitives.ReadInt32LittleEndian(buffer[60..]);
         PartitionSize = BinaryPrimitives.ReadInt64LittleEndian(buffer[64..]);

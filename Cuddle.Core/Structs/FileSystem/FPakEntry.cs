@@ -18,9 +18,8 @@ public sealed record FPakEntry : IVFSEntry {
 
             if (fields.CompressionBlockSize == 0x3F) {
                 CompressionBlockSize = archive.Read<uint>();
-            }
-            else {
-                CompressionBlockSize = (uint)fields.CompressionBlockSize << 11;
+            } else {
+                CompressionBlockSize = (uint) fields.CompressionBlockSize << 11;
             }
 
             CompressionMethod = fields.CompressionMethod;
@@ -46,13 +45,12 @@ public sealed record FPakEntry : IVFSEntry {
             CompressionBlocks = new FPakCompressedBlock[fields.CompressionBlockCount];
             if (fields.CompressionBlockCount > 0) {
                 if (UncompressedSize < CompressionBlockSize || fields.CompressionBlockSize < 0x3F && UncompressedSize < 0x10000) {
-                    CompressionBlockSize = (uint)UncompressedSize;
+                    CompressionBlockSize = (uint) UncompressedSize;
                 }
 
                 if (fields.CompressionBlockCount == 1) {
                     CompressionBlocks[0] = new FPakCompressedBlock { CompressedStart = 0, CompressedEnd = Size };
-                }
-                else {
+                } else {
                     var current = 0L;
                     for (var index = 0; index < fields.CompressionBlockCount; ++index) {
                         var size = archive.Read<uint>();
@@ -65,8 +63,7 @@ public sealed record FPakEntry : IVFSEntry {
                     }
                 }
             }
-        }
-        else {
+        } else {
             var start = archive.Position;
 
             Pos = archive.Read<long>();
@@ -97,8 +94,7 @@ public sealed record FPakEntry : IVFSEntry {
                     CompressionBlocks[index].CompressedStart -= delta;
                     CompressionBlocks[index].CompressedEnd -= delta;
                 }
-            }
-            else {
+            } else {
                 // subtract global offset
                 for (var index = 0; index < CompressionBlocks.Length; ++index) {
                     CompressionBlocks[index].CompressedStart -= Pos;

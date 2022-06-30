@@ -128,7 +128,7 @@ public sealed class VFSManager : IResettable {
             entry.Data = new UAssetFile(data, uexp, Path.GetFileNameWithoutExtension(entry.MountedPath), entry.Owner.Game, entry.Owner, this);
         }
 
-        return (UAssetFile)entry.Data;
+        return (UAssetFile) entry.Data;
     }
 
     public UAssetFile? ReadAsset(string path) {

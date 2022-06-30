@@ -12,7 +12,7 @@ public readonly struct Int40 : IEquatable<Int40>, IEquatable<int>, IEquatable<lo
     public readonly byte E;
 
     public static implicit operator long(Int40 value) => value.ToInt64();
-    public long ToInt64() => A | ((long)B << 8) | ((long)C << 16) | ((long)D << 24) | ((long)E << 32);
+    public long ToInt64() => A | ((long) B << 8) | ((long) C << 16) | ((long) D << 24) | ((long) E << 32);
 
     public bool Equals(int other) => other == ToInt64();
 

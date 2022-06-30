@@ -38,8 +38,7 @@ public class FPakIndex {
                 var mounted = MountPoint + path;
                 Files.Add(new FPakEntry(archive, Owner, false) { Path = path, MountedPath = mounted });
             }
-        }
-        else {
+        } else {
             PathHashSeed = archive.Read<ulong>();
 
             var hasPathHashIndex = archive.ReadBoolean();
@@ -126,8 +125,7 @@ public class FPakIndex {
                         var path = hash.ToString("x8");
                         if (hashStore == null || !hashStore.TryGetPath(hash, out var mountPath)) {
                             mountPath = MountPoint + path; // this is bad.
-                        }
-                        else {
+                        } else {
                             path = mountPath[MountPoint.Length..];
                         }
 
@@ -135,8 +133,7 @@ public class FPakIndex {
                         entry.MountedPath = mountPath;
                         entry.ObjectPath = FPakEntry.CreateObjectPath(entry.MountedPath);
                         Files.Add(entry);
-                    }
-                    else {
+                    } else {
                         entry = Files[entryIndex];
                     }
 

@@ -36,7 +36,7 @@
     <Target Name="CustomAfterBuild" AfterTargets="AfterBuild">
         <Copy SourceFiles="..\ATTRIBUTION.txt" DestinationFolder="$(TargetDir)" ContinueOnError="true" />
     </Target>
-    
+
     <Target Name="SetSourceRevisionId" BeforeTargets="BeforeBuild">
         <Exec Command="git describe --long --always --dirty --exclude=* --abbrev=8" ConsoleToMSBuild="True" IgnoreExitCode="False" ContinueOnError="True">
             <Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput" />
