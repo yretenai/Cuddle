@@ -1,35 +1,34 @@
-﻿using System.Numerics;
-using Cuddle.Core.Assets;
+﻿using Cuddle.Core.Assets;
 using Cuddle.Core.Structs.Asset;
 
 namespace Cuddle.Core.Structs.Math;
 
 public record FCapsuleShape : FTaggedStructValue {
-    public FCapsuleShape() : this(Vector3.Zero, 0f, Vector3.Zero, 0f) { }
+    public FCapsuleShape() : this(new FVector(), 0f, new FVector(), 0f) { }
 
     public FCapsuleShape(FPropertyOwner owner) => Owner = owner;
 
-    public FCapsuleShape(Vector3 center, float radius, Vector3 orientation, float length) {
+    public FCapsuleShape(FVector center, float radius, FVector orientation, float length) {
         Center = center;
         Radius = radius;
         Orientation = orientation;
         Length = length;
     }
 
-    public Vector3 Center { get; set; }
+    public FVector Center { get; set; } = new();
     public float Radius { get; set; }
-    public Vector3 Orientation { get; set; }
+    public FVector Orientation { get; set; } = new();
     public float Length { get; set; }
     internal override bool SerializeProperties => false;
 
     public override void ProcessProperties(FPropertyOwner owner) {
-        Center = owner.GetProperty<Vector3>(nameof(Center));
+        Center = owner.GetProperty<FVector>(nameof(Center)) ?? Center;
         Radius = owner.GetProperty<float>(nameof(Radius));
-        Orientation = owner.GetProperty<Vector3>(nameof(Orientation));
+        Orientation = owner.GetProperty<FVector>(nameof(Orientation)) ?? Orientation;
         Length = owner.GetProperty<float>(nameof(Length));
     }
 
-    public void Deconstruct(out Vector3 center, out float radius, out Vector3 orientation, out float length) {
+    public void Deconstruct(out FVector center, out float radius, out FVector orientation, out float length) {
         center = Center;
         radius = Radius;
         orientation = Orientation;

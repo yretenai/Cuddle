@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -96,8 +95,11 @@ public static class FStructRegistry {
 
         try {
             CurrentProcessingStruct.Value = className;
-            var value = Activator.CreateInstance(structType, data) as FTaggedStructValue;
-            value?.ProcessProperties(value);
+            var value = Activator.CreateInstance(structType, data);
+            if (value is FTaggedStructValue tagged) {
+                tagged.ProcessProperties(tagged);
+            }
+
             return value;
         } catch {
             return null;

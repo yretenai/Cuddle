@@ -7,7 +7,7 @@ namespace Cuddle.Core.Structs.Asset;
 public record FWorldTileInfo {
     public FWorldTileInfo(FArchiveReader reader) {
         Position = reader.Read<FIntVector>();
-        Bounds = reader.Read<FBox>();
+        Bounds = new FBox(reader, "FBox");
         Layer = new FWorldTileLayer(reader);
 
         if (reader.Version >= EObjectVersion.WORLD_LEVEL_INFO_UPDATED) {
