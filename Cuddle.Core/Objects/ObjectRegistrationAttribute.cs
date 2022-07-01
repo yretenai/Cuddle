@@ -2,7 +2,7 @@
 
 namespace Cuddle.Core.Objects;
 
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = true, Inherited = false)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false)]
 public sealed class ObjectRegistrationAttribute : Attribute {
     public ObjectRegistrationAttribute() { }
 
