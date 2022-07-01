@@ -1,10 +1,11 @@
-﻿using Cuddle.Core.Structs;
+﻿using Cuddle.Core.Assets;
+using Cuddle.Core.Structs;
 using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Objects;
 
 [ObjectRegistration("StringAssetReference", "StringClassReference", "SoftClassPath")]
-public record FSoftObjectPath {
+public record FSoftObjectPath : FFallbackStruct {
     public FSoftObjectPath() {
         Path = FName.Null;
         SubPath = "None";

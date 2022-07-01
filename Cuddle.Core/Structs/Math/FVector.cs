@@ -1,66 +1,121 @@
-﻿using Cuddle.Core.Objects;
+﻿using Cuddle.Core.Assets;
+using Cuddle.Core.Objects;
 using Cuddle.Core.Structs.Asset;
+using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs.Math;
 
-[ObjectRegistration("Vector3f"), ObjectRegistration("Vector", MaxVersionUE5 = EObjectVersionUE5.LARGE_WORLD_COORDINATES)]
-public record struct FVector3f(float X, float Y, float Z) {
-    public static implicit operator FVector3d(FVector3f value) => new(value.X, value.Y, value.Z);
+[ObjectRegistration("Vector4f", "Vector4d", "Vector4")]
+public record FVector4 : FFallbackStruct {
+    public FVector4() { }
+    public FVector4(FArchiveReader reader) : this(reader, FStructRegistry.CurrentProcessingStruct.Value ?? "Vector4") { }
+    public FVector4(FArchiveReader reader, string name) {
+        var isDouble = name == "Vector4" && reader.VersionUE5 >= EObjectVersionUE5.LARGE_WORLD_COORDINATES || name == "Vector4d";
+        X = isDouble ? reader.Read<double>() : reader.Read<float>();
+        Y = isDouble ? reader.Read<double>() : reader.Read<float>();
+        Z = isDouble ? reader.Read<double>() : reader.Read<float>();
+        W = isDouble ? reader.Read<double>() : reader.Read<float>();
+    }
 
-    public FVector3d ToFVector3d() => new(X, Y, Z);
+    public double X { get; set; }
+    public double Y { get; set; }
+    public double Z { get; set; }
+    public double W { get; set; }
 }
 
-[ObjectRegistration("Vector3d", "Vector")]
-public record struct FVector3d(double X, double Y, double Z) {
-    public static implicit operator FVector3f(FVector3d value) => new((float) value.X, (float) value.Y, (float) value.Z);
+[ObjectRegistration("Quat4f", "Quat4d", "Quat")]
+public record FQuat : FFallbackStruct {
+    public FQuat() { }
+    public FQuat(FArchiveReader reader) : this(reader, FStructRegistry.CurrentProcessingStruct.Value ?? "Quat") { }
+    public FQuat(FArchiveReader reader, string name) {
+        var isDouble = name == "Quat" && reader.VersionUE5 >= EObjectVersionUE5.LARGE_WORLD_COORDINATES || name == "Quat4d";
+        X = isDouble ? reader.Read<double>() : reader.Read<float>();
+        Y = isDouble ? reader.Read<double>() : reader.Read<float>();
+        Z = isDouble ? reader.Read<double>() : reader.Read<float>();
+        W = isDouble ? reader.Read<double>() : reader.Read<float>();
+    }
 
-    public FVector3f ToFVector3f() => new((float) X, (float) Y, (float) Z);
+    public double X { get; set; }
+    public double Y { get; set; }
+    public double Z { get; set; }
+    public double W { get; set; }
 }
 
-[ObjectRegistration("Vector4f", "Plane4f", "Quat4f"), ObjectRegistration("Vector4", "Plane", "Quat", MaxVersionUE5 = EObjectVersionUE5.LARGE_WORLD_COORDINATES)]
-public record struct FVector4f(float X, float Y, float Z, float W) {
-    public static implicit operator FVector4d(FVector4f value) => new(value.X, value.Y, value.Z, value.W);
+[ObjectRegistration("Plane4f", "Plane4d", "Plane")]
+public record FPlane : FFallbackStruct {
+    public FPlane() { }
+    public FPlane(FArchiveReader reader) : this(reader, FStructRegistry.CurrentProcessingStruct.Value ?? "Plane") { }
+    public FPlane(FArchiveReader reader, string name) {
+        var isDouble = name == "Plane" && reader.VersionUE5 >= EObjectVersionUE5.LARGE_WORLD_COORDINATES || name == "Plane4d";
+        X = isDouble ? reader.Read<double>() : reader.Read<float>();
+        Y = isDouble ? reader.Read<double>() : reader.Read<float>();
+        Z = isDouble ? reader.Read<double>() : reader.Read<float>();
+        W = isDouble ? reader.Read<double>() : reader.Read<float>();
+    }
 
-    public FVector4d ToFVector4d() => new(X, Y, Z, W);
+    public double X { get; set; }
+    public double Y { get; set; }
+    public double Z { get; set; }
+    public double W { get; set; }
 }
 
-[ObjectRegistration("Vector4d", "Vector4", "Plane4d", "Plane", "Quat4d", "Quat")]
-public record struct FVector4d(double X, double Y, double Z, double W) {
-    public static implicit operator FVector4f(FVector4d value) => new((float) value.X, (float) value.Y, (float) value.Z, (float) value.W);
+[ObjectRegistration("Vector3f", "Vector3d", "Vector")]
+public record FVector : FFallbackStruct {
+    public FVector() { }
+    public FVector(FArchiveReader reader) : this(reader, FStructRegistry.CurrentProcessingStruct.Value ?? "Vector") { }
+    public FVector(FArchiveReader reader, string name) {
+        var isDouble = name == "Vector" && reader.VersionUE5 >= EObjectVersionUE5.LARGE_WORLD_COORDINATES || name == "Vector4d";
+        X = isDouble ? reader.Read<double>() : reader.Read<float>();
+        Y = isDouble ? reader.Read<double>() : reader.Read<float>();
+        Z = isDouble ? reader.Read<double>() : reader.Read<float>();
+    }
 
-    public FVector4f ToFVector4f() => new((float) X, (float) Y, (float) Z, (float) W);
+    public double X { get; set; }
+    public double Y { get; set; }
+    public double Z { get; set; }
 }
 
-[ObjectRegistration("Vector2f"), ObjectRegistration("Vector2D", MaxVersionUE5 = EObjectVersionUE5.LARGE_WORLD_COORDINATES)]
-public record struct FVector2f(float X, float Y) {
-    public static implicit operator FVector2d(FVector2f value) => new(value.X, value.Y);
+[ObjectRegistration("Vector2f", "Vector2d", "Vector2D")]
+public record FVector2D : FFallbackStruct {
+    public FVector2D() { }
+    public FVector2D(FArchiveReader reader) : this(reader, FStructRegistry.CurrentProcessingStruct.Value ?? "Vector2D") { }
+    public FVector2D(FArchiveReader reader, string name) {
+        var isDouble = name == "Vector2D" && reader.VersionUE5 >= EObjectVersionUE5.LARGE_WORLD_COORDINATES || name == "Vector2d";
+        X = isDouble ? reader.Read<double>() : reader.Read<float>();
+        Y = isDouble ? reader.Read<double>() : reader.Read<float>();
+    }
 
-    public FVector2d ToFVector2d() => new(X, Y);
+    public double X { get; set; }
+    public double Y { get; set; }
 }
 
-[ObjectRegistration("Vector2D")]
-public record struct FVector2d(double X, double Y) {
-    public static implicit operator FVector2f(FVector2d value) => new((float) value.X, (float) value.Y);
+[ObjectRegistration("Rotator3f", "Rotator3d", "Rotator")]
+public record FRotator : FFallbackStruct {
+    public FRotator() { }
+    public FRotator(FArchiveReader reader) : this(reader, FStructRegistry.CurrentProcessingStruct.Value ?? "Rotator") { }
+    public FRotator(FArchiveReader reader, string name) {
+        var isDouble = name == "Rotator" && reader.VersionUE5 >= EObjectVersionUE5.LARGE_WORLD_COORDINATES || name == "Rotator3d";
+        Pitch = isDouble ? reader.Read<double>() : reader.Read<float>();
+        Yaw = isDouble ? reader.Read<double>() : reader.Read<float>();
+        Roll = isDouble ? reader.Read<double>() : reader.Read<float>();
+    }
 
-    public FVector2f ToFVector2f() => new((float) X, (float) Y);
+    public double Pitch { get; set; }
+    public double Yaw { get; set; }
+    public double Roll { get; set; }
 }
-
-[ObjectRegistration("TwoVectors", MaxVersionUE5 = EObjectVersionUE5.LARGE_WORLD_COORDINATES)]
-public record struct FTwoVectorsF(FVector2f V1, FVector2f V2);
 
 [ObjectRegistration("TwoVectors")]
-public record struct FTwoVectorsD(FVector2d V1, FVector2d V2);
+public record FTwoVectors : FFallbackStruct {
+    public FTwoVectors() {
+        V1 = new FVector();
+        V2 = new FVector();
+    }
+    public FTwoVectors(FArchiveReader reader) {
+        V1 = new FVector(reader, "Vector");
+        V2 = new FVector(reader, "Vector");
+    }
 
-[ObjectRegistration("Rotator3f"), ObjectRegistration("Rotator", MaxVersionUE5 = EObjectVersionUE5.LARGE_WORLD_COORDINATES)]
-public record struct FRotator3f(float Pitch, float Yaw, float Roll) {
-    public static implicit operator FRotator3d(FRotator3f value) => new(value.Pitch, value.Yaw, value.Roll);
-
-    public FRotator3d ToFRotator3d() => new(Pitch, Yaw, Roll);
-}
-
-[ObjectRegistration("Rotator3d", "Rotator")]
-public record struct FRotator3d(double Pitch, double Yaw, double Roll) {
-    public static implicit operator FRotator3f(FRotator3d value) => new((float) value.Pitch, (float) value.Yaw, (float) value.Roll);
-
-    public FRotator3f ToFRotator3f() => new((float) Pitch, (float) Yaw, (float) Roll);
+    public FVector V1 { get; set; }
+    public FVector V2 { get; set; }
 }

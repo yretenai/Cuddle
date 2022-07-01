@@ -1,5 +1,7 @@
-﻿namespace Cuddle.Core.Structs.Math;
+﻿using Cuddle.Core.Assets;
 
-public readonly record struct FIntVector(int X, int Y, int Z) {
+namespace Cuddle.Core.Structs.Math;
+
+public readonly record struct FIntVector(int X, int Y, int Z) : FFallbackStruct {
     public FIntVector() : this(0, 0, 0) { }
 }

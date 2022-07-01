@@ -1,5 +1,7 @@
-﻿namespace Cuddle.Core.Structs.Math;
+﻿using Cuddle.Core.Assets;
 
-public readonly record struct FIntPoint(int X, int Y) {
+namespace Cuddle.Core.Structs.Math;
+
+public readonly record struct FIntPoint(int X, int Y) : FFallbackStruct {
     public FIntPoint() : this(0, 0) { }
 }

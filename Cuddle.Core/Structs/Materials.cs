@@ -1,4 +1,5 @@
-﻿using Cuddle.Core.Assets;
+﻿using System;
+using Cuddle.Core.Assets;
 using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs;
@@ -28,12 +29,25 @@ public record FExpressionInput : FFallbackStruct {
     public FName ExpressionName { get; set; }
 }
 
-public record FMaterialInput<T> : FExpressionInput where T : unmanaged {
-    public FMaterialInput(FArchiveReader reader) : base(reader) {
+public abstract record FMaterialInput<T> : FExpressionInput {
+    protected FMaterialInput(FArchiveReader reader) : base(reader) {
         UseConstantValue = reader.ReadBoolean();
-        Constant = reader.Read<T>();
     }
 
     public bool UseConstantValue { get; set; }
-    public T Constant { get; set; }
+    public T Constant { get; set; } = default!;
+}
+
+public record FUnmanagedMaterialInput<T> : FMaterialInput<T> where T : unmanaged {
+    public FUnmanagedMaterialInput(FArchiveReader reader) : base(reader) {
+        Constant = reader.Read<T>();
+    }
+}
+
+
+public record FManagedMaterialInput<T> : FMaterialInput<T> where T : class, new() {
+    public FManagedMaterialInput(FArchiveReader reader) : base(reader) {
+        var t = typeof(T);
+        Constant = (T) Activator.CreateInstance(t, reader, t.Name[1..])!;
+    }
 }

@@ -1,9 +1,10 @@
 using System;
+using Cuddle.Core.Assets;
 using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs.Intl;
 
-public record FFormatArgumentValue {
+public record FFormatArgumentValue : FFallbackStruct {
     public FFormatArgumentValue() => Type = EFormatArgumentType.None;
 
     public FFormatArgumentValue(FArchiveReader data) {

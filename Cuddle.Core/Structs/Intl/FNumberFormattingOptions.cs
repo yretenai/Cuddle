@@ -1,9 +1,10 @@
 ﻿using System.Runtime.InteropServices;
+using Cuddle.Core.Assets;
 
 namespace Cuddle.Core.Structs.Intl;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public record struct FNumberFormattingOptions {
+public record struct FNumberFormattingOptions : FFallbackStruct {
     public static FNumberFormattingOptions Default =>
         new() {
             AlwaysSign = false,
