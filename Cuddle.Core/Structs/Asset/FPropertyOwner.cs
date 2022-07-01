@@ -36,7 +36,7 @@ public record FPropertyOwner {
                             break;
                         }
                     }
-                } else if (t.IsValueType || typeof(T).IsAssignableTo(typeof(FStructValue))) {
+                } else if (t.IsValueType || typeof(T).IsAssignableTo(typeof(FFallbackStruct))) {
                     foreach (var prop in properties) {
                         if (prop.Value is StructProperty) {
                             property = prop.Value;

@@ -33,6 +33,7 @@ public abstract class UProperty {
             "ByteProperty" => new ByteProperty(data, tag, context),
             "ClassProperty" => new ObjectProperty(data, tag, context),
             "DoubleProperty" => new UnmanagedProperty<double>(data, tag, context),
+            "LargeWorldCoordinatesRealProperty" => new UnmanagedProperty<double>(data, tag, context), // I assume one day this will be a decimal aka 128-bit float.
             "EnumProperty" => new EnumProperty(data, tag, context),
             "FloatProperty" => new UnmanagedProperty<float>(data, tag, context),
             "Int8Property" => new UnmanagedProperty<sbyte>(data, tag, context),

@@ -5,6 +5,9 @@ using System.Numerics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Cuddle.Core.Objects;
+using Cuddle.Core.Structs;
+using Cuddle.Core.Structs.Asset;
+using Cuddle.Core.Structs.Math;
 using Cuddle.Core.VFS;
 using Serilog;
 
@@ -12,65 +15,80 @@ namespace Cuddle.Core.Assets;
 
 public static class FStructRegistry {
     static FStructRegistry() {
-        LoadTypes(typeof(FStructValue).Assembly);
+        LoadTypes(typeof(FFallbackStruct).Assembly);
     }
 
-    private static Dictionary<string, Type> StructTypes { get; } = new() {
-        { "Guid", typeof(Guid) },
-        { "Vector", typeof(Vector3) },
-        { "Vector2D", typeof(Vector2) },
-        { "Quat", typeof(Quaternion) },
+    private static List<(string Name, Type? T, EObjectVersion MaximumVersionUE4, EObjectVersionUE5 MaximumVersionUE5)> StructTypes { get; } = new() {
+        ("Guid", typeof(Guid), (EObjectVersion) uint.MaxValue, (EObjectVersionUE5) uint.MaxValue),
+        ("ColorMaterialInput", typeof(FMaterialInput<FColor>), (EObjectVersion) uint.MaxValue, (EObjectVersionUE5) uint.MaxValue),
+        ("ScalarMaterialInput", typeof(FMaterialInput<float>), (EObjectVersion) uint.MaxValue, (EObjectVersionUE5) uint.MaxValue),
+        ("ShadingModelMaterialInput", typeof(FMaterialInput<uint>), (EObjectVersion) uint.MaxValue, (EObjectVersionUE5) uint.MaxValue),
+        ("StrataMaterialInput", typeof(FMaterialInput<uint>), (EObjectVersion) uint.MaxValue, (EObjectVersionUE5) uint.MaxValue),
+        ("VectorMaterialInput", typeof(FMaterialInput<Vector3>), (EObjectVersion) uint.MaxValue, (EObjectVersionUE5) uint.MaxValue),
+        ("Vector2MaterialInput", typeof(FMaterialInput<Vector2>), (EObjectVersion) uint.MaxValue, (EObjectVersionUE5) uint.MaxValue),
+        ("MaterialAttributesInput", typeof(FExpressionInput), (EObjectVersion) uint.MaxValue, (EObjectVersionUE5) uint.MaxValue),
     };
 
-    private static Dictionary<Regex, Type> RegexStructTypes { get; } = new();
+    private static List<(Regex Test, Type? T, EObjectVersion MaximumVersionUE4, EObjectVersionUE5 MaximumVersionUE5)> RegexStructTypes { get; } = new();
 
     public static void LoadTypes(Assembly assembly) {
-        foreach (var type in assembly.GetTypes().Where(x => x.IsAssignableTo(typeof(FStructValue)))) {
-            if (type == typeof(FStructValue)) {
+        foreach (var type in assembly.GetTypes().Where(x => x.IsAssignableTo(typeof(FFallbackStruct)) || x.GetCustomAttributes<ObjectRegistrationAttribute>().Any() && x.IsValueType)) {
+            if (type == typeof(FFallbackStruct)) {
                 continue;
             }
 
-            var attr = type.GetCustomAttribute<ObjectRegistrationAttribute>();
-            if (attr != null) {
+            if (type.IsGenericType) {
+                continue;
+            }
+
+            var attrs = type.GetCustomAttributes<ObjectRegistrationAttribute>().ToArray();
+            foreach (var attr in attrs) {
                 if (attr.Skip) {
                     continue;
                 }
 
                 if (!string.IsNullOrEmpty(attr.Expression)) {
-                    RegexStructTypes[new Regex(attr.Expression, RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant)] = type;
+                    RegexStructTypes.Add((new Regex(attr.Expression, RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant), type, attr.MaxVersionUE4, attr.MaxVersionUE5));
+                }
+
+                if (attr.Names?.Length > 0) {
+                    foreach (var name in attr.Names) {
+                        StructTypes.Add((name, type, attr.MaxVersionUE4, attr.MaxVersionUE5));
+                    }
                 }
             }
 
-            if (attr?.Names?.Length > 0) {
-                foreach (var name in attr.Names) {
-                    StructTypes[name] = type;
-                }
-            }
-
-            {
+            if (attrs.Length == 0) {
                 var name = type.Name;
                 if (name[0] is 'F' or 'U') {
                     name = name[1..];
                 }
 
-                StructTypes[name] = type;
+                StructTypes.Add((name, type, (EObjectVersion) uint.MaxValue, (EObjectVersionUE5) uint.MaxValue));
             }
         }
+    }
+
+    public static Type? GetType(string name, EObjectVersion version, EObjectVersionUE5 ue5Version) {
+        var t = StructTypes.FirstOrDefault(x => x.Name == name && x.MaximumVersionUE5 > ue5Version && x.MaximumVersionUE4 > version).T;
+        if (t != null) {
+            return t;
+        }
+
+        t = RegexStructTypes.FirstOrDefault(x => x.Test.IsMatch(name) && x.MaximumVersionUE5 > ue5Version && x.MaximumVersionUE4 > version).T;
+        if (t != null) {
+            // cache for faster lookup.
+            StructTypes.Add((name, t, version, ue5Version));
+            return t;
+        }
+
+        return null;
     }
 
     public static object? Create(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) {
         var className = tag.ValueType.Value;
 
-        if (!StructTypes.TryGetValue(className, out var structType)) {
-            foreach (var (regex, type) in RegexStructTypes) {
-                if (regex.IsMatch(className)) {
-                    // cache this class name because the regex matched so we can look it up faster next time.
-                    StructTypes[className] = type;
-                    structType = type;
-                    break;
-                }
-            }
-        }
+        var structType = GetType(className, data.Version, data.VersionUE5);
 
         if (structType == null) {
             try {

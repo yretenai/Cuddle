@@ -1,7 +1,5 @@
-using Cuddle.Core.Assets;
-
 namespace Cuddle.Core.Structs.Intl;
 
-public record struct FDateTime(long Ticks) : FStructValue {
+public record struct FDateTime(long Ticks) {
     public FDateTime() : this(0) { }
 }

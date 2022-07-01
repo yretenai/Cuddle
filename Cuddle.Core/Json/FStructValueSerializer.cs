@@ -5,10 +5,10 @@ using Cuddle.Core.Assets;
 
 namespace Cuddle.Core.Json;
 
-public class FStructValueSerializer : JsonConverter<FStructValue> {
-    public override FStructValue Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) => throw new NotSupportedException();
+public class FStructValueSerializer : JsonConverter<FFallbackStruct> {
+    public override FFallbackStruct Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) => throw new NotSupportedException();
 
-    public override void Write(Utf8JsonWriter writer, FStructValue value, JsonSerializerOptions options) {
+    public override void Write(Utf8JsonWriter writer, FFallbackStruct value, JsonSerializerOptions options) {
         writer.WriteStartObject();
         if (value is FTaggedStructValue { SerializeProperties: true } taggedStructValue) {
             var isPureObject = value.GetType() == typeof(FTaggedStructValue);

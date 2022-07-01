@@ -1,7 +1,7 @@
 ﻿namespace Cuddle.Core.Structs.Asset;
 
 // UE4 reference: EUnrealEngineObjectUE4Version (ObjectVersion.h)
-public enum EObjectVersion {
+public enum EObjectVersion : uint {
     OLDEST_LOADABLE_PACKAGE = 214,
 
     // Removed restriction on blueprint-exposed variables from being read-only

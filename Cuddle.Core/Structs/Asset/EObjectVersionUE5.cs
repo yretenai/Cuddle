@@ -1,6 +1,6 @@
 ﻿namespace Cuddle.Core.Structs.Asset;
 
-public enum EObjectVersionUE5 {
+public enum EObjectVersionUE5 : uint {
     INITIAL_VERSION_UE5 = 1000,
 
     // Support stripping names that are not referenced from export data

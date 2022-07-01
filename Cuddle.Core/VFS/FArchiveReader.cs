@@ -36,6 +36,7 @@ public sealed class FArchiveReader : IPoliteDisposable {
     public int Position { get; set; }
     public int Length => Data.Length;
     public int Remaining => Data.Length - Position;
+    public bool HasEditorData => Asset?.Summary.HasEditorData == true;
 
     public bool Disposed { get; private set; }
 
