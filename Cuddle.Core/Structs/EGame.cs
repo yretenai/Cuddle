@@ -3,15 +3,15 @@
 // @formatter:off
 // largely based on https://github.com/gildor2/UEViewer/blob/60accbff70e58bfc66eaad4594416694b95422ee/Unreal/UnCore.h#L344
 
-// 32-bits 
+// 32-bits
 // 00000000 00000000 X0000000 00000000
 // ue_major ue_minor ue_game  ue_game
 // X = Bit flag for if it's an official branch.
 // very unlikely that versions will ever go over 255, but more likely that games go over 255 given enough time.
 // written format: MAJOR.MINOR.GAME
 // max: 255.255.32767
-// special versions: 
-//      4.25.32768 = 4.25.plus = Plus PS5/XSX support 
+// special versions:
+//      4.25.32768 = 4.25.plus = Plus PS5/XSX support
 //      4.27.32768 = 4.27.plus = Plus Ray Tracing support
 public enum EGame {
     UE4_0 = 4 << 24, // 0b00000100 00000000 00000000 00000000
@@ -37,15 +37,17 @@ public enum EGame {
     UE4_20 = UE4_0 + (20 << 16),
     UE4_21 = UE4_0 + (21 << 16),
     UE4_22 = UE4_0 + (22 << 16),
+        GAME_Valorant_Alpha = UE4_22 + 1, // valorant 0.45 - 0.47
     UE4_23 = UE4_0 + (23 << 16),
+        GAME_Valorant_Beta = UE4_23 + 1, // valorant 0.48 - 0.50
     UE4_24 = UE4_0 + (24 << 16),
-        GAME_Ares = UE4_24 + 1, // valorant beta.
+        GAME_Valorant_Episode_1 = UE4_24 + 1, // valorant 1.XX
     UE4_25 = UE4_0 + (25 << 16),
-        GAME_Valorant = GAME_Valorant_Episode_4, // latest version for convenience.
-            GAME_Valorant_Episode_1 = UE4_25 + 1, // todo: check if there are ep-to-ep changes.
-            GAME_Valorant_Episode_2 = UE4_25 + 2,
-            GAME_Valorant_Episode_3 = UE4_25 + 3,
-            GAME_Valorant_Episode_4 = UE4_25 + 4,
+        GAME_Valorant = GAME_Valorant_Episode_5, // latest version for convenience.
+            GAME_Valorant_Episode_2 = UE4_25 + 1, // valorant 2.XX
+            GAME_Valorant_Episode_3 = UE4_25 + 2, // valorant 3.XX
+            GAME_Valorant_Episode_4 = UE4_25 + 3, // valorant 4.XX
+            GAME_Valorant_Episode_5 = UE4_25 + 4, // valorant 5.XX
     UE4_25Plus = UE4_25 + (1 << 15), // 0b00000100 00011001 10000000 00000000
     UE4_26 = UE4_0 + (26 << 16),
         GAME_Dauntless = UE4_26 + 1,
