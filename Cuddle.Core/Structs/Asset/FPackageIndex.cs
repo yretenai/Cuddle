@@ -5,7 +5,7 @@ using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs.Asset;
 
-public class FPackageIndex {
+public record FPackageIndex {
     public FPackageIndex() { }
 
     public FPackageIndex(FArchiveReader archive) {

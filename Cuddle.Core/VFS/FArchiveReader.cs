@@ -143,6 +143,17 @@ public sealed class FArchiveReader : IPoliteDisposable {
         return value;
     }
 
+    public FName[] ReadNames(int? count = null) {
+        count ??= Read<int>();
+
+        var value = new FName[count.Value];
+        for (var index = 0; index < value.Length; ++index) {
+            value[index] = new FName(this);
+        }
+
+        return value;
+    }
+
     public FArchiveReader Partition(int pos, int size) {
         var block = MemoryOwner<byte>.Allocate(size);
         Data.Memory.Slice(pos, size).CopyTo(block.Memory);

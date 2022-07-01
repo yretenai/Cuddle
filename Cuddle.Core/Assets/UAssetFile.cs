@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Cuddle.Core.Objects;
 using Cuddle.Core.Structs;
 using Cuddle.Core.Structs.Asset;
 using Cuddle.Core.VFS;
@@ -30,14 +32,57 @@ public sealed class UAssetFile : IPoliteDisposable {
         archive.Position = Summary.ExportOffset;
         Exports = archive.ReadClassArray<FObjectExport>(Summary.ExportCount);
 
-        // todo: GatherableTextDataMap EDITOR_ONLY
-        // todo: SoftPackageReferenceList -> FName or FString depending on ADDED_SOFT_OBJECT_PATH
-        // todo: DependsMap -> FPackageIndex[ExportCount][]
-        // todo: SearchableNamesMap -> Map<FPackageIndex, FName[]>
-        // todo: ThumbnailCache -> read inline -> int * [fstirng, fstring, int]
-        // todo: WorldTileInfoDataOffset -> FWorldTileInfo
-        // todo: PreloadDependencies -> FPackageIndex
-        // todo: PayloadToc -> FPackageTrailer
+        if (Summary.DependsOffset > 0) {
+            Dependencies = new FPackageIndex[Summary.ExportCount][];
+            archive.Position = Summary.DependsOffset;
+            for (var i = 0; i < Summary.ExportCount; i++) {
+                Dependencies[i] = archive.ReadClassArray<FPackageIndex>();
+            }
+        } else {
+            Dependencies = Array.Empty<FPackageIndex[]>();
+        }
+
+        if (Summary.PreloadDependencyOffset > 0) {
+            archive.Position = Summary.PreloadDependencyOffset;
+            Preload = archive.ReadClassArray<FPackageIndex>(Summary.PreloadDependencyCount);
+        } else {
+            Preload = Array.Empty<FPackageIndex>();
+        }
+
+        // todo: gatherable name.
+
+        if (Summary.SoftPackageReferencesOffset > 0) {
+            archive.Position = Summary.SoftPackageReferencesOffset;
+            PackageReferences = Summary.FileVersionUE4 >= EObjectVersion.ADDED_SOFT_OBJECT_PATH ? archive.ReadClassArray<FSoftObjectPath>(Summary.SoftPackageReferencesCount) : archive.ReadStrings(Summary.SoftPackageReferencesCount).Select(x => new FSoftObjectPath(x)).ToArray();
+        } else {
+            PackageReferences = Array.Empty<FSoftObjectPath>();
+        }
+
+        if (Summary.SearchableNamesOffset > 0) {
+            archive.Position = Summary.SearchableNamesOffset;
+            var count = archive.Read<int>();
+            SearchableNames = new Dictionary<FPackageIndex, FName[]>(count);
+            for (var i = 0; i < count; ++i) {
+                SearchableNames.Add(new FPackageIndex(archive), archive.ReadNames());
+            }
+        } else {
+            SearchableNames = new Dictionary<FPackageIndex, FName[]>();
+        }
+
+        if (Summary.ThumbnailTableOffset > 0) {
+            archive.Position = Summary.ThumbnailTableOffset;
+            ThumbnailTable = archive.ReadClassArray<FThumbnailTableEntry>();
+        } else {
+            ThumbnailTable = Array.Empty<FThumbnailTableEntry>();
+        }
+
+        if (Summary.WorldTileInfoDataOffset > 0) {
+            WorldTileInfo = new FWorldTileInfo(archive);
+        }
+
+        if (Summary.PayloadTocOffset > 0) {
+            Payload = new FPackageTrailer(archive);
+        }
 
         var combined = MemoryOwner<byte>.Allocate(uasset.Length + uexp.Length);
         uasset.Memory.CopyTo(combined.Memory);
@@ -55,7 +100,14 @@ public sealed class UAssetFile : IPoliteDisposable {
     public FNameEntry[] Names { get; }
     public FObjectImport[] Imports { get; }
     public FObjectExport[] Exports { get; }
+    public FPackageIndex[][] Dependencies { get; }
+    public FPackageIndex[] Preload { get; }
+    public FSoftObjectPath[] PackageReferences { get; }
+    public Dictionary<FPackageIndex, FName[]> SearchableNames { get; }
+    public FThumbnailTableEntry[] ThumbnailTable { get; }
     public FArchiveReader ExportData { get; }
+    public FWorldTileInfo? WorldTileInfo { get; }
+    public FPackageTrailer? Payload { get; }
 
     public bool Disposed { get; private set; }
 
