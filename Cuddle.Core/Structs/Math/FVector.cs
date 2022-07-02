@@ -9,6 +9,7 @@ namespace Cuddle.Core.Structs.Math;
 public record FVector4 : FFallbackStruct {
     public FVector4() { }
     public FVector4(FArchiveReader reader) : this(reader, FStructRegistry.CurrentProcessingStruct.Value ?? "Vector4") { }
+
     public FVector4(FArchiveReader reader, string name) {
         var isDouble = name == "Vector4" && reader.VersionUE5 >= EObjectVersionUE5.LARGE_WORLD_COORDINATES || name == "Vector4d";
         X = isDouble ? reader.Read<double>() : reader.Read<float>();
@@ -27,6 +28,7 @@ public record FVector4 : FFallbackStruct {
 public record FQuat : FFallbackStruct {
     public FQuat() { }
     public FQuat(FArchiveReader reader) : this(reader, FStructRegistry.CurrentProcessingStruct.Value ?? "Quat") { }
+
     public FQuat(FArchiveReader reader, string name) {
         var isDouble = name == "Quat" && reader.VersionUE5 >= EObjectVersionUE5.LARGE_WORLD_COORDINATES || name == "Quat4d";
         X = isDouble ? reader.Read<double>() : reader.Read<float>();
@@ -45,6 +47,7 @@ public record FQuat : FFallbackStruct {
 public record FPlane : FFallbackStruct {
     public FPlane() { }
     public FPlane(FArchiveReader reader) : this(reader, FStructRegistry.CurrentProcessingStruct.Value ?? "Plane") { }
+
     public FPlane(FArchiveReader reader, string name) {
         var isDouble = name == "Plane" && reader.VersionUE5 >= EObjectVersionUE5.LARGE_WORLD_COORDINATES || name == "Plane4d";
         X = isDouble ? reader.Read<double>() : reader.Read<float>();
@@ -63,6 +66,7 @@ public record FPlane : FFallbackStruct {
 public record FVector : FFallbackStruct {
     public FVector() { }
     public FVector(FArchiveReader reader) : this(reader, FStructRegistry.CurrentProcessingStruct.Value ?? "Vector") { }
+
     public FVector(FArchiveReader reader, string name) {
         var isDouble = name == "Vector" && reader.VersionUE5 >= EObjectVersionUE5.LARGE_WORLD_COORDINATES || name == "Vector4d";
         X = isDouble ? reader.Read<double>() : reader.Read<float>();
@@ -79,6 +83,7 @@ public record FVector : FFallbackStruct {
 public record FVector2D : FFallbackStruct {
     public FVector2D() { }
     public FVector2D(FArchiveReader reader) : this(reader, FStructRegistry.CurrentProcessingStruct.Value ?? "Vector2D") { }
+
     public FVector2D(FArchiveReader reader, string name) {
         var isDouble = name == "Vector2D" && reader.VersionUE5 >= EObjectVersionUE5.LARGE_WORLD_COORDINATES;
         X = isDouble ? reader.Read<double>() : reader.Read<float>();
@@ -93,6 +98,7 @@ public record FVector2D : FFallbackStruct {
 public record FRotator : FFallbackStruct {
     public FRotator() { }
     public FRotator(FArchiveReader reader) : this(reader, FStructRegistry.CurrentProcessingStruct.Value ?? "Rotator") { }
+
     public FRotator(FArchiveReader reader, string name) {
         var isDouble = name == "Rotator" && reader.VersionUE5 >= EObjectVersionUE5.LARGE_WORLD_COORDINATES || name == "Rotator3d";
         Pitch = isDouble ? reader.Read<double>() : reader.Read<float>();
@@ -111,6 +117,7 @@ public record FTwoVectors : FFallbackStruct {
         V1 = new FVector();
         V2 = new FVector();
     }
+
     public FTwoVectors(FArchiveReader reader) {
         V1 = new FVector(reader, "Vector");
         V2 = new FVector(reader, "Vector");

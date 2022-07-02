@@ -13,6 +13,8 @@ using Serilog;
 namespace Cuddle.Core.Assets;
 
 public static class FStructRegistry {
+    internal static AsyncLocal<string> CurrentProcessingStruct = new();
+
     static FStructRegistry() {
         LoadTypes(typeof(FFallbackStruct).Assembly);
     }
@@ -63,8 +65,6 @@ public static class FStructRegistry {
             }
         }
     }
-
-    internal static AsyncLocal<string> CurrentProcessingStruct = new();
 
     public static object? Create(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) {
         var className = tag.ValueType.Value;
