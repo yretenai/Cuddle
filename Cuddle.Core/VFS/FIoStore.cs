@@ -32,7 +32,7 @@ public sealed class FIoStore : IVFSFile {
                 }
 
                 using var directoryReader = new FArchiveReader(Decrypt(Toc.DirectoryIndexBuffer, Toc.ContainerFlags.HasFlag(EIoContainerFlags.Encrypted)));
-                Directory = new FIoDirectory(directoryReader, this);
+                Directory = new FIoDirectory(directoryReader, hashStore, this);
 
                 Toc.DirectoryIndexBuffer.Dispose();
                 Toc.DirectoryIndexBuffer = null;

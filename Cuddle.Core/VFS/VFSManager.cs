@@ -97,8 +97,6 @@ public sealed class VFSManager : IResettable {
         }
     }
 
-    public MemoryOwner<byte> ReadFile(IVFSEntry entry) => entry.ReadFile();
-
     public MemoryOwner<byte> ReadFile(string path) {
         var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.Equals(path, StringComparison.Ordinal));
         return file == null ? MemoryOwner<byte>.Empty : file.Owner.ReadFile(file);
@@ -119,7 +117,7 @@ public sealed class VFSManager : IResettable {
         }
 
         if (entry.Data is null) {
-            var data = ReadFile(entry);
+            var data = entry.ReadFile();
             if (data.Length == 0) {
                 return null;
             }
