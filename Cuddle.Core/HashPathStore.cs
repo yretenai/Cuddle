@@ -9,9 +9,10 @@ using DragonLib.Hash.Basis;
 namespace Cuddle.Core;
 
 public class HashPathStore : IArchiveSerializable {
-    public HashPathStore() { }
+    public HashPathStore(Encoding? encoding = null) => Encoding = encoding ?? Encoding.Unicode;
 
-    public HashPathStore(FArchiveReader archive) {
+    public HashPathStore(FArchiveReader archive, Encoding? encoding = null) {
+        Encoding = encoding ?? Encoding.Unicode;
         var count = archive.Read<int>();
         Paths.EnsureCapacity(count);
         for (var index = 0; index < count; ++index) {
@@ -19,6 +20,7 @@ public class HashPathStore : IArchiveSerializable {
         }
     }
 
+    public Encoding Encoding { get; } // Some platforms use UTF8, most will use UTF16 though.
     public Dictionary<ulong, string> Paths { get; } = new();
 
     public void Serialize(FArchiveWriter writer) {
@@ -30,7 +32,7 @@ public class HashPathStore : IArchiveSerializable {
         }
     }
 
-    public ulong AddPath(string relativePath, string absolutePath, ulong seed, bool bugged) {
+    public ulong AddPath(string relativePath, ulong seed, bool bugged) {
         var lowercaseRelativePath = relativePath.ToLower();
         var basis = 0xcbf29ce484222325UL;
         var prime = 0x00000100000001b3UL;
@@ -41,8 +43,8 @@ public class HashPathStore : IArchiveSerializable {
         basis += seed;
 
         using var fnv = FowlerNollVo.CreateAlternate((FNV64Basis) basis, prime);
-        var hash = fnv.ComputeHashValue(Encoding.UTF8.GetBytes(lowercaseRelativePath));
-        Paths[hash] = absolutePath;
+        var hash = fnv.ComputeHashValue(Encoding.GetBytes(lowercaseRelativePath));
+        Paths[hash] = relativePath;
         return hash;
     }
 

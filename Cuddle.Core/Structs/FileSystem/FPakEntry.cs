@@ -113,7 +113,6 @@ public sealed record FPakEntry : IVFSEntry {
     public bool IsEncrypted { get; }
     public bool IsDeleted { get; }
     public uint CompressionBlockSize { get; }
-    public string Path { get; internal set; } = "";
 
     public IVFSFile Owner { get; } = null!;
     public long Size { get; }
@@ -168,7 +167,31 @@ public sealed record FPakEntry : IVFSEntry {
 
         // Engine/Plugins/Stuff -> /Plugins/Stuff -- normalize Plugins
         if (mountedPath.StartsWith("Engine/Plugins")) {
-            return mountedPath[6..];
+            mountedPath = mountedPath[6..];
+            var contentIndex = mountedPath.IndexOf("/Content", StringComparison.Ordinal);
+            var contentLength = 8;
+            if (contentIndex == -1) {
+                contentIndex = mountedPath.IndexOf("/Config", StringComparison.Ordinal);
+                contentLength = 0;
+            }
+
+            if (contentIndex == -1) {
+                if (mountedPath.EndsWith(".uplugin")) {
+                    var uplugin = mountedPath[(mountedPath.LastIndexOf('/') + 1)..];
+                    return $"/Plugins/{uplugin[..^8]}/{uplugin}";
+                }
+
+                return mountedPath;
+            }
+
+            var prefix = mountedPath[..contentIndex];
+            var name = prefix[(prefix.LastIndexOf('/') + 1)..];
+            return $"/Plugins/{name}{mountedPath[(contentIndex + contentLength)..]}";
+        }
+
+        // Engine/Stuff -> /Engine/Stuff -- normalize Engine
+        if (mountedPath.StartsWith("Engine/")) {
+            return "/" + mountedPath;
         }
 
         // Project/Content/Stuff/ -> Game/Content/Stuff -- strip project nname

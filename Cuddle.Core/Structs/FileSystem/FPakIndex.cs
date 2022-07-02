@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using Cuddle.Core.VFS;
+using Serilog;
 
 namespace Cuddle.Core.Structs.FileSystem;
 
@@ -34,9 +35,8 @@ public class FPakIndex {
         if (owner.Version < EPakVersion.PathHashIndex) {
             Files.EnsureCapacity(Count);
             for (var index = 0; index < Count; ++index) {
-                var path = archive.ReadString();
-                var mounted = MountPoint + path;
-                Files.Add(new FPakEntry(archive, Owner, false) { Path = path, MountedPath = mounted });
+                var mounted = MountPoint + archive.ReadString();
+                Files.Add(new FPakEntry(archive, Owner, false) { MountedPath = mounted });
             }
         } else {
             PathHashSeed = archive.Read<ulong>();
@@ -63,6 +63,7 @@ public class FPakIndex {
                 var dirCount = dirReader.Read<int>();
                 for (var index = 0; index < dirCount; ++index) {
                     var dirName = dirReader.ReadString();
+                    var name = dirName;
                     var fileCount = dirReader.Read<int>();
                     if (dirName[0] == '/') {
                         dirName = dirName[1..];
@@ -86,15 +87,14 @@ public class FPakIndex {
                             }
                         }
 
-                        entry.Path = dirName + fileName;
-                        entry.MountedPath = MountPoint + entry.Path;
-                        entry.ObjectPath = FPakEntry.CreateObjectPath(entry.MountedPath);
+                        entry.MountedPath = MountPoint + dirName + fileName;
+                        entry.ObjectPath = FPakEntry.CreateObjectPath(entry.MountedPath[1..]);
+                        entry.MountedHash = hashStore?.AddPath(name + fileName, PathHashSeed, owner.Version < EPakVersion.Fnv64BugFix) ?? 0;
                         if (entryLoc >= 0) {
                             entryLocCache[entryLoc] = Files.Count;
                         }
 
                         Files.Add(entry);
-                        // note: figure out what value gets passed to FPakFile::HashPath and store the value in hashStore.
                     }
                 }
             }
@@ -106,9 +106,9 @@ public class FPakIndex {
                 for (var index = 0; index < count; ++index) {
                     var hash = hashReader.Read<ulong>();
                     var entryLoc = hashReader.Read<int>();
-                    FPakEntry entry;
 
                     if (!hasFullDirectoryIndex || !entryLocCache.TryGetValue(entryLoc, out var entryIndex)) {
+                        FPakEntry entry;
                         switch (entryLoc) {
                             case int.MaxValue or int.MinValue: // Invalid, Unused
                                 continue;
@@ -124,20 +124,24 @@ public class FPakIndex {
 
                         var path = hash.ToString("x8");
                         if (hashStore == null || !hashStore.TryGetPath(hash, out var mountPath)) {
-                            mountPath = MountPoint + path; // this is bad.
-                        } else {
-                            path = mountPath[MountPoint.Length..];
+                            mountPath = path; // this is bad.
                         }
 
-                        entry.Path = path;
-                        entry.MountedPath = mountPath;
+                        if (mountPath[0] == '/') {
+                            mountPath = mountPath[1..];
+                        }
+
+                        entry.MountedPath = MountPoint + mountPath;
                         entry.ObjectPath = FPakEntry.CreateObjectPath(entry.MountedPath);
                         Files.Add(entry);
                     } else {
-                        entry = Files[entryIndex];
-                    }
+                        var entry = Files[entryIndex];
+                        if (entry.MountedHash != 0 && entry.MountedHash != hash) {
+                            Log.Warning("Hash mismatch for {Path}", entry.MountedPath);
+                        }
 
-                    entry.MountedHash = hash;
+                        entry.MountedHash = hash;
+                    }
                 }
             }
 
