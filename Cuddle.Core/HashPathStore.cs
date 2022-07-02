@@ -64,4 +64,13 @@ public class HashPathStore : IArchiveSerializable {
         Serialize(writer);
         return writer.Data;
     }
+
+    public void ReplaceHash(ulong oldHash, ulong newHash) {
+        if (oldHash == newHash || !TryGetPath(oldHash, out var path)) {
+            return;
+        }
+
+        Paths.Remove(oldHash);
+        Paths[newHash] = path;
+    }
 }

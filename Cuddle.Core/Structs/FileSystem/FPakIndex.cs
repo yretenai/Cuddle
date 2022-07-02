@@ -141,8 +141,8 @@ public class FPakIndex {
                         Files.Add(entry);
                     } else {
                         var entry = Files[entryIndex];
-                        if (entry.MountedHash != 0 && entry.MountedHash != hash) {
-                            Log.Warning("Hash mismatch for {Path}", entry.MountedPath);
+                        if (entry.MountedHash != 0 && entry.MountedHash != hash) { // ?!
+                            hashStore?.ReplaceHash(entry.MountedHash, hash);
                         }
 
                         entry.MountedHash = hash;

@@ -5,9 +5,42 @@ using System.Runtime.InteropServices;
 namespace Cuddle.Core;
 
 public static class Oodle {
+    // this has va_args, which is not possible to process in c# so you should probably use a native trampoline instead.
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void OodleCore_Plugin_Printf(int verboseLevel, [MarshalAs(UnmanagedType.LPStr)] string file, int line, [MarshalAs(UnmanagedType.LPStr)] string fmt);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate void* OodleCore_Plugins_SetPrintf([MarshalAs(UnmanagedType.FunctionPtr)] OodleCore_Plugin_Printf fp_rrRawPrintf);
+
+    public unsafe delegate OodleDecompressCallbackRet OodleDecompressCallback(void* userdata, void* rawBuf, int rawLen, void* compBuf, int compBufferSize, int rawDone, int compUsed);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate int OodleLZ_Decompress(void* srcBuf, int srcSize, void* rawBuf, int rawSize, int fuzzSafe = 1, int checkCRC = 0, OodleLZ_Verbosity verbosity = OodleLZ_Verbosity.None, void* decBufBase = null, int decBufSize = 0, void* fpCallback = null, void* callbackUserData = null, void* decoderMemory = null, int decoderMemorySize = 0, OodleLZ_Decode_ThreadPhase threadPhase = OodleLZ_Decode_ThreadPhase.Unthreaded);
+
+    public enum OodleDecompressCallbackRet {
+        Continue = 0,
+        Cancel = 1,
+        Invalid = 2,
+    }
+
+    public enum OodleLZ_Decode_ThreadPhase {
+        ThreadPhase1 = 1,
+        ThreadPhase2 = 2,
+        ThreadPhaseAll = 3,
+        Unthreaded = ThreadPhaseAll,
+    }
+
+    public enum OodleLZ_Verbosity {
+        None = 0,
+        Minimal = 1,
+        Some = 2,
+        Lots = 3,
+    }
+
     public static bool IsReady => DecompressDelegate != null;
 
-    private static OodleLZ_Decompress? DecompressDelegate { get; set; }
+    public static OodleLZ_Decompress? DecompressDelegate { get; set; }
+    public static OodleCore_Plugins_SetPrintf? SetPrintfDelegate { get; set; }
 
     public static int Decompress(Memory<byte> input, Memory<byte> output) {
         if (DecompressDelegate == null) {
@@ -18,7 +51,7 @@ public static class Oodle {
         using var outPin = output.Pin();
 
         unsafe {
-            return DecompressDelegate.Invoke((IntPtr) inPin.Pointer, input.Length, (IntPtr) outPin.Pointer, output.Length, 0, 0, 0, IntPtr.Zero, 0, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, 0, 3);
+            return DecompressDelegate.Invoke(inPin.Pointer, input.Length, outPin.Pointer, output.Length);
         }
     }
 
@@ -45,12 +78,19 @@ public static class Oodle {
             return false;
         }
 
-        var address = NativeMethods.GetProcAddress(handle, "OodleLZ_Decompress");
+        var address = NativeMethods.GetProcAddress(handle, nameof(OodleLZ_Decompress));
         if (address == IntPtr.Zero) {
             return false;
         }
 
         DecompressDelegate = Marshal.GetDelegateForFunctionPointer<OodleLZ_Decompress>(address);
+
+        address = NativeMethods.GetProcAddress(handle, nameof(OodleCore_Plugins_SetPrintf));
+        if (address == IntPtr.Zero) {
+            return true;
+        }
+
+        SetPrintfDelegate = Marshal.GetDelegateForFunctionPointer<OodleCore_Plugins_SetPrintf>(address);
         return true;
     }
 
@@ -63,6 +103,4 @@ public static class Oodle {
         public static extern IntPtr GetProcAddress(IntPtr hModule, string procname);
 #pragma warning restore CA2101
     }
-
-    private delegate int OodleLZ_Decompress(IntPtr srcBuf, int srcSize, IntPtr dstBuf, int dstSize, int fuzz, int crc, int verbose, IntPtr dstBase, int dstBaseSize, IntPtr cb, IntPtr cbContext, IntPtr scratch, uint scratchSize, uint threadPhase);
 }
