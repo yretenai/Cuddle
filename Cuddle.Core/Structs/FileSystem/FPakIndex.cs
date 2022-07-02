@@ -123,9 +123,8 @@ public class FPakIndex {
                             }
                         }
 
-                        var path = hash.ToString("x8");
                         if (hashStore == null || !hashStore.TryGetPath(hash, out var mountPath)) {
-                            mountPath = path; // this is bad.
+                            mountPath = hash.ToString("x8"); // this is bad.
                         }
 
                         if (mountPath[0] == '/') {
