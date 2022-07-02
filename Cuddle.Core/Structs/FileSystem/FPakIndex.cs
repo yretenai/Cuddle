@@ -35,8 +35,9 @@ public class FPakIndex {
         if (owner.Version < EPakVersion.PathHashIndex) {
             Files.EnsureCapacity(Count);
             for (var index = 0; index < Count; ++index) {
-                var mounted = MountPoint + archive.ReadString();
-                Files.Add(new FPakEntry(archive, Owner, false) { MountedPath = mounted });
+                var name = archive.ReadString();
+                var mounted = MountPoint + name;
+                Files.Add(new FPakEntry(archive, Owner, false) { MountedPath = mounted, MountedHash = hashStore?.AddPath(name, PathHashSeed, owner.Version < EPakVersion.Fnv64BugFix) ?? 0 });
             }
         } else {
             PathHashSeed = archive.Read<ulong>();
