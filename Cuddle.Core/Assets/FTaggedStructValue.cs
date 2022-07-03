@@ -17,5 +17,5 @@ public record FTaggedStructValue : FPropertyOwner, FFallbackStruct {
 
     internal virtual bool SerializeProperties => Owner == null;
 
-    public virtual void ProcessProperties(FPropertyOwner owner) { }
+    public virtual void ProcessProperties(FPropertyOwner owner, EObjectVersion version, EObjectVersionUE5 versionUE5) { }
 }

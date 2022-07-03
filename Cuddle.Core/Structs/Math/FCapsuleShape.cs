@@ -8,7 +8,7 @@ public record FCapsuleShape : FTaggedStructValue {
 
     public FCapsuleShape(FPropertyOwner owner) => Owner = owner;
 
-    public FCapsuleShape(FVector center, float radius, FVector orientation, float length) {
+    public FCapsuleShape(FVector center, double radius, FVector orientation, double length) {
         Center = center;
         Radius = radius;
         Orientation = orientation;
@@ -16,19 +16,19 @@ public record FCapsuleShape : FTaggedStructValue {
     }
 
     public FVector Center { get; set; } = new();
-    public float Radius { get; set; }
+    public double Radius { get; set; }
     public FVector Orientation { get; set; } = new();
-    public float Length { get; set; }
+    public double Length { get; set; }
     internal override bool SerializeProperties => false;
 
-    public override void ProcessProperties(FPropertyOwner owner) {
+    public override void ProcessProperties(FPropertyOwner owner, EObjectVersion version, EObjectVersionUE5 versionUE5) {
         Center = owner.GetProperty<FVector>(nameof(Center)) ?? Center;
-        Radius = owner.GetProperty<float>(nameof(Radius));
+        Radius = versionUE5 >= EObjectVersionUE5.LARGE_WORLD_COORDINATES ? owner.GetProperty<double>(nameof(Radius)) : owner.GetProperty<float>(nameof(Radius));
         Orientation = owner.GetProperty<FVector>(nameof(Orientation)) ?? Orientation;
-        Length = owner.GetProperty<float>(nameof(Length));
+        Length = versionUE5 >= EObjectVersionUE5.LARGE_WORLD_COORDINATES ? owner.GetProperty<double>(nameof(Length)) : owner.GetProperty<float>(nameof(Length));
     }
 
-    public void Deconstruct(out FVector center, out float radius, out FVector orientation, out float length) {
+    public void Deconstruct(out FVector center, out double radius, out FVector orientation, out double length) {
         center = Center;
         radius = Radius;
         orientation = Orientation;

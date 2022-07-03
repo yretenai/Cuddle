@@ -33,7 +33,7 @@ public static class FStructRegistry {
     private static Dictionary<Regex, Type> RegexStructTypes { get; } = new();
 
     public static void LoadTypes(Assembly assembly) {
-        foreach (var type in assembly.GetTypes().Where(x => x.IsAssignableTo(typeof(FFallbackStruct)))) {
+        foreach (var type in assembly.GetTypes().Where(x => x.IsAssignableTo(typeof(FFallbackStruct)) || x.IsValueType && x.GetCustomAttribute<ObjectRegistrationAttribute>() != null)) {
             if (type == typeof(FFallbackStruct)) {
                 continue;
             }
@@ -97,7 +97,7 @@ public static class FStructRegistry {
             CurrentProcessingStruct.Value = className;
             var value = Activator.CreateInstance(structType, data);
             if (value is FTaggedStructValue tagged) {
-                tagged.ProcessProperties(tagged);
+                tagged.ProcessProperties(tagged, data.Version, data.VersionUE5);
             }
 
             return value;

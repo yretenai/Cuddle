@@ -15,7 +15,7 @@ public abstract record FPerPlatformValue<T> : FTaggedStructValue where T : unman
     public T Default { get; set; }
     internal override bool SerializeProperties => false;
 
-    public override void ProcessProperties(FPropertyOwner owner) {
+    public override void ProcessProperties(FPropertyOwner owner, EObjectVersion version, EObjectVersionUE5 versionUE5) {
         Default = owner.GetProperty<T>(nameof(Default));
     }
 
