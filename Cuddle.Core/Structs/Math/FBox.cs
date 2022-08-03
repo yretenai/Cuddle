@@ -15,7 +15,7 @@ public record FBox : FFallbackStruct {
         var vectorName = isDouble ? "Vector3d" : "Vector3f";
         Origin = new FVector(reader, vectorName);
         BoxExtent = new FVector(reader, vectorName);
-        IsValid = reader.ReadBoolean();
+        IsValid = reader.ReadBit();
     }
 
     public FVector Origin { get; set; }
