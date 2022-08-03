@@ -23,5 +23,5 @@ public record FMatrix44 : FFallbackStruct {
     public FPlane YPlane { get; set; }
     public FPlane ZPlane { get; set; }
     public FPlane WPlane { get; set; }
-    public Matrix4X4<double> ToSilk() => new(XPlane.ToSilk(), YPlane.ToSilk(), ZPlane.ToSilk(), WPlane.ToSilk());
+    public Matrix4X4<double> ToSilk() => new(XPlane.ToSilkDouble(), YPlane.ToSilkDouble(), ZPlane.ToSilkDouble(), WPlane.ToSilkDouble());
 }

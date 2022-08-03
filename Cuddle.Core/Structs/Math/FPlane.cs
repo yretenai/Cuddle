@@ -1,4 +1,5 @@
-﻿using Cuddle.Core.Assets;
+﻿using System.Numerics;
+using Cuddle.Core.Assets;
 using Cuddle.Core.Objects;
 using Cuddle.Core.Structs.Asset;
 using Cuddle.Core.VFS;
@@ -25,4 +26,5 @@ public record FPlane : FFallbackStruct {
     public double W { get; set; }
 
     public Plane<double> ToSilk() => new(X, Y, Z, W);
+    public Vector4D<double> ToSilkDouble() => new(X, Y, Z, W);
 }
