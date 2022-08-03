@@ -7,6 +7,6 @@ namespace Cuddle.Core.Json;
 
 public class FNameSerializer : JsonConverter<FName> {
     public override FName Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) => throw new NotSupportedException();
-    public override void Write(Utf8JsonWriter writer, FName value, JsonSerializerOptions options) => writer.WriteStringValue(value.Value);
-    public override void WriteAsPropertyName(Utf8JsonWriter writer, FName value, JsonSerializerOptions options) => writer.WritePropertyName(value.Value);
+    public override void Write(Utf8JsonWriter writer, FName value, JsonSerializerOptions options) => writer.WriteStringValue(value.InstanceValue);
+    public override void WriteAsPropertyName(Utf8JsonWriter writer, FName value, JsonSerializerOptions options) => writer.WritePropertyName(value.InstanceValue);
 }
