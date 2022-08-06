@@ -21,6 +21,9 @@ public partial record CuddleFlags : CommandLineFlags {
     [Flag("filter", Help = "Path filters", Category = "Cuddle")]
     public List<Regex> Filters { get; set; } = new();
 
+    [Flag("culture", Aliases = new[] { "l" }, Help = "List of Localization Cultures to load", Category = "Cuddle")]
+    public List<string> Cultures { get; set; } = new();
+
     [Flag("oodle", Help = "Directory or path to a valid oodle library", Category = "Cuddle")]
     public string? OodlePath { get; set; }
 

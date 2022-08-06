@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using Cuddle.Core;
@@ -34,6 +35,11 @@ public static class Program {
 
         using var manager = new VFSManager();
         manager.MountDir(new DirectoryInfo(flags.PakPath), flags.Game);
+        if (flags.Cultures.Any()) {
+            foreach (var culture in flags.Cultures.Select(x => x.ToCulture())) {
+                manager.Culture.LoadCulture(culture);
+            }
+        }
 
         switch (flags.Mode) {
             case CuddleMode.Export:

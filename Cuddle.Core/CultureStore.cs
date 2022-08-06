@@ -16,6 +16,10 @@ public class CultureStore {
     public VFSManager Manager { get; set; }
 
     public void LoadCulture(ECulture culture) {
+        if (culture == ECulture.None) {
+            return;
+        }
+
         var iso = $"/{culture.ToISO_639_1()}/";
 
         if (PrimaryCulture == ECulture.None) {
@@ -43,7 +47,7 @@ public class CultureStore {
             }
 
             foreach (var (key, value) in values) {
-                if(nsMap.ContainsKey(key.Value)) {
+                if (nsMap.ContainsKey(key.Value)) {
                     continue;
                 }
 
