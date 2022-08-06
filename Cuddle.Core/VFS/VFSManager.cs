@@ -11,9 +11,7 @@ using Serilog;
 namespace Cuddle.Core.VFS;
 
 public sealed class VFSManager : IResettable {
-    public VFSManager() {
-        Culture = new CultureStore(this);
-    }
+    public VFSManager() => Culture = new CultureStore(this);
 
     public AESKeyStore KeyStore { get; } = new();
     public HashPathStore HashStore { get; } = new();

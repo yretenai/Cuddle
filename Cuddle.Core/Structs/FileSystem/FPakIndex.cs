@@ -5,7 +5,6 @@ using System.Text;
 using Cuddle.Core.VFS;
 using DragonLib.Hash;
 using DragonLib.Hash.Basis;
-using Serilog;
 
 namespace Cuddle.Core.Structs.FileSystem;
 

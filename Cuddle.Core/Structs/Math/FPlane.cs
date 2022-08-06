@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using Cuddle.Core.Assets;
+﻿using Cuddle.Core.Assets;
 using Cuddle.Core.Objects;
 using Cuddle.Core.Structs.Asset;
 using Cuddle.Core.VFS;

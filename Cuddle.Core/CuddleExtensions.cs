@@ -223,6 +223,6 @@ public static class CuddleExtensions {
             ECulture.Portuguese => "pt",
             ECulture.PortuguesePT => "pt-PT",
             ECulture.PortugueseBR => "pt-BR",
-            _ => throw new ArgumentOutOfRangeException(nameof(culture), culture, null)
+            _ => throw new ArgumentOutOfRangeException(nameof(culture), culture, null),
         };
 }
