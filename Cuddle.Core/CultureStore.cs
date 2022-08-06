@@ -43,6 +43,10 @@ public class CultureStore {
             }
 
             foreach (var (key, value) in values) {
+                if(nsMap.ContainsKey(key.Value)) {
+                    continue;
+                }
+
                 nsMap[key.Value] = value.Value;
             }
         }
