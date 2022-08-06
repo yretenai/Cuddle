@@ -11,8 +11,13 @@ using Serilog;
 namespace Cuddle.Core.VFS;
 
 public sealed class VFSManager : IResettable {
+    public VFSManager() {
+        Culture = new CultureStore(this);
+    }
+
     public AESKeyStore KeyStore { get; } = new();
     public HashPathStore HashStore { get; } = new();
+    public CultureStore Culture { get; set; }
 
     public List<IVFSFile> Containers { get; } = new();
     public IEnumerable<IVFSEntry> Files => Containers.SelectMany(x => x.Entries);

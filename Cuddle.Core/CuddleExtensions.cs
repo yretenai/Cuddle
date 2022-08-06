@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Cuddle.Core.Structs;
 using Cuddle.Core.Structs.Asset;
+using Cuddle.Core.Structs.Intl;
 
 namespace Cuddle.Core;
 
@@ -168,4 +169,60 @@ public static class CuddleExtensions {
         };
 
     public static bool IsNullOrNone([NotNullWhen(false)] this string? value) => string.IsNullOrEmpty(value) || value == "None";
+
+    public static string ToISO_639_1(this ECulture culture) =>
+        culture switch {
+            ECulture.None => "xx",
+            ECulture.English => "en",
+            ECulture.EnglishUS => "en-US",
+            ECulture.EnglishGB => "en-GB",
+            ECulture.EnglishHK => "en-HK",
+            ECulture.French => "fr",
+            ECulture.FrenchFR => "fr-FR",
+            ECulture.FrenchCA => "fr-CA",
+            ECulture.Italian => "it",
+            ECulture.ItalianIT => "it-IT",
+            ECulture.German => "de",
+            ECulture.GermanDE => "de-DE",
+            ECulture.Spanish => "es",
+            ECulture.SpanishES => "es-ES",
+            ECulture.SpanishMX => "es-MX",
+            ECulture.SpanishLatAm => "es-419",
+            ECulture.Danish => "da",
+            ECulture.DanishDK => "da-DK",
+            ECulture.Dutch => "nl",
+            ECulture.DutchNL => "nl-NL",
+            ECulture.Finnish => "fi",
+            ECulture.FinnishFI => "fi-FI",
+            ECulture.Swedish => "sv",
+            ECulture.SwedishSE => "sv-SE",
+            ECulture.Russian => "ru",
+            ECulture.RussianRU => "ru-RU",
+            ECulture.Polish => "pl",
+            ECulture.PolishPL => "pl-PL",
+            ECulture.Arabic => "ar",
+            ECulture.ArabicAE => "ar-AE",
+            ECulture.Korean => "ko",
+            ECulture.KoreanKR => "ko-KR",
+            ECulture.Japanese => "ja",
+            ECulture.JapaneseJP => "ja-JP",
+            ECulture.SimplifiedChinese => "zh-Hans",
+            ECulture.SimplifiedChineseCN => "zh-Hans-CN",
+            ECulture.SimplifiedChineseHK => "zh-Hans-HK",
+            ECulture.SimplifiedChineseMO => "zh-Hans-MO",
+            ECulture.SimplifiedChineseSG => "zh-Hans-SG",
+            ECulture.TraditionalChinese => "zh-Hant",
+            ECulture.TraditionalChineseCN => "zh-Hant-CN",
+            ECulture.TraditionalChineseHK => "zh-Hant-HK",
+            ECulture.TraditionalChineseMO => "zh-Hant-MO",
+            ECulture.TraditionalChineseSG => "zh-Hant-SG",
+            ECulture.Turkish => "tr",
+            ECulture.TurkishTR => "tr-TR",
+            ECulture.Thai => "th",
+            ECulture.ThaiTH => "th-TH",
+            ECulture.Portuguese => "pt",
+            ECulture.PortuguesePT => "pt-PT",
+            ECulture.PortugueseBR => "pt-BR",
+            _ => throw new ArgumentOutOfRangeException(nameof(culture), culture, null)
+        };
 }

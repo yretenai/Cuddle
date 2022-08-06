@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Cuddle.Core.Structs.Intl;
 using Cuddle.Core.VFS;
-using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Cuddle.Core.Objects.Intl;
 
 public class FTextLocalizationResource {
-    public FTextLocalizationResource(MemoryOwner<byte> data) {
-        using var reader = new FArchiveReader(data);
+    public FTextLocalizationResource(FArchiveReader reader) {
         var guid = reader.Read<Guid>();
         if (guid == Magic) {
             Version = reader.Read<ELocResVersion>();

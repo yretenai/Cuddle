@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using Cuddle.Core.Objects.Assets;
 using Cuddle.Core.Structs.Asset;
 using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs.Intl;
 
 public abstract class FTextHistory {
-    // todo: localization provider.
-    public abstract string BuildDisplayString();
+    public abstract string BuildDisplayString(VFSManager? manager);
 
     public class None : FTextHistory {
         public None(FArchiveReader data) {
@@ -20,7 +20,7 @@ public abstract class FTextHistory {
 
         public string SourceString { get; } = "None";
 
-        public override string BuildDisplayString() => SourceString;
+        public override string BuildDisplayString(VFSManager? manager) => SourceString;
     }
 
     public class Base : FTextHistory {
@@ -40,7 +40,13 @@ public abstract class FTextHistory {
         public string Key { get; }
         public string SourceString { get; }
 
-        public override string BuildDisplayString() => SourceString.IsNullOrNone() ? $"{Namespace}_{Key}" : SourceString;
+        public override string BuildDisplayString(VFSManager? manager) {
+            if (manager?.Culture == null || !manager.Culture.TryGetValue(Namespace, Key, out var str)) {
+                return SourceString.IsNullOrNone() ? $"{Namespace}_{Key}" : SourceString;
+            }
+
+            return str;
+        }
     }
 
     public class NamedFormat : FTextHistory {
@@ -55,7 +61,7 @@ public abstract class FTextHistory {
         public FText SourceFmt { get; }
         public Dictionary<string, FFormatArgumentValue> Arguments { get; }
 
-        public override string BuildDisplayString() => SourceFmt.History.BuildDisplayString();
+        public override string BuildDisplayString(VFSManager? manager) => SourceFmt.History.BuildDisplayString(manager);
     }
 
     public class OrderedFormat : FTextHistory {
@@ -67,7 +73,7 @@ public abstract class FTextHistory {
         public FText SourceFmt { get; }
         public FFormatArgumentValue[] Arguments { get; }
 
-        public override string BuildDisplayString() => SourceFmt.History.BuildDisplayString();
+        public override string BuildDisplayString(VFSManager? manager) => SourceFmt.History.BuildDisplayString(manager);
     }
 
     public class ArgumentFormat : FTextHistory {
@@ -82,7 +88,7 @@ public abstract class FTextHistory {
         public FText SourceFmt { get; }
         public List<KeyValuePair<string, FFormatArgumentValue>> Arguments { get; }
 
-        public override string BuildDisplayString() => SourceFmt.History.BuildDisplayString();
+        public override string BuildDisplayString(VFSManager? manager) => SourceFmt.History.BuildDisplayString(manager);
     }
 
     public class AsNumber : FTextHistory {
@@ -99,7 +105,7 @@ public abstract class FTextHistory {
         public FNumberFormattingOptions? FormatOptions { get; }
         public string TargetCulture { get; }
 
-        public override string BuildDisplayString() => (FormatOptions ?? FNumberFormattingOptions.DefaultNoGrouping).Format(SourceValue.Value);
+        public override string BuildDisplayString(VFSManager? manager) => (FormatOptions ?? FNumberFormattingOptions.DefaultNoGrouping).Format(SourceValue.Value);
     }
 
     public class AsCurrency : FTextHistory {
@@ -122,7 +128,7 @@ public abstract class FTextHistory {
         public string TargetCulture { get; }
 
         // todo: format currency, use simoleons for now.
-        public override string BuildDisplayString() => "§" + (FormatOptions ?? FNumberFormattingOptions.DefaultNoGrouping).Format(SourceValue.Value);
+        public override string BuildDisplayString(VFSManager? manager) => "§" + (FormatOptions ?? FNumberFormattingOptions.DefaultNoGrouping).Format(SourceValue.Value);
     }
 
     public class AsPercent : FTextHistory {
@@ -139,7 +145,7 @@ public abstract class FTextHistory {
         public FNumberFormattingOptions? FormatOptions { get; }
         public string TargetCulture { get; }
 
-        public override string BuildDisplayString() => (FormatOptions ?? FNumberFormattingOptions.DefaultNoGrouping).Format(SourceValue.Value) + "%";
+        public override string BuildDisplayString(VFSManager? manager) => (FormatOptions ?? FNumberFormattingOptions.DefaultNoGrouping).Format(SourceValue.Value) + "%";
     }
 
     public class AsDate : FTextHistory {
@@ -158,7 +164,7 @@ public abstract class FTextHistory {
         public string? TimeZone { get; }
         public string TargetCulture { get; }
 
-        public override string BuildDisplayString() {
+        public override string BuildDisplayString(VFSManager? manager) {
             var dt = new DateTime(SourceDateTime.Ticks);
             // todo: TimeZone, Culture
             return DateStyle switch {
@@ -186,7 +192,7 @@ public abstract class FTextHistory {
         public string TimeZone { get; }
         public string TargetCulture { get; }
 
-        public override string BuildDisplayString() {
+        public override string BuildDisplayString(VFSManager? manager) {
             var dt = new DateTime(SourceDateTime.Ticks);
             // todo: TimeZone, Culture
             return DateStyle switch {
@@ -215,7 +221,7 @@ public abstract class FTextHistory {
         public string TimeZone { get; }
         public string TargetCulture { get; }
 
-        public override string BuildDisplayString() {
+        public override string BuildDisplayString(VFSManager? manager) {
             var dt = new DateTime(SourceDateTime.Ticks);
             // todo: TimeZone, Culture
             return DateStyle switch {
@@ -239,8 +245,8 @@ public abstract class FTextHistory {
         public FText SourceText { get; }
         public ETransformType TransformType { get; }
 
-        public override string BuildDisplayString() {
-            var str = SourceText.History.BuildDisplayString();
+        public override string BuildDisplayString(VFSManager? manager) {
+            var str = SourceText.History.BuildDisplayString(manager);
             return TransformType switch {
                 ETransformType.ToLower => str.ToLower(),
                 ETransformType.ToUpper => str.ToUpper(),
@@ -258,8 +264,13 @@ public abstract class FTextHistory {
         public FName TableId { get; }
         public string Key { get; }
 
-        // todo: lookup?
-        public override string BuildDisplayString() => $"{TableId}_{Key}";
+        public override string BuildDisplayString(VFSManager? manager) {
+            if (manager?.ReadExport(TableId.Value, TableId.Instance) is not UStringTable st || !st.Keys.TryGetValue(Key, out var str)) {
+                return $"{TableId}_{Key}";
+            }
+
+            return str;
+        }
     }
 
     public class TextGenerator : FTextHistory {
@@ -274,6 +285,6 @@ public abstract class FTextHistory {
         public byte[] GeneratorContents { get; } = Array.Empty<byte>();
 
         // all TextGenreator instances are game specific.
-        public override string BuildDisplayString() => GeneratorTypeId;
+        public override string BuildDisplayString(VFSManager? manager) => GeneratorTypeId;
     }
 }

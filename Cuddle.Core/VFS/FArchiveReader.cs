@@ -14,20 +14,25 @@ public sealed class FArchiveReader : IPoliteDisposable {
     public FArchiveReader(UAssetFile asset, MemoryOwner<byte> data) {
         Asset = asset;
         Data = data;
+        Manager = asset.Manager;
         Game = asset.Game;
         Version = asset.Summary.FileVersionUE4;
         VersionUE5 = asset.Summary.FileVersionUE5;
     }
 
-    public FArchiveReader(EGame game, MemoryOwner<byte> data) {
+    public FArchiveReader(EGame game, MemoryOwner<byte> data, VFSManager? manager = null) {
         Game = game;
         Version = game.FindObjectVersion();
-
+        Manager = manager;
         Data = data;
     }
 
-    public FArchiveReader(MemoryOwner<byte> data) => Data = data;
+    public FArchiveReader(MemoryOwner<byte> data, VFSManager? manager = null) {
+        Data = data;
+        Manager = manager;
+    }
 
+    public VFSManager? Manager { get; set; }
     public EGame Game { get; set; }
     public EObjectVersion Version { get; set; }
     public EObjectVersionUE5 VersionUE5 { get; set; }
@@ -158,7 +163,7 @@ public sealed class FArchiveReader : IPoliteDisposable {
     public FArchiveReader Partition(int pos, int size) {
         var block = MemoryOwner<byte>.Allocate(size);
         Data.Memory.Slice(pos, size).CopyTo(block.Memory);
-        return Asset == null ? new FArchiveReader(Game, block) : new FArchiveReader(Asset, block);
+        return Asset == null ? new FArchiveReader(Game, block, Manager) : new FArchiveReader(Asset, block);
     }
 
     public FArchiveReader Partition(int? count = null) {
@@ -166,6 +171,6 @@ public sealed class FArchiveReader : IPoliteDisposable {
         var block = MemoryOwner<byte>.Allocate(count.Value);
         Data.Memory.Slice(Position, count.Value).CopyTo(block.Memory);
         Position += count.Value;
-        return Asset == null ? new FArchiveReader(Game, block) : new FArchiveReader(Asset, block);
+        return Asset == null ? new FArchiveReader(Game, block, Manager) : new FArchiveReader(Asset, block);
     }
 }

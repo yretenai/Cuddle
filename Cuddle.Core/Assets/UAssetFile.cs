@@ -17,7 +17,7 @@ public sealed class UAssetFile : IPoliteDisposable {
         Owner = owner;
         Manager = manager;
 
-        using var archive = new FArchiveReader(game, uasset);
+        using var archive = new FArchiveReader(game, uasset, manager);
         Summary = new FPackageFileSummary(archive, Name);
         archive.Asset = this;
         archive.Version = Summary.FileVersionUE4;
@@ -234,7 +234,7 @@ public sealed class UAssetFile : IPoliteDisposable {
             return false;
         }
 
-        reader = new FArchiveReader(Game, bulk);
+        reader = new FArchiveReader(this, bulk);
         return true;
     }
 
@@ -247,7 +247,7 @@ public sealed class UAssetFile : IPoliteDisposable {
             return false;
         }
 
-        reader = new FArchiveReader(Game, ptnl);
+        reader = new FArchiveReader(this, ptnl);
         return true;
     }
 }

@@ -35,6 +35,7 @@ public class FText {
     public ETextFlag Flags { get; }
     public ETextHistoryType Type { get; }
     public FTextHistory History { get; }
+    public VFSManager Manager { get; }
 
-    public override string ToString() => History.BuildDisplayString();
+    public override string ToString() => History.BuildDisplayString(Manager);
 }
