@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Security.Cryptography;
 using Cuddle.Core.Structs;
 using Cuddle.Core.Structs.FileSystem;
+using Cuddle.Security;
 using DragonLib;
 using K4os.Compression.LZ4;
 using Microsoft.Toolkit.HighPerformance.Buffers;
@@ -97,15 +97,17 @@ public sealed class FPakFile : IVFSFile {
             }
         }
 
-        if (IsIndexEncrypted || EncryptionGuid != Guid.Empty) {
+        if (IsIndexEncrypted || EncryptionGuid != Guid.Empty && EncryptionKey != null) {
             var testBlock = new byte[16].AsSpan();
             stream.Position = indexOffset;
             stream.ReadExactly(testBlock);
 
-            if (keyStore == null || !FindEncryptionKey(keyStore, testBlock)) {
+            if (keyStore == null || !keyStore.FindEncryptionKey(EncryptionGuid, testBlock, out var enc)) {
                 Log.Error("Can't find encryption key that suits Encryption Key GUID {KeyGuid} for PAK {PakName}", EncryptionGuid, Name);
                 return;
             }
+
+            EncryptionKey = enc;
         }
 
         using var indexReader = new FArchiveReader(game, ReadBytes(indexOffset, indexSize, IsIndexEncrypted));
@@ -294,30 +296,6 @@ public sealed class FPakFile : IVFSFile {
         return Decrypt(data, isEncrypted)[..(int) count];
     }
 
-    private bool FindEncryptionKey(AESKeyStore aesKey, Span<byte> test) {
-        if (EncryptionKey != null) {
-            return true;
-        }
-
-        if (aesKey.Keys.TryGetValue(EncryptionGuid, out var key)) {
-            EncryptionKey = key;
-            return true;
-        }
-
-        var dec = new byte[16].AsSpan();
-        foreach (var unknownKey in aesKey.NullKeys) {
-            EncryptionKey = unknownKey;
-            DecryptInner(new Span<byte>(test.ToArray()), dec);
-            if (Math.Abs(BinaryPrimitives.ReadInt32LittleEndian(dec)) < 255) {
-                aesKey.Keys[EncryptionGuid] = EncryptionKey;
-                return true;
-            }
-        }
-
-        EncryptionKey = null;
-        return false;
-    }
-
     ~FPakFile() {
         Dispose();
     }
@@ -328,20 +306,8 @@ public sealed class FPakFile : IVFSFile {
         }
 
         var decryptedOwner = MemoryOwner<byte>.Allocate(data.Length);
-        var size = DecryptInner(data.Span, decryptedOwner.Span);
+        var size = AESKeyStore.Decrypt(EncryptionKey, data.Span, decryptedOwner.Span);
         data.Dispose();
         return decryptedOwner[..size];
-    }
-
-    private int DecryptInner(Span<byte> enc, Span<byte> dec) {
-        using var cipher = Aes.Create();
-#pragma warning disable CA5358
-        cipher.Mode = CipherMode.ECB;
-#pragma warning restore CA5358
-        cipher.Padding = PaddingMode.None;
-        cipher.BlockSize = 128;
-        cipher.Key = EncryptionKey!;
-        cipher.IV = new byte[16];
-        return cipher.DecryptEcb(enc, dec, cipher.Padding);
     }
 }

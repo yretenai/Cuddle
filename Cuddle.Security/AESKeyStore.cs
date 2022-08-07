@@ -1,13 +1,17 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Security.Cryptography;
 using DragonLib;
 using Serilog;
 
-namespace Cuddle.Core;
+namespace Cuddle.Security;
 
 public sealed class AESKeyStore {
-    internal Dictionary<Guid, byte[]> Keys { get; } = new();
-    internal List<byte[]> NullKeys { get; } = new();
+    public Dictionary<Guid, byte[]> Keys { get; } = new();
+    public List<byte[]> NullKeys { get; } = new();
 
     public void AddKey(Guid identifier, byte[] key) {
         Keys[identifier] = key;
@@ -52,5 +56,37 @@ public sealed class AESKeyStore {
         foreach (var key in NullKeys) {
             Log.Information("  {Guid:n} = 0x{Key}", Guid.Empty, key.ToHexString());
         }
+    }
+
+    public bool FindEncryptionKey(Guid encryptionGuid, Span<byte> test, [MaybeNullWhen(false)] out byte[] key) {
+        if (Keys.TryGetValue(encryptionGuid, out key)) {
+            return true;
+        }
+
+        var dec = new byte[16].AsSpan();
+        foreach (var unknownKey in NullKeys.Concat(Keys.Values)) {
+            Decrypt( unknownKey, new Span<byte>(test.ToArray()), dec);
+            if (Math.Abs(BinaryPrimitives.ReadInt32LittleEndian(dec)) < 255) {
+                key = unknownKey;
+                Keys[encryptionGuid] = key;
+                return true;
+            }
+        }
+
+        key = null;
+        return false;
+    }
+
+
+    public static int Decrypt(byte[] key, Span<byte> enc, Span<byte> dec) {
+        using var cipher = Aes.Create();
+#pragma warning disable CA5358
+        cipher.Mode = CipherMode.ECB;
+#pragma warning restore CA5358
+        cipher.Padding = PaddingMode.None;
+        cipher.BlockSize = 128;
+        cipher.Key = key;
+        cipher.IV = new byte[16];
+        return cipher.DecryptEcb(enc, dec, cipher.Padding);
     }
 }

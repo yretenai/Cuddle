@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using Cuddle.Core.Structs;
 using Cuddle.Core.Structs.FileSystem;
+using Cuddle.Security;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 using Serilog;
 
@@ -22,13 +22,17 @@ public sealed class FIoStore : IVFSFile {
 
         Toc = new FIoToc(this, tocStream, keyStore);
 
+        Debug.Assert(Toc.Version >= EIoStoreTocVersion.DirectoryIndex);
+
         if (Toc.Version >= EIoStoreTocVersion.DirectoryIndex) {
             if (Toc.DirectoryIndexBuffer != null) {
                 if (Toc.ContainerFlags.HasFlag(EIoContainerFlags.Encrypted)) {
-                    if (keyStore == null || !FindEncryptionKey(keyStore, Toc.DirectoryIndexBuffer.Span[..16])) {
+                    if (keyStore == null || !keyStore.FindEncryptionKey(EncryptionGuid, Toc.DirectoryIndexBuffer.Span[..16], out var enc)) {
                         Log.Error("Can't find encryption key that suits Encryption Key GUID {KeyGuid} for IoStore {StoreName}", EncryptionGuid, Name);
                         return;
                     }
+
+                    EncryptionKey = enc;
                 }
 
                 using var directoryReader = new FArchiveReader(Decrypt(Toc.DirectoryIndexBuffer, Toc.ContainerFlags.HasFlag(EIoContainerFlags.Encrypted)));
@@ -38,6 +42,7 @@ public sealed class FIoStore : IVFSFile {
                 Toc.DirectoryIndexBuffer = null;
             }
         }
+
         // if there is no directory index, load pak for the FPakIndex. idk if anything will ever use this version.
     }
 
@@ -74,7 +79,7 @@ public sealed class FIoStore : IVFSFile {
             throw new InvalidOperationException();
         }
 
-        return MemoryOwner<byte>.Empty;
+        throw new NotImplementedException();
     }
 
     public MemoryOwner<byte> ReadBytes(long offset, long count, bool isEncrypted) => throw new NotImplementedException();
@@ -102,45 +107,9 @@ public sealed class FIoStore : IVFSFile {
         }
 
         var decryptedOwner = MemoryOwner<byte>.Allocate(data.Length);
-        var size = DecryptInner(data.Span, decryptedOwner.Span);
+        var size = AESKeyStore.Decrypt(EncryptionKey, data.Span, decryptedOwner.Span);
         data.Dispose();
 
         return decryptedOwner[..size];
-    }
-
-    private int DecryptInner(Span<byte> enc, Span<byte> dec) {
-        using var cipher = Aes.Create();
-#pragma warning disable CA5358
-        cipher.Mode = CipherMode.ECB;
-#pragma warning restore CA5358
-        cipher.Padding = PaddingMode.None;
-        cipher.BlockSize = 128;
-        cipher.Key = EncryptionKey!;
-        cipher.IV = new byte[16];
-        return cipher.DecryptEcb(enc, dec, cipher.Padding);
-    }
-
-    private bool FindEncryptionKey(AESKeyStore aesKey, Span<byte> test) {
-        if (EncryptionKey != null) {
-            return true;
-        }
-
-        if (aesKey.Keys.TryGetValue(EncryptionGuid, out var key)) {
-            EncryptionKey = key;
-            return true;
-        }
-
-        var dec = new byte[16].AsSpan();
-        foreach (var unknownKey in aesKey.NullKeys) {
-            EncryptionKey = unknownKey;
-            DecryptInner(new Span<byte>(test.ToArray()), dec);
-            if (Math.Abs(BinaryPrimitives.ReadInt32LittleEndian(dec)) < 255) {
-                aesKey.Keys[EncryptionGuid] = EncryptionKey;
-                return true;
-            }
-        }
-
-        EncryptionKey = null;
-        return false;
     }
 }

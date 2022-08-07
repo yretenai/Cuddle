@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Cuddle.Core.Assets;
 using Cuddle.Core.Structs;
+using Cuddle.Security;
 using DragonLib.Text;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 using Serilog;
