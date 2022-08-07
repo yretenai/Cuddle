@@ -51,7 +51,7 @@ public abstract class FTextHistory {
 
     public class NamedFormat : FTextHistory {
         public NamedFormat(FArchiveReader data) {
-            SourceFmt = new FText(data);
+            SourceFmt = new FText(data, data.Asset);
             Arguments = new Dictionary<string, FFormatArgumentValue>(data.Read<int>());
             for (var i = 0; i < Arguments.Count; i++) {
                 Arguments[data.ReadString()] = new FFormatArgumentValue(data);
@@ -66,7 +66,7 @@ public abstract class FTextHistory {
 
     public class OrderedFormat : FTextHistory {
         public OrderedFormat(FArchiveReader data) {
-            SourceFmt = new FText(data);
+            SourceFmt = new FText(data, data.Asset);
             Arguments = data.ReadClassArray<FFormatArgumentValue>();
         }
 
@@ -78,7 +78,7 @@ public abstract class FTextHistory {
 
     public class ArgumentFormat : FTextHistory {
         public ArgumentFormat(FArchiveReader data) {
-            SourceFmt = new FText(data);
+            SourceFmt = new FText(data, data.Asset);
             Arguments = new List<KeyValuePair<string, FFormatArgumentValue>>(data.Read<int>());
             for (var i = 0; i < Arguments.Count; i++) {
                 Arguments.Add(new KeyValuePair<string, FFormatArgumentValue>(data.ReadString(), new FFormatArgumentValue(data)));
@@ -238,7 +238,7 @@ public abstract class FTextHistory {
 
     public class Transform : FTextHistory {
         public Transform(FArchiveReader data) {
-            SourceText = new FText(data);
+            SourceText = new FText(data, data.Asset);
             TransformType = data.Read<ETransformType>();
         }
 

@@ -4,7 +4,7 @@ using Cuddle.Core.VFS;
 namespace Cuddle.Core.Structs.Property;
 
 public class BoolProperty : UProperty {
-    public BoolProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(tag, context) => Value = context.ReadMode == FPropertyReadMode.Normal ? tag.BoolValue : data.ReadBit();
+    public BoolProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(tag, context, data.Asset) => Value = context.ReadMode == FPropertyReadMode.Normal ? tag.BoolValue : data.ReadBit();
 
     public bool Value { get; }
 

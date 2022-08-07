@@ -11,7 +11,7 @@ namespace Cuddle.Headless.Mode;
 
 public static class ExportMode {
     public static void Do(CuddleFlags flags, VFSManager manager) {
-        foreach (var file in manager.UniqueFilesPath) {
+        foreach (var (_, file) in manager.UniqueFilesPath) {
             try {
                 if (flags.Filters.Count > 0 && !flags.Filters.Any(x => x.IsMatch(file.MountedPath))) {
                     continue;

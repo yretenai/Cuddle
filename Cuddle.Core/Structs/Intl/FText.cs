@@ -1,12 +1,15 @@
 ﻿using System;
+using System.Text.Json.Serialization;
+using Cuddle.Core.Assets;
 using Cuddle.Core.Structs.Asset;
 using Cuddle.Core.VFS;
 
 namespace Cuddle.Core.Structs.Intl;
 
 public class FText {
-    public FText(FArchiveReader data) {
+    public FText(FArchiveReader data, UAssetFile? owner) {
         Flags = data.Read<ETextFlag>();
+        Owner = owner;
         if (data.Version >= EObjectVersion.FTEXT_HISTORY) {
             Type = data.Read<ETextHistoryType>();
             History = Type switch {
@@ -32,10 +35,12 @@ public class FText {
         }
     }
 
+    [JsonIgnore]
+    public UAssetFile Owner { get; set; }
+
     public ETextFlag Flags { get; }
     public ETextHistoryType Type { get; }
     public FTextHistory History { get; }
-    public VFSManager Manager { get; }
 
-    public override string ToString() => History.BuildDisplayString(Manager);
+    public override string ToString() => History.BuildDisplayString(Owner.Manager);
 }

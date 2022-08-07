@@ -26,7 +26,7 @@ public class CultureStore {
             PrimaryCulture = culture;
         }
 
-        foreach (var locresEntry in Manager.UniqueFilesPath.Where(x => x.ObjectPath.Contains(iso, StringComparison.InvariantCultureIgnoreCase) && x.ObjectPath.EndsWith(".locres", StringComparison.InvariantCultureIgnoreCase))) {
+        foreach (var (_, locresEntry) in Manager.UniqueFilesPath.Where(x => x.Key.Contains(iso, StringComparison.InvariantCultureIgnoreCase) && x.Key.EndsWith(".locres", StringComparison.InvariantCultureIgnoreCase))) {
             using var data = locresEntry.ReadFile();
             using var reader = new FArchiveReader(data, Manager);
             var locres = new FTextLocalizationResource(reader);

@@ -6,7 +6,7 @@ using Serilog;
 namespace Cuddle.Core.Structs.Property;
 
 public class MapProperty : UProperty {
-    public MapProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(tag, context) {
+    public MapProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(tag, context, data.Asset) {
         var keyTag = tag.AsKeyTag();
         var valueTag = tag.AsValueTag();
 

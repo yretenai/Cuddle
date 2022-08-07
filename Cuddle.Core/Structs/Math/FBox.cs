@@ -6,7 +6,7 @@ using Silk.NET.Maths;
 
 namespace Cuddle.Core.Structs.Math;
 
-[ObjectRegistration("FBox3f", "FBox3d", "FBox")]
+[ObjectRegistration("Box3f", "Box3d", "Box")]
 public record FBox : FFallbackStruct {
     public FBox(FArchiveReader reader) : this(reader, FStructRegistry.CurrentProcessingStruct.Value ?? "Box") { }
 

@@ -4,7 +4,7 @@ using Cuddle.Core.VFS;
 namespace Cuddle.Core.Structs.Property;
 
 public class ByteProperty : UProperty {
-    public ByteProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(tag, context) {
+    public ByteProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(tag, context, data.Asset) {
         Value = context.ReadMode switch {
             FPropertyReadMode.Map => (byte) data.Read<int>(),
             _ => data.Read<byte>(),

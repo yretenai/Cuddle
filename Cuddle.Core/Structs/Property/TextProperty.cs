@@ -5,7 +5,7 @@ using Cuddle.Core.VFS;
 namespace Cuddle.Core.Structs.Property;
 
 public class TextProperty : UProperty {
-    public TextProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(tag, context) => Value = new FText(data);
+    public TextProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(tag, context, data.Asset) => Value = new FText(data, Owner);
 
     public FText Value { get; }
 

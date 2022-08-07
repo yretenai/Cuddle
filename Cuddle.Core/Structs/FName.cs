@@ -26,6 +26,11 @@ public readonly record struct FName : IEquatable<string?> {
     }
 
     public FName(string value, int instance = 0) {
+        var index = value.IndexOf(':');
+        if (index > -1 && int.TryParse(value[(index + 1)..], out instance)) {
+            value = value[..index];
+        }
+
         Index = -1;
         Value = value;
         Instance = instance;
@@ -36,7 +41,7 @@ public readonly record struct FName : IEquatable<string?> {
     public int Index { get; private init; }
 
     // Deduplication instance. 1 = first entry, 0 = no duplicates allowed.
-    public int Instance { get; }
+    public int Instance { get; init; }
     public string Value { get; } = "None";
     public string InstanceValue => Instance > 1 ? $"{Value}:{Instance}" : Value;
 

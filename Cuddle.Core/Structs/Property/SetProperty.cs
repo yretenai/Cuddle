@@ -5,7 +5,7 @@ using Cuddle.Core.VFS;
 namespace Cuddle.Core.Structs.Property;
 
 public class SetProperty : UProperty {
-    public SetProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(tag, context) {
+    public SetProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) : base(tag, context, data.Asset) {
         var arrayContext = context with { ElementTag = tag, ReadMode = FPropertyReadMode.Array };
         var deserializeTag = tag.AsValueTag();
         var count = data.Read<int>();

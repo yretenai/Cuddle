@@ -35,6 +35,7 @@ public static class Program {
 
         using var manager = new VFSManager();
         manager.MountDir(new DirectoryInfo(flags.PakPath), flags.Game);
+        manager.Freeze();
         if (flags.Cultures.Any()) {
             foreach (var culture in flags.Cultures.Select(x => x.ToCulture())) {
                 manager.Culture.LoadCulture(culture);

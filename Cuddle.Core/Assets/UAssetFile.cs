@@ -131,8 +131,13 @@ public sealed class UAssetFile : IPoliteDisposable {
     }
 
     public UObject? GetExport(int index) => index > Exports.Length ? null : GetExport(Exports[index]);
+    public UObject? GetExport(FName name) => GetExport(Exports.FirstOrDefault(x => x.ObjectName.Equals(name)));
 
-    private UObject? GetExport(FObjectExport export) {
+    private UObject? GetExport(FObjectExport? export) {
+        if (export == null) {
+            return null;
+        }
+
         if (export.Disposed) {
             export.Reset();
         }
@@ -182,8 +187,9 @@ public sealed class UAssetFile : IPoliteDisposable {
             return null;
         }
 
-        var asset = Owner.Manager.ReadAsset(outer.ObjectName.Value);
-        throw new NotImplementedException();
+        import.Object = Owner.Manager.ReadExport(outer.ObjectName);
+        import.ObjectCreated = true;
+        return import.Object;
     }
 
     public UObject? GetIndex(FPackageIndex index) {

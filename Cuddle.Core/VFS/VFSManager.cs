@@ -19,9 +19,10 @@ public sealed class VFSManager : IResettable {
     public CultureStore Culture { get; set; }
 
     public List<IVFSFile> Containers { get; } = new();
-    public IEnumerable<IVFSEntry> Files => Containers.SelectMany(x => x.Entries);
-    public IEnumerable<IVFSEntry> UniqueFilesPath => Files.DistinctBy(x => x.MountedPath);
-    public IEnumerable<IVFSEntry> UniqueFilesHash => Files.DistinctBy(x => x.MountedHash);
+    public IVFSEntry[] Files { get; set; } = Array.Empty<IVFSEntry>();
+    public Dictionary<string, IVFSEntry> UniqueFilesPath { get; private set; } = new();
+    public Dictionary<string, IVFSEntry> UniqueFilesObjectPath { get; private set; } = new();
+    public Dictionary<ulong, IVFSEntry> UniqueFilesHash { get; private set; } = new();
 
     public bool Disposed { get; private set; }
 
@@ -101,15 +102,29 @@ public sealed class VFSManager : IResettable {
         }
     }
 
+    private IVFSEntry? TryFindFile(string path, out FName name) {
+        name = FName.Null;
+        var ext = Path.GetExtension(path);
+        if (ext.Length > 1) {
+            name = new FName(ext[1..]);
+            if (name.Value.Length > 1 && Path.GetFileNameWithoutExtension(path) == name.Value) {
+                path = path[..path.IndexOf('.')];
+            }
+        }
+
+        if (path.StartsWith("/Game/") && UniqueFilesObjectPath.TryGetValue(path, out var file)) {
+            return file;
+        }
+
+        return UniqueFilesPath.TryGetValue(path, out file) ? file : null;
+    }
+
     public MemoryOwner<byte> ReadFile(string path) {
-        var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.Equals(path, StringComparison.Ordinal));
+        var file = TryFindFile(path, out _);
         return file == null ? MemoryOwner<byte>.Empty : file.Owner.ReadFile(file);
     }
 
-    public MemoryOwner<byte> ReadFile(ulong hash) {
-        var file = Files.FirstOrDefault(x => x.MountedHash == hash);
-        return file == null ? MemoryOwner<byte>.Empty : file.Owner.ReadFile(file);
-    }
+    public MemoryOwner<byte> ReadFile(ulong hash) => !UniqueFilesHash.TryGetValue(hash, out var file) ? MemoryOwner<byte>.Empty : file.Owner.ReadFile(file);
 
     public UAssetFile? ReadAsset(IVFSEntry? entry) {
         if (entry == null || Disposed || entry.Owner.Disposed) {
@@ -133,20 +148,38 @@ public sealed class VFSManager : IResettable {
         return (UAssetFile) entry.Data;
     }
 
-    public UAssetFile? ReadAsset(string path) {
-        var file = Files.FirstOrDefault(x => x.MountedPath.Equals(path, StringComparison.Ordinal) || x.ObjectPath.Equals(path, StringComparison.Ordinal));
+    public UAssetFile? ReadAsset(string path, out FName name) {
+        var file = TryFindFile(path, out name);
         return ReadAsset(file);
     }
 
     public UAssetFile? ReadAsset(ulong hash) {
-        var file = Files.FirstOrDefault(x => x.MountedHash == hash);
+        UniqueFilesHash.TryGetValue(hash, out var file);
         return ReadAsset(file);
     }
 
     public UObject? ReadExport(IVFSEntry entry, int index) => ReadAsset(entry)?.GetExport(index);
-    public UObject? ReadExport(string path, int index) => ReadAsset(path)?.GetExport(index);
+    public UObject? ReadExport(string path, int index) => ReadAsset(path, out _)?.GetExport(index);
+
+    public UObject? ReadExport(string path) {
+        var asset = ReadAsset(path, out var name);
+        return asset?.GetExport(name);
+    }
+
+    public UObject? ReadExport(FName path) {
+        var asset = ReadAsset(path.Value, out var name);
+        return asset?.GetExport(name with { Instance = path.Instance });
+    }
+
     public UObject? ReadExport(ulong hash, int index) => ReadAsset(hash)?.GetExport(index);
     public UObject?[] ReadExports(IVFSEntry entry) => ReadAsset(entry)?.GetExports() ?? Array.Empty<UObject>();
-    public UObject?[] ReadExports(string path) => ReadAsset(path)?.GetExports() ?? Array.Empty<UObject>();
+    public UObject?[] ReadExports(string path) => ReadAsset(path, out _)?.GetExports() ?? Array.Empty<UObject>();
     public UObject?[] ReadExports(ulong hash) => ReadAsset(hash)?.GetExports() ?? Array.Empty<UObject>();
+
+    public void Freeze() {
+        Files = Containers.SelectMany(x => x.Entries).ToArray();
+        UniqueFilesPath = Files.DistinctBy(x => x.MountedPath).ToDictionary(x => x.MountedPath);
+        UniqueFilesObjectPath = Files.DistinctBy(x => x.ObjectPath).ToDictionary(x => x.ObjectPath);
+        UniqueFilesHash = Files.DistinctBy(x => x.MountedHash).ToDictionary(x => x.MountedHash);
+    }
 }

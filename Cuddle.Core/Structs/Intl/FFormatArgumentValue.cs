@@ -10,7 +10,7 @@ public record FFormatArgumentValue : FFallbackStruct {
     public FFormatArgumentValue(FArchiveReader data) {
         Type = data.Read<EFormatArgumentType>();
         Value = Type switch {
-            EFormatArgumentType.Text => new FText(data),
+            EFormatArgumentType.Text => new FText(data, data.Asset),
             EFormatArgumentType.Int => data.Read<long>(),
             EFormatArgumentType.UInt => data.Read<ulong>(),
             EFormatArgumentType.Double => data.Read<double>(),

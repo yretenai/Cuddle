@@ -5,9 +5,10 @@ using Cuddle.Core.VFS;
 namespace Cuddle.Core.Assets;
 
 public abstract class UProperty {
-    protected UProperty(FPropertyTag tag, FPropertyTagContext context) {
+    protected UProperty(FPropertyTag tag, FPropertyTagContext context, UAssetFile? owner) {
         Tag = tag;
         TagContext = context;
+        Owner = owner;
     }
 
     [JsonIgnore]
@@ -15,6 +16,9 @@ public abstract class UProperty {
 
     [JsonIgnore]
     public FPropertyTagContext TagContext { get; }
+
+    [JsonIgnore]
+    public UAssetFile? Owner { get; }
 
     public static UProperty? CreateProperty(FArchiveReader data, FPropertyTag tag, FPropertyTagContext context) {
         return tag.Type.Value switch {

@@ -14,7 +14,6 @@ public sealed class FArchiveReader : IPoliteDisposable {
     public FArchiveReader(UAssetFile asset, MemoryOwner<byte> data) {
         Asset = asset;
         Data = data;
-        Manager = asset.Manager;
         Game = asset.Game;
         Version = asset.Summary.FileVersionUE4;
         VersionUE5 = asset.Summary.FileVersionUE5;
