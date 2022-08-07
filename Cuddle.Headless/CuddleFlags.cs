@@ -18,6 +18,9 @@ public partial record CuddleFlags : CommandLineFlags {
     [Flag("profiling", Hidden = true)]
     public bool Profiling { get; set; }
 
+    [Flag("insensitive", Default = false, Help = "Is the VFS case sensitive", Category = "Cuddle")]
+    public bool IsCaseInsensitive { get; set; }
+
     [Flag("filter", Help = "Path filters", Category = "Cuddle")]
     public List<Regex> Filters { get; set; } = new();
 

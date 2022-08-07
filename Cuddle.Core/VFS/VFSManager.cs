@@ -23,6 +23,7 @@ public sealed class VFSManager : IResettable {
     public Dictionary<string, IVFSEntry> UniqueFilesPath { get; private set; } = new();
     public Dictionary<string, IVFSEntry> UniqueFilesObjectPath { get; private set; } = new();
     public Dictionary<ulong, IVFSEntry> UniqueFilesHash { get; private set; } = new();
+    public bool IsCaseInsensitive { get; private set; }
 
     public bool Disposed { get; private set; }
 
@@ -112,6 +113,10 @@ public sealed class VFSManager : IResettable {
             }
         }
 
+        if (IsCaseInsensitive) {
+            path = path.ToLower();
+        }
+
         if (path.StartsWith("/Game/") && UniqueFilesObjectPath.TryGetValue(path, out var file)) {
             return file;
         }
@@ -176,10 +181,11 @@ public sealed class VFSManager : IResettable {
     public UObject?[] ReadExports(string path) => ReadAsset(path, out _)?.GetExports() ?? Array.Empty<UObject>();
     public UObject?[] ReadExports(ulong hash) => ReadAsset(hash)?.GetExports() ?? Array.Empty<UObject>();
 
-    public void Freeze() {
+    public void Freeze(bool caseInsensitive = false) {
+        IsCaseInsensitive = caseInsensitive;
         Files = Containers.SelectMany(x => x.Entries).ToArray();
-        UniqueFilesPath = Files.DistinctBy(x => x.MountedPath).ToDictionary(x => x.MountedPath);
-        UniqueFilesObjectPath = Files.DistinctBy(x => x.ObjectPath).ToDictionary(x => x.ObjectPath);
+        UniqueFilesPath = Files.DistinctBy(x => caseInsensitive ? x.MountedPath.ToLower() : x.MountedPath).ToDictionary(x => caseInsensitive ? x.MountedPath.ToLower() : x.MountedPath);
+        UniqueFilesObjectPath = Files.DistinctBy(x =>  caseInsensitive ? x.ObjectPath.ToLower() : x.ObjectPath).ToDictionary(x => caseInsensitive ? x.ObjectPath.ToLower() : x.ObjectPath);
         UniqueFilesHash = Files.DistinctBy(x => x.MountedHash).ToDictionary(x => x.MountedHash);
     }
 }
