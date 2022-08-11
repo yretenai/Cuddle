@@ -105,23 +105,29 @@ public sealed class VFSManager : IResettable {
 
     private IVFSEntry? TryFindFile(string path, out FName name) {
         name = FName.Null;
-        var ext = Path.GetExtension(path);
-        if (ext.Length > 1) {
-            name = new FName(ext[1..]);
-            if (name.Value.Length > 1 && Path.GetFileNameWithoutExtension(path) == name.Value) {
-                path = path[..path.IndexOf('.')];
-            }
-        }
+        var isObject = path.StartsWith("/Game/", IsCaseInsensitive ? StringComparison.InvariantCultureIgnoreCase : StringComparison.Ordinal);
 
-        if (IsCaseInsensitive) {
-            path = path.ToLower();
-        }
-
-        if (path.StartsWith("/Game/") && UniqueFilesObjectPath.TryGetValue(path, out var file)) {
+        if (isObject && UniqueFilesObjectPath.TryGetValue(path, out var file)) {
             return file;
         }
 
-        return UniqueFilesPath.TryGetValue(path, out file) ? file : null;
+        if (UniqueFilesPath.TryGetValue(path, out file)) {
+            return file;
+        }
+
+        var ext = Path.GetExtension(path);
+        if (ext.Length <= 1) {
+            return null;
+        }
+
+        name = new FName(ext[1..]);
+        var strippedPath = path[..path.IndexOf('.')];
+
+        if (isObject && UniqueFilesObjectPath.TryGetValue(strippedPath, out file)) {
+            return file;
+        }
+
+        return UniqueFilesPath.TryGetValue(strippedPath, out file) ? file : null;
     }
 
     public MemoryOwner<byte> ReadFile(string path) {
@@ -184,8 +190,8 @@ public sealed class VFSManager : IResettable {
     public void Freeze(bool caseInsensitive = false) {
         IsCaseInsensitive = caseInsensitive;
         Files = Containers.SelectMany(x => x.Entries).ToArray();
-        UniqueFilesPath = Files.DistinctBy(x => caseInsensitive ? x.MountedPath.ToLower() : x.MountedPath).ToDictionary(x => caseInsensitive ? x.MountedPath.ToLower() : x.MountedPath);
-        UniqueFilesObjectPath = Files.DistinctBy(x =>  caseInsensitive ? x.ObjectPath.ToLower() : x.ObjectPath).ToDictionary(x => caseInsensitive ? x.ObjectPath.ToLower() : x.ObjectPath);
+        UniqueFilesPath = Files.DistinctBy(x => caseInsensitive ? x.MountedPath.ToLower() : x.MountedPath).ToDictionary(x => caseInsensitive ? x.MountedPath.ToLower() : x.MountedPath, IsCaseInsensitive ? StringComparer.InvariantCultureIgnoreCase : StringComparer.Ordinal);
+        UniqueFilesObjectPath = Files.DistinctBy(x =>  caseInsensitive ? x.ObjectPath.ToLower() : x.ObjectPath).ToDictionary(x => caseInsensitive ? x.ObjectPath.ToLower() : x.ObjectPath, IsCaseInsensitive ? StringComparer.InvariantCultureIgnoreCase : StringComparer.Ordinal);
         UniqueFilesHash = Files.DistinctBy(x => x.MountedHash).ToDictionary(x => x.MountedHash);
     }
 }
