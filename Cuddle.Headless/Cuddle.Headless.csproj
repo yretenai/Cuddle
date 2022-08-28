@@ -5,6 +5,8 @@
         <TargetFramework>net7.0</TargetFramework>
         <Nullable>enable</Nullable>
         <LangVersion>preview</LangVersion>
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+        <ApplicationIcon>..\Cuddle\Cuddle.ico</ApplicationIcon>
         <WarningsAsErrors>CA2000</WarningsAsErrors>
     </PropertyGroup>
 

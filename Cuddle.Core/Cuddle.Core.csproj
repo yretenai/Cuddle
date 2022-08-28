@@ -6,6 +6,7 @@
         <LangVersion>preview</LangVersion>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <WarningsAsErrors>CA2000</WarningsAsErrors>
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
         <ProductName>Cuddle</ProductName>
         <Version>0.0.4.1</Version>
     </PropertyGroup>
