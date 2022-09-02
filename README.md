@@ -4,7 +4,7 @@ Unreal PAK Processor
 
 ## Cuddle and it's contributors are not affiliated with, or sponsored by, or authorized by, Epic Games.
 
-The "Cuddle" icon is generated with help from Midjourney.
+The "[Cuddle](Cuddle/Cuddle.ico)" icon is generated with help from Midjourney.
 
 ### Special Thanks
 
