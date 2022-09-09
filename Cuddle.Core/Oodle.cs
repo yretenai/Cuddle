@@ -55,13 +55,31 @@ public static class Oodle {
         }
     }
 
+    public static string OodleLibName {
+        get {
+            if (OperatingSystem.IsWindows()) {
+                return "oo2core_*_win64.dll";
+            }
+
+            if (OperatingSystem.IsLinux()) {
+                return "oo2core_*_linux64.so";
+            }
+
+            if (OperatingSystem.IsMacOS() || OperatingSystem.IsMacCatalyst()) {
+                return "oo2core_*_mac64.dylib";
+            }
+
+            throw new PlatformNotSupportedException();
+        }
+    }
+
     public static bool Load(string? path) {
         if (!OperatingSystem.IsWindows()) { // todo: investigate oodle decompressors for linux (ooz?)
             return false;
         }
 
         if (Directory.Exists(path)) {
-            var files = Directory.GetFiles(path, "oo2core_*_win64.dll");
+            var files = Directory.GetFiles(path, OodleLibName, SearchOption.TopDirectoryOnly);
             if (files.Length == 0) {
                 return false;
             }
@@ -73,34 +91,26 @@ public static class Oodle {
             return false;
         }
 
-        var handle = NativeMethods.LoadLibraryW(path);
+        var handle = NativeLibrary.Load(path);
         if (handle == IntPtr.Zero) {
             return false;
         }
 
-        var address = NativeMethods.GetProcAddress(handle, nameof(OodleLZ_Decompress));
+        var address = NativeLibrary.GetExport(handle, nameof(OodleLZ_Decompress));
         if (address == IntPtr.Zero) {
             return false;
         }
 
         DecompressDelegate = Marshal.GetDelegateForFunctionPointer<OodleLZ_Decompress>(address);
 
-        address = NativeMethods.GetProcAddress(handle, nameof(OodleCore_Plugins_SetPrintf));
+        address = NativeLibrary.GetExport(handle, nameof(OodleCore_Plugins_SetPrintf));
         if (address == IntPtr.Zero) {
             return true;
         }
 
+#pragma warning disable CA1420
         SetPrintfDelegate = Marshal.GetDelegateForFunctionPointer<OodleCore_Plugins_SetPrintf>(address);
+#pragma warning restore CA1420
         return true;
-    }
-
-    private static class NativeMethods {
-        [DllImport("kernel32", CharSet = CharSet.Unicode, SetLastError = true), DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        public static extern IntPtr LoadLibraryW(string dllname);
-
-#pragma warning disable CA2101
-        [DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true), DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        public static extern IntPtr GetProcAddress(IntPtr hModule, string procname);
-#pragma warning restore CA2101
     }
 }

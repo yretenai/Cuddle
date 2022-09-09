@@ -77,10 +77,12 @@ public sealed class UAssetFile : IPoliteDisposable {
         }
 
         if (Summary.WorldTileInfoDataOffset > 0) {
+            archive.Position = Summary.WorldTileInfoDataOffset;
             WorldTileInfo = new FWorldTileInfo(archive);
         }
 
         if (Summary.PayloadTocOffset > 0) {
+            archive.Position = Summary.PayloadTocOffset;
             Payload = new FPackageTrailer(archive);
         }
 
