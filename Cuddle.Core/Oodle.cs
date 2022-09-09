@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace Cuddle.Core;
 
-public static class Oodle {
+public sealed class Oodle : IDisposable {
     // this has va_args, which is not possible to process in c# so you should probably use a native trampoline instead.
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void OodleCore_Plugin_Printf(int verboseLevel, [MarshalAs(UnmanagedType.LPStr)] string file, int line, [MarshalAs(UnmanagedType.LPStr)] string fmt);
@@ -37,22 +37,21 @@ public static class Oodle {
         Lots = 3,
     }
 
-    public static bool IsReady => DecompressDelegate != null;
+    public OodleLZ_Decompress DecompressDelegate { get; set; }
+    public OodleCore_Plugins_SetPrintf SetPrintfDelegate { get; set; }
+    public IntPtr OodleNative { get; private set; }
 
-    public static OodleLZ_Decompress? DecompressDelegate { get; set; }
-    public static OodleCore_Plugins_SetPrintf? SetPrintfDelegate { get; set; }
-
-    public static int Decompress(Memory<byte> input, Memory<byte> output) {
-        if (DecompressDelegate == null) {
-            return -1;
-        }
-
+    public int Decompress(Memory<byte> input, Memory<byte> output) {
         using var inPin = input.Pin();
         using var outPin = output.Pin();
 
         unsafe {
             return DecompressDelegate.Invoke(inPin.Pointer, input.Length, outPin.Pointer, output.Length);
         }
+    }
+
+    ~Oodle() {
+        NativeLibrary.Free(OodleNative);
     }
 
     public static string OodleLibName {
@@ -73,44 +72,38 @@ public static class Oodle {
         }
     }
 
-    public static bool Load(string? path) {
-        if (!OperatingSystem.IsWindows()) { // todo: investigate oodle decompressors for linux (ooz?)
-            return false;
-        }
-
+    public Oodle(string? path) {
         if (Directory.Exists(path)) {
             var files = Directory.GetFiles(path, OodleLibName, SearchOption.TopDirectoryOnly);
             if (files.Length == 0) {
-                return false;
+                throw new FileNotFoundException("Could not find Oodle library in path", path);
             }
 
             path = files[0];
         }
 
         if (string.IsNullOrEmpty(path) || !File.Exists(path)) {
-            return false;
+            throw new FileNotFoundException("Could not find Oodle library", path);
         }
 
-        var handle = NativeLibrary.Load(path);
-        if (handle == IntPtr.Zero) {
-            return false;
-        }
-
-        var address = NativeLibrary.GetExport(handle, nameof(OodleLZ_Decompress));
-        if (address == IntPtr.Zero) {
-            return false;
-        }
-
-        DecompressDelegate = Marshal.GetDelegateForFunctionPointer<OodleLZ_Decompress>(address);
-
-        address = NativeLibrary.GetExport(handle, nameof(OodleCore_Plugins_SetPrintf));
-        if (address == IntPtr.Zero) {
-            return true;
-        }
+        OodleNative = NativeLibrary.Load(path);
 
 #pragma warning disable CA1420
-        SetPrintfDelegate = Marshal.GetDelegateForFunctionPointer<OodleCore_Plugins_SetPrintf>(address);
+        DecompressDelegate = Marshal.GetDelegateForFunctionPointer<OodleLZ_Decompress>(NativeLibrary.GetExport(OodleNative, nameof(OodleLZ_Decompress)));
+        SetPrintfDelegate = Marshal.GetDelegateForFunctionPointer<OodleCore_Plugins_SetPrintf>(NativeLibrary.GetExport(OodleNative, nameof(OodleCore_Plugins_SetPrintf)));
 #pragma warning restore CA1420
-        return true;
+    }
+
+    public unsafe void SetPrintf(OodleCore_Plugin_Printf fp_rrRawPrintf) {
+        SetPrintfDelegate.Invoke(fp_rrRawPrintf);
+    }
+
+    public void Dispose() {
+        if (OodleNative != IntPtr.Zero) {
+            NativeLibrary.Free(OodleNative);
+            OodleNative = IntPtr.Zero;
+        }
+
+        GC.SuppressFinalize(this);
     }
 }

@@ -17,6 +17,7 @@ public sealed class VFSManager : IResettable {
     public AESKeyStore KeyStore { get; } = new();
     public HashPathStore HashStore { get; } = new();
     public CultureStore Culture { get; set; }
+    public Oodle? Oodle { get; set; }
 
     public List<IVFSFile> Containers { get; } = new();
     public IVFSEntry[] Files { get; set; } = Array.Empty<IVFSEntry>();
@@ -33,6 +34,9 @@ public sealed class VFSManager : IResettable {
         }
 
         Containers.Clear();
+
+        Oodle?.Dispose();
+        Oodle = null;
 
         if (Disposed) {
             return;

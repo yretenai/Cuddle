@@ -29,13 +29,16 @@ public static class Program {
             .WriteTo.File(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "Logs", $"{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}.log"), encoding: Encoding.UTF8)
             .CreateLogger();
         SystemManagement.DescribeLog();
-        Oodle.Load(flags.OodlePath);
         Log.Debug("{Flags}", flags.ToString());
         Log.Debug("Args: {Args}", string.Join(' ', Environment.GetCommandLineArgs()[1..]));
 
         using var manager = new VFSManager();
         manager.MountDir(new DirectoryInfo(flags.PakPath), flags.Game);
         manager.Freeze(flags.IsCaseInsensitive);
+        if (!string.IsNullOrEmpty(flags.OodlePath)) {
+            manager.Oodle = new Oodle(flags.OodlePath);
+        }
+
         if (flags.Cultures.Any()) {
             foreach (var culture in flags.Cultures.Select(x => x.ToCulture())) {
                 manager.Culture.LoadCulture(culture);

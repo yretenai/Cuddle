@@ -234,11 +234,12 @@ public sealed class FPakFile : IVFSFile {
                     break;
                 }
                 case "oodle": {
-                    if (!Oodle.IsReady) {
-                        Log.Error("Unable to decompress file {Path} because it uses Oodle compression and the Oodle dll has not been loaded!", index.MountedPath);
+                    if (Manager.Oodle == null) {
+                        Log.Error("Unable to decompress file {Path} because it uses Oodle compression and the Oodle library has not been loaded!", index.MountedPath);
+                        throw new InvalidOperationException();
                     }
 
-                    if (Oodle.Decompress(blockChunk, blockData) == -1) {
+                    if (Manager.Oodle.Decompress(blockChunk, blockData) == -1) {
                         throw new InvalidOperationException();
                     }
 
