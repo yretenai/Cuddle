@@ -8,10 +8,9 @@ using Cuddle.Core.Structs;
 using Cuddle.Core.Structs.FileSystem;
 using Cuddle.Security;
 using DragonLib;
-using K4os.Compression.LZ4;
+using IronCompress;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 using Serilog;
-using ZstdNet;
 
 namespace Cuddle.Core.VFS;
 
@@ -142,6 +141,7 @@ public sealed class FPakFile : IVFSFile {
     public bool HasHashes => Version >= EPakVersion.PathHashIndex;
     public bool HasPaths => true;
     public IEnumerable<IVFSEntry> Entries => Index?.Files.Where(x => !x.IsDeleted) ?? new List<FPakEntry>();
+    private static Iron Iron { get; set; } = new();
 
     public MemoryOwner<byte> ReadFile(string path) {
         var index = Index?.Files.FirstOrDefault(x => x.MountedPath == path || x.ObjectPath.EndsWith(path, StringComparison.Ordinal));
@@ -184,6 +184,7 @@ public sealed class FPakFile : IVFSFile {
             var blockChunk = dataBuffer.Memory[(int) block.CompressedStart..(int) block.CompressedEnd];
 
             var compressionType = CompressionMethods[index.CompressionMethod].ToLower();
+            var copy = true;
 
             if (compressionType == "magic") {
                 if ((BinaryPrimitives.ReadUInt16LittleEndian(blockChunk.Span) & 0xFFFFFF) == 0xb52ffd) {
@@ -211,17 +212,8 @@ public sealed class FPakFile : IVFSFile {
                 case "zlib": {
                     using var dataPin = blockChunk.Pin();
                     using var dataStream = new UnmanagedMemoryStream((byte*) dataPin.Pointer, blockChunk.Length);
-                    dataStream.Position = 2;
-                    using var zlib = new DeflateStream(dataStream, CompressionMode.Decompress);
+                    using var zlib = new ZLibStream(dataStream, CompressionMode.Decompress);
                     zlib.ReadExactly(blockData.Span);
-                    break;
-                }
-                case "zstd": {
-                    using var zstd = new Decompressor();
-                    if (zstd.Unwrap(blockChunk.Span, blockData.Span) < 0) {
-                        throw new InvalidOperationException();
-                    }
-
                     break;
                 }
                 case "gzip": {
@@ -245,16 +237,20 @@ public sealed class FPakFile : IVFSFile {
 
                     break;
                 }
+                case "zstd":
                 case "lz4": {
-                    if (LZ4Codec.Decode(blockChunk.Span, blockData.Span) == -1) {
-                        throw new InvalidOperationException();
-                    }
-
+                    copy = false;
+                    var codec = compressionType == "zstd" ? Codec.Zstd : Codec.LZ4;
+                    using var data = Iron.Decompress(codec, blockChunk.Span, (int) size);
+                    data.AsSpan().CopyTo(outputBuffer.Span[(int) outputOffset..]);
                     break;
                 }
             }
 
-            blockData.CopyTo(outputBuffer.Memory[(int) outputOffset..]);
+            if (copy) {
+                blockData.CopyTo(outputBuffer.Memory[(int) outputOffset..]);
+            }
+
             outputOffset += size;
         }
 

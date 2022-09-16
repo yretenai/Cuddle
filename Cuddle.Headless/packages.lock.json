@@ -20,10 +20,10 @@
           "Serilog": "2.10.0"
         }
       },
-      "K4os.Compression.LZ4": {
+      "IronCompress": {
         "type": "Transitive",
-        "resolved": "1.2.16",
-        "contentHash": "XLNQWNayxeMgd1gv0s6kZywM11kww7rTzu3nPGh8fQNblHGbFt79LC1Sk1/QQ8DIJb2Qfl2p+WlLIOWCSuyi8w=="
+        "resolved": "1.0.0-preview-02",
+        "contentHash": "OK/rlnXrHcxSXMJCP6bEeGvf+25X9ORpjjw7/pQqdyICNyzf5+zQrJfE5iJT586hyZ6gcsZ39CjzOnzFZGMMpw=="
       },
       "Microsoft.Toolkit.HighPerformance": {
         "type": "Transitive",
@@ -40,21 +40,15 @@
         "resolved": "2.15.0",
         "contentHash": "7aDFUR+wSU8kv/YrJX9PxTNye+ZO4ReYEoGI9YjLiipDHYivGJ/I+iR2xtSP+hkeKbC+xmOgE6TnZVf5INCqNg=="
       },
-      "ZstdNet": {
-        "type": "Transitive",
-        "resolved": "1.4.5",
-        "contentHash": "fi9aP1QY3ZenIMUW1pxdSjku6lYAUjScrwfXSXT1qyKtTdLxOIzeBMe+w/hQm0vMsvQnjcFInByMrIT7AlXUHA=="
-      },
       "cuddle.core": {
         "type": "Project",
         "dependencies": {
           "Cuddle.Security": "[1.0.0, )",
           "DragonLib": "[3.0.1, )",
-          "K4os.Compression.LZ4": "[1.2.16, )",
+          "IronCompress": "[1.0.0-preview-02, )",
           "Microsoft.Toolkit.HighPerformance": "[7.1.2, )",
           "Serilog": "[2.11.0, )",
-          "Silk.NET.Maths": "[2.15.0, )",
-          "ZstdNet": "[1.4.5, )"
+          "Silk.NET.Maths": "[2.15.0, )"
         }
       },
       "cuddle.security": {
