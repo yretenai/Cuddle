@@ -5,13 +5,6 @@ using System.Runtime.InteropServices;
 namespace Cuddle.Core;
 
 public sealed class Oodle : IDisposable {
-    // this has va_args, which is not possible to process in c# so you should probably use a native trampoline instead.
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void OodleCore_Plugin_Printf(int verboseLevel, [MarshalAs(UnmanagedType.LPStr)] string file, int line, [MarshalAs(UnmanagedType.LPStr)] string fmt);
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public unsafe delegate void* OodleCore_Plugins_SetPrintf([MarshalAs(UnmanagedType.FunctionPtr)] OodleCore_Plugin_Printf fp_rrRawPrintf);
-
     public unsafe delegate OodleDecompressCallbackRet OodleDecompressCallback(void* userdata, void* rawBuf, int rawLen, void* compBuf, int compBufferSize, int rawDone, int compUsed);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -38,7 +31,6 @@ public sealed class Oodle : IDisposable {
     }
 
     public OodleLZ_Decompress DecompressDelegate { get; set; }
-    public OodleCore_Plugins_SetPrintf SetPrintfDelegate { get; set; }
     public IntPtr OodleNative { get; private set; }
 
     public int Decompress(Memory<byte> input, Memory<byte> output) {
@@ -57,15 +49,15 @@ public sealed class Oodle : IDisposable {
     public static string OodleLibName {
         get {
             if (OperatingSystem.IsWindows()) {
-                return "oo2core_*_win64.dll";
+                return "oo2core*win64.dll";
             }
 
             if (OperatingSystem.IsLinux()) {
-                return "oo2core_*_linux64.so";
+                return RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? "oo2core*linuxarm64.so" : "oo2core*linux64.so";
             }
 
             if (OperatingSystem.IsMacOS() || OperatingSystem.IsMacCatalyst()) {
-                return "oo2core_*_mac64.dylib";
+                return RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? "oo2core*macarm64.dylib" : "oo2core*mac64.dylib";
             }
 
             throw new PlatformNotSupportedException();
@@ -90,12 +82,7 @@ public sealed class Oodle : IDisposable {
 
 #pragma warning disable CA1420
         DecompressDelegate = Marshal.GetDelegateForFunctionPointer<OodleLZ_Decompress>(NativeLibrary.GetExport(OodleNative, nameof(OodleLZ_Decompress)));
-        SetPrintfDelegate = Marshal.GetDelegateForFunctionPointer<OodleCore_Plugins_SetPrintf>(NativeLibrary.GetExport(OodleNative, nameof(OodleCore_Plugins_SetPrintf)));
 #pragma warning restore CA1420
-    }
-
-    public unsafe void SetPrintf(OodleCore_Plugin_Printf fp_rrRawPrintf) {
-        SetPrintfDelegate.Invoke(fp_rrRawPrintf);
     }
 
     public void Dispose() {
