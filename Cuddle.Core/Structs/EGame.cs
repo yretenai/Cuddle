@@ -43,10 +43,11 @@ public enum EGame {
     UE4_24 = UE4_0 + (24 << 16),
         GAME_Valorant_Gamma = UE4_24 + 1, // valorant 1.XX
     UE4_25 = UE4_0 + (25 << 16),
-        GAME_Valorant = UE4_25 + 1, // valorant 2.XX+ - current
+        GAME_Valorant_Delta = UE4_25 + 1, // valorant 2.XX - 4.XX
     UE4_25Plus = UE4_25 + (1 << 15), // 0b00000100 00011001 10000000 00000000
     UE4_26 = UE4_0 + (26 << 16),
         GAME_Dauntless = UE4_26 + 1,
+        GAME_Valorant = UE4_26 + 2, // valorant 5.XX+
     UE4_27 = UE4_0 + (27 << 16),
     UE4_27Plus = UE4_27 + (1 << 15), // 0b00000100 00011011 10000000 00000000
     UE4_28 = UE4_0 + (28 << 16),
