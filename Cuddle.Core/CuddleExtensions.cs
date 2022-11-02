@@ -13,19 +13,18 @@ public static class CuddleExtensions {
     public static bool IsCustom(this EGame game) => ((uint) game & 0xFFFF) != 0;
     public static bool IsGame(this EGame game) => ((uint) game & 0x7FFF) != 0;
     public static bool IsBranch(this EGame game) => ((uint) game & 0x8000) != 0;
+    public static int Major(this EGame game) => (int) game >> 24;
+    public static int Minor(this EGame game) => ((int) game >> 16) & 0xFF;
 
     public static string AsFormattedString(this EGame game) {
-        var sb = new StringBuilder();
-        var value = (uint) game;
-        sb.Append(value >> 24);
+        var sb = new StringBuilder("Unreal ");
+        sb.Append(game.Major());
         sb.Append('.');
-        var minor = (value >> 16) & 0xFF;
+        var minor = game.Minor();
         sb.Append(minor);
         if (!game.IsCustom()) {
             return sb.ToString();
         }
-
-        sb.Append('.');
 
         var text = Enum.GetNames<EGame>().Zip(Enum.GetValues<EGame>()).Where(x => x.Second == game).Select(x => x.First.ToString()).MaxBy(x => x.Length);
         if (game.IsBranch() && !string.IsNullOrEmpty(text)) {
@@ -37,12 +36,10 @@ public static class CuddleExtensions {
         }
 
         if (string.IsNullOrEmpty(text) || !text.StartsWith("GAME_")) {
-            sb.Append(value & 0x7FFF);
-            return sb.ToString();
+            return sb + "." + ((int)game & 0x7FFF);
         }
 
-        sb.Append(text[5..].Replace('_', '-'));
-        return sb.ToString();
+        return $"{text[5..].Replace('_', ' ')} ({sb})";
     }
 
     public static EObjectVersion FindObjectVersion(this EGame game) {
@@ -65,8 +62,8 @@ public static class CuddleExtensions {
 
     public static EObjectVersion ToGameObjectVersion(this EGame game) =>
         game switch {
-            EGame.UE4_25Plus => EObjectVersion.ADDED_PACKAGE_OWNER,
-            EGame.UE4_27Plus => EObjectVersion.CORRECT_LICENSEE_FLAG,
+            EGame.UE4_25_Plus => EObjectVersion.ADDED_PACKAGE_OWNER,
+            EGame.UE4_27_Plus => EObjectVersion.CORRECT_LICENSEE_FLAG,
             _ => 0,
         };
 
@@ -128,8 +125,8 @@ public static class CuddleExtensions {
 
     public static EEditorObjectVersion ToGameEditorVersion(this EGame game) =>
         game switch {
-            EGame.UE4_25Plus => EEditorObjectVersion.SkeletalMeshBuildRefactor,
-            EGame.UE4_27Plus => EEditorObjectVersion.SkeletalMeshSourceDataSupport16bitOfMaterialNumber,
+            EGame.UE4_25_Plus => EEditorObjectVersion.SkeletalMeshBuildRefactor,
+            EGame.UE4_27_Plus => EEditorObjectVersion.SkeletalMeshSourceDataSupport16bitOfMaterialNumber,
             _ => 0,
         };
 
@@ -211,11 +208,14 @@ public static class CuddleExtensions {
             ECulture.SimplifiedChineseHK => "zh-Hans-HK",
             ECulture.SimplifiedChineseMO => "zh-Hans-MO",
             ECulture.SimplifiedChineseSG => "zh-Hans-SG",
+            ECulture.SimplifiedChineseTW => "zh-Hans-TW",
+            ECulture.Taiwanese => "zh-TW",
             ECulture.TraditionalChinese => "zh-Hant",
             ECulture.TraditionalChineseCN => "zh-Hant-CN",
             ECulture.TraditionalChineseHK => "zh-Hant-HK",
             ECulture.TraditionalChineseMO => "zh-Hant-MO",
             ECulture.TraditionalChineseSG => "zh-Hant-SG",
+            ECulture.TraditionalChineseTW => "zh-Hant-TW",
             ECulture.Turkish => "tr",
             ECulture.TurkishTR => "tr-TR",
             ECulture.Thai => "th",
@@ -266,11 +266,14 @@ public static class CuddleExtensions {
             "zh-Hans-HK" => ECulture.SimplifiedChineseHK,
             "zh-Hans-MO" => ECulture.SimplifiedChineseMO,
             "zh-Hans-SG" => ECulture.SimplifiedChineseSG,
+            "zh-Hans-TW" => ECulture.SimplifiedChineseTW,
+            "zh-TW" => ECulture.Taiwanese,
             "zh-Hant" => ECulture.TraditionalChinese,
             "zh-Hant-CN" => ECulture.TraditionalChineseCN,
             "zh-Hant-HK" => ECulture.TraditionalChineseHK,
             "zh-Hant-MO" => ECulture.TraditionalChineseMO,
             "zh-Hant-SG" => ECulture.TraditionalChineseSG,
+            "zh-Hant-TW" => ECulture.TraditionalChineseTW,
             "tr" => ECulture.Turkish,
             "tr-TR" => ECulture.TurkishTR,
             "th" => ECulture.Thai,
