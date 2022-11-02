@@ -1,0 +1,97 @@
+﻿<adonisControls:AdonisWindow x:Class="Cuddle.Windows.GameConfigDialog"
+                             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                             xmlns:mgmt="clr-namespace:Cuddle.Management"
+                             xmlns:fa="http://schemas.fontawesome.com/icons/svg/properties"
+                             xmlns:adonis="clr-namespace:AdonisUI;assembly=AdonisUI"
+                             xmlns:adonisControls="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
+                             xmlns:adonisExtensions="clr-namespace:AdonisUI.Extensions;assembly=AdonisUI"
+                             mc:Ignorable="d"
+                             AllowDrop="True"
+                             ShrinkTitleBarWhenMaximized="False"
+                             IconVisibility="Collapsed"
+                             TitleVisibility="Collapsed"
+                             DataContext="{Binding Source={x:Static mgmt:GameConfigManager.Instance}}"
+                             Title="GameConfigDialog" MinHeight="225" Height="225" MinWidth="515" Width="515">
+    <adonisControls:AdonisWindow.TitleBarContent>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="29" />
+            </Grid.RowDefinitions>
+            <Label VerticalAlignment="Center" FontWeight="Bold" HorizontalContentAlignment="Left" Grid.Column="0"
+                   Margin="5, 0, 5, 0">
+                Game Configuration
+            </Label>
+            <Button Grid.Column="1" BorderThickness="0" HorizontalAlignment="Right" Background="Transparent"
+                    Style="{DynamicResource {x:Static adonis:Styles.AccentButton}}"
+                    fa:FontAwesome.PrimaryColor="{DynamicResource {x:Static adonis:Brushes.AccentForegroundBrush}}"
+                    fa:FontAwesome.SecondaryColor="{DynamicResource {x:Static adonis:Brushes.ForegroundBrush}}"
+                    fa:FontAwesome.Icon="Solid_FloppyDisk" Width="50" ToolTip="Save and Close" />
+        </Grid>
+    </adonisControls:AdonisWindow.TitleBarContent>
+    <Grid Margin="5">
+        <Grid>
+            <StackPanel>
+                <Label Target="GamePath">Installation Directory</Label>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="GamePath" Margin="0, 0, 5, 0" />
+                    <Button Grid.Column="1" Click="Browse"
+                            Style="{DynamicResource {x:Static adonis:Styles.AccentButton}}"
+                            fa:FontAwesome.PrimaryColor="{DynamicResource {x:Static adonis:Brushes.AccentForegroundBrush}}"
+                            fa:FontAwesome.SecondaryColor="{DynamicResource {x:Static adonis:Brushes.ForegroundBrush}}"
+                            fa:FontAwesome.Icon="Solid_FolderOpen" Width="50" Height="30" ToolTip="Browse" />
+                </Grid>
+                <Label Target="GameTarget" Margin="0, 5, 0, 0">Unreal Version</Label>
+                <ComboBox x:Name="GameTarget"
+                          SelectedItem="{Binding GameTarget}"
+                          ItemsSource="{Binding Source={x:Static mgmt:GameConfigManager.GameTargets}}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <Label Content="{Binding  Text}" Margin="{Binding Margin}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Label Target="KeyList" Margin="0, 5, 0, 0">AES Keys</Label>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="KeyInput"
+                             adonisExtensions:WatermarkExtension.Watermark="0x0000000000000000000000000000000000000000000000000000000000000000"
+                             Margin="0, 0, 5, 0" />
+                    <TextBox Grid.Row="1" Grid.Column="0" x:Name="GuidInput"
+                             adonisExtensions:WatermarkExtension.Watermark="Optional Key Guid" Margin="0, 5, 5, 0" />
+                    <Button Grid.Row="0" Grid.Column="1" Click="AddKey"
+                            Style="{DynamicResource {x:Static adonis:Styles.AccentButton}}"
+                            fa:FontAwesome.PrimaryColor="{DynamicResource {x:Static adonis:Brushes.AccentForegroundBrush}}"
+                            fa:FontAwesome.SecondaryColor="{DynamicResource {x:Static adonis:Brushes.ForegroundBrush}}"
+                            fa:FontAwesome.Icon="Solid_Plus" Width="50" Height="30" ToolTip="Add" />
+                    <Button Grid.Row="1" Grid.Column="1" Margin="0, 5, 0, 0" Click="ClearKeys"
+                            Style="{DynamicResource {x:Static adonis:Styles.AccentButton}}"
+                            fa:FontAwesome.PrimaryColor="{DynamicResource {x:Static adonis:Brushes.AccentForegroundBrush}}"
+                            fa:FontAwesome.SecondaryColor="{DynamicResource {x:Static adonis:Brushes.ForegroundBrush}}"
+                            fa:FontAwesome.Icon="Solid_Recycle" Width="50" Height="30" ToolTip="Clear" />
+                </Grid>
+                <ScrollViewer BorderThickness="1">
+                    <ListBox x:Name="KeyList" ItemsSource="{Binding Keys, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" MouseDoubleClick="RemoveAESEntry" />
+                </ScrollViewer>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</adonisControls:AdonisWindow>

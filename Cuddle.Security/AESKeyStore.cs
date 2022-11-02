@@ -12,8 +12,32 @@ namespace Cuddle.Security;
 public sealed class AESKeyStore {
     public Dictionary<Guid, byte[]> Keys { get; } = new();
     public List<byte[]> NullKeys { get; } = new();
+    public IEnumerable<string> AllKeys => Keys.Values.Concat(NullKeys).Select(x => x.ToHexString()).Distinct();
+
+    public void RemoveKey(Guid identifier) {
+        if (Keys.TryGetValue(identifier, out var key)) {
+            NullKeys.Remove(key);
+        }
+
+        Keys.Remove(identifier);
+    }
+
+    public void RemoveKey(byte[] key) {
+        NullKeys.Remove(key);
+        Keys.Remove(Keys.First(x => x.Value == key).Key);
+    }
+
+    public void Clear() {
+        NullKeys.Clear();
+        Keys.Clear();
+    }
 
     public void AddKey(Guid identifier, byte[] key) {
+        if (identifier == Guid.Empty) {
+            AddKey(key);
+            return;
+        }
+
         Keys[identifier] = key;
     }
 
@@ -22,10 +46,6 @@ public sealed class AESKeyStore {
     }
 
     public void AddKey(Guid identifier, string key) {
-        if (key.StartsWith("0x")) {
-            key = key[2..];
-        }
-
         Keys[identifier] = key.ToBytes();
     }
 
@@ -34,10 +54,6 @@ public sealed class AESKeyStore {
             var parts = key.Split('=', 2, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
             AddKey(parts[0].StartsWith("0x") ? new Guid(parts[0][2..].ToBytes()) : Guid.Parse(parts[0]), parts[1]);
             return;
-        }
-
-        if (key.StartsWith("0x")) {
-            key = key[2..];
         }
 
         NullKeys.Add(key.ToBytes());

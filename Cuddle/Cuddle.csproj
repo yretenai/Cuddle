@@ -18,16 +18,34 @@
         <Optimize>True</Optimize>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(TargetFramework)' == 'net7.0' ">
+    <PropertyGroup Condition=" '$(TargetFramework)' == 'net7.0-windows' ">
         <EnablePreviewFeatures>true</EnablePreviewFeatures>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Cuddle.Core\Cuddle.Core.csproj"/>
+        <ProjectReference Include="..\Cuddle.Core\Cuddle.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Page Update="Window\Main.xaml">
+        <Generator>MSBuild:Compile</Generator>
+        <XamlRuntime>Wpf</XamlRuntime>
+        <SubType>Designer</SubType>
+      </Page>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="AdonisUI" Version="1.17.1" />
+      <PackageReference Include="AdonisUI.ClassicTheme" Version="1.17.1" />
+      <PackageReference Include="FontAwesome6.Svg" Version="2.3.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Win32" />
     </ItemGroup>
 
     <Target Name="CustomAfterBuild" AfterTargets="AfterBuild">
-        <Copy SourceFiles="..\ATTRIBUTION.txt" DestinationFolder="$(TargetDir)" ContinueOnError="true"/>
+        <Copy SourceFiles="..\ATTRIBUTION.txt" DestinationFolder="$(TargetDir)" ContinueOnError="true" />
     </Target>
 
 </Project>
