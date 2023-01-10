@@ -12,7 +12,7 @@ using Serilog;
 namespace Cuddle.Core.VFS;
 
 public sealed class FIoStore : IVFSFile {
-    public FIoStore(string fullPath, EGame game, string name, AESKeyStore? keyStore, HashPathStore? hashStore, VFSManager manager) {
+    public FIoStore(string fullPath, EGame game, string name, VFSManager manager) {
         Name = name;
         Manager = manager;
         Game = game;
@@ -20,14 +20,14 @@ public sealed class FIoStore : IVFSFile {
         FullPath = fullPath;
         using var tocStream = new FileStream(Path.ChangeExtension(fullPath, "utoc"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
-        Toc = new FIoToc(this, tocStream, keyStore);
+        Toc = new FIoToc(this, tocStream, Manager.KeyStore);
 
         Debug.Assert(Toc.Version >= EIoStoreTocVersion.DirectoryIndex);
 
         if (Toc.Version >= EIoStoreTocVersion.DirectoryIndex) {
             if (Toc.DirectoryIndexBuffer != null) {
                 if (Toc.ContainerFlags.HasFlag(EIoContainerFlags.Encrypted)) {
-                    if (keyStore == null || !keyStore.FindEncryptionKey(EncryptionGuid, Toc.DirectoryIndexBuffer.Span[..16], out var enc)) {
+                    if (Manager.KeyStore.FindEncryptionKey(EncryptionGuid, Toc.DirectoryIndexBuffer.Span[..16], out var enc)) {
                         Log.Error("Can't find encryption key that suits Encryption Key GUID {KeyGuid} for IoStore {StoreName}", EncryptionGuid, Name);
                         return;
                     }
@@ -36,7 +36,7 @@ public sealed class FIoStore : IVFSFile {
                 }
 
                 using var directoryReader = new FArchiveReader(Decrypt(Toc.DirectoryIndexBuffer, Toc.ContainerFlags.HasFlag(EIoContainerFlags.Encrypted)));
-                Directory = new FIoDirectory(directoryReader, hashStore, this);
+                Directory = new FIoDirectory(directoryReader, Manager.HashStore, this);
 
                 Toc.DirectoryIndexBuffer.Dispose();
                 Toc.DirectoryIndexBuffer = null;

@@ -89,20 +89,20 @@ public sealed class VFSManager : IResettable {
         var found = new HashSet<string>();
         if (global is not null) {
             found.Add("global");
-            Containers.Add(new FIoStore(global.FullName, game, Path.GetFileNameWithoutExtension(global.Name), KeyStore, HashStore, this) { IsGlobal = true });
+            Containers.Add(new FIoStore(global.FullName, game, Path.GetFileNameWithoutExtension(global.Name), this) { IsGlobal = true });
         }
 
         foreach (var casPath in dir.EnumerateFiles("*.ucas", SearchOption.TopDirectoryOnly).OrderBy(x => x.Name.Replace('.', '_'), new NaturalStringComparer(StringComparison.OrdinalIgnoreCase))) {
             var name = Path.GetFileNameWithoutExtension(casPath.Name);
             if (found.Add(name)) {
-                Containers.Add(new FIoStore(casPath.FullName, game, name, KeyStore, HashStore, this));
+                Containers.Add(new FIoStore(casPath.FullName, game, name, this));
             }
         }
 
         foreach (var pakPath in dir.EnumerateFiles("*.pak", SearchOption.AllDirectories).OrderBy(x => x.Name.Replace('.', '_'), new NaturalStringComparer(StringComparison.OrdinalIgnoreCase))) {
             var name = Path.GetFileNameWithoutExtension(pakPath.Name);
             if (found.Add(name)) {
-                Containers.Add(new FPakFile(pakPath.FullName, game, name, KeyStore, HashStore, this));
+                Containers.Add(new FPakFile(pakPath.FullName, game, name, this));
             }
         }
     }

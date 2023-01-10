@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using Cuddle.Core.VFS;
 using DragonLib.Hash;
 using DragonLib.Hash.Basis;
@@ -9,7 +8,7 @@ using DragonLib.Hash.Basis;
 namespace Cuddle.Core.Structs.FileSystem;
 
 public class FPakIndex {
-    public FPakIndex(FArchiveReader archive, FPakFile owner, HashPathStore? hashStore) {
+    public FPakIndex(FArchiveReader archive, FPakFile owner, HashPathStore hashStore) {
         Owner = owner;
 
         MountPoint = archive.ReadString();
@@ -37,7 +36,7 @@ public class FPakIndex {
         if (owner.Version < EPakVersion.PathHashIndex) {
             Files.EnsureCapacity(Count);
             using var crc = CyclicRedundancyCheck.Create(CRC32Variants.ISO);
-            PathHashSeed = crc.ComputeHashValue((hashStore?.Encoding ?? Encoding.Unicode).GetBytes(owner.Name.ToLower()));
+            PathHashSeed = crc.ComputeHashValue(hashStore.Encoding.GetBytes(owner.Name.ToLower()));
             for (var index = 0; index < Count; ++index) {
                 var name = archive.ReadString();
                 var mounted = MountPoint + name;

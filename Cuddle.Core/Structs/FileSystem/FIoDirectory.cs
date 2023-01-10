@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Text;
 using Cuddle.Core.VFS;
 using DragonLib.Hash;
 using DragonLib.Hash.Basis;
@@ -10,7 +9,7 @@ using Microsoft.Toolkit.HighPerformance.Buffers;
 namespace Cuddle.Core.Structs.FileSystem;
 
 public class FIoDirectory {
-    public FIoDirectory(FArchiveReader archive, HashPathStore? hashStore, FIoStore owner) {
+    public FIoDirectory(FArchiveReader archive, HashPathStore hashStore, FIoStore owner) {
         Owner = owner;
 
         MountPoint = archive.ReadString();
@@ -34,7 +33,7 @@ public class FIoDirectory {
         }
 
         using var crc = CyclicRedundancyCheck.Create(CRC32Variants.ISO);
-        var pathHashSeed = crc.ComputeHashValue((hashStore?.Encoding ?? Encoding.Unicode).GetBytes(owner.Name.ToLower()));
+        var pathHashSeed = crc.ComputeHashValue(hashStore.Encoding.GetBytes(owner.Name.ToLower()));
         DirectoryEntries = archive.ReadArray<FIoDirectoryIndexEntry>().ToArray();
         FileEntries = archive.ReadArray<FIoFileIndexEntry>().ToArray();
         StringTable = archive.ReadStrings();

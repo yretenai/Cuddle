@@ -12,7 +12,7 @@ using Microsoft.Toolkit.HighPerformance.Buffers;
 namespace Cuddle.Core.Structs.FileSystem;
 
 public sealed class FIoToc : IPoliteDisposable {
-    public FIoToc(FIoStore store, Stream stream, AESKeyStore? keyStore) {
+    public FIoToc(FIoStore store, Stream stream, AESKeyStore keyStore) {
         Owner = store;
 
         Span<byte> buffer = stackalloc byte[16];

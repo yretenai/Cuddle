@@ -15,116 +15,126 @@ using Serilog;
 namespace Cuddle.Core.VFS;
 
 public sealed class FPakFile : IVFSFile {
-    public FPakFile(string fullPath, EGame game, string name, AESKeyStore? keyStore, HashPathStore? hashStore, VFSManager manager) {
-        Name = name;
-        Game = game;
-        Manager = manager;
-
-        using var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-
-        var offset = 0x3D;
-
-        if (game >= EGame.UE4_22) {
-            offset += 0x80;
-        }
-
-        if (game >= EGame.UE4_23) {
-            offset += 0x20;
-        }
-
-        if (game.GetEngineVersion() is EGame.UE4_25) {
-            // I tried to track what caused this in UE code, but i failed.
-            // for now, trust UEViewer.
-            offset += 1; // ????
-        }
-
-        using var buffer = MemoryOwner<byte>.Allocate(offset);
-        stream.Seek(-offset, SeekOrigin.End);
-        stream.ReadExactly(buffer.Span);
-
-        using var header = new FArchiveReader(game, buffer);
-
-        EncryptionGuid = header.Read<Guid>();
-        IsIndexEncrypted = header.Read<byte>() != 0;
-        Tag = header.Read<uint>();
-        if (Tag != 0x5A6F12E1) {
-            Log.Error("Failed to read PakFile header for {PakName}! Magic is invalid, expected 5A6F12E1 but got {Tag:X}", Name, Tag);
-            return;
-        }
-
+#pragma warning disable CA2000
+    public FPakFile(string fullPath, EGame game, string name, VFSManager manager) : this(new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite), game, name, manager, false) {
+    #pragma warning restore CA2000
         FullPath = fullPath;
+    }
 
-        Version = header.Read<EPakVersion>();
+    public FPakFile(Stream stream, EGame game, string name, VFSManager manager, bool leaveOpen = false) {
+        try {
+            Name = name;
+            Game = game;
+            Manager = manager;
+            BaseStream = stream;
 
-        if (Version < EPakVersion.IndexEncryption) {
-            IsIndexEncrypted = false;
-        }
+            var offset = 0x3D;
 
-        if (Version < EPakVersion.EncryptionKeyGuid) {
-            EncryptionGuid = Guid.Empty;
-        }
+            if (game >= EGame.UE4_22) {
+                offset += 0x80;
+            }
 
-        SubVersion = header.Read<ushort>();
-        var indexOffset = header.Read<long>();
-        var indexSize = header.Read<long>();
-        IndexHash = header.ReadArray<byte>(0x14).ToArray();
-
-        if (Version is EPakVersion.FrozenIndex) {
-            IndexIsFrozen = header.Read<byte>() != 0;
-        }
-
-        if (Version < EPakVersion.FNameBasedCompressionMethod) {
-            CompressionMethods = new List<string> {
-                "None", // COMPRESS_None
-                "Zlib", // COMPRESS_ZLIB
-                "Gzip", // COMPRESS_GZIP
-                "Custom", // This was never defined, but some games defined it as Oodle.
-                "Custom", // COMPRESS_Custom, but it's probably Oodle (that's what the UE source assumes.) -- Validate headers, if nothing works it's probably LZ4
-            };
-        } else {
-            CompressionMethods = new List<string> {
-                "None",
-            };
-
-            var count = 4;
             if (game >= EGame.UE4_23) {
-                count += 1;
+                offset += 0x20;
             }
 
-            for (var index = 0; index < count; ++index) {
-                CompressionMethods.Add(header.ReadArray<byte>(0x20).ReadUTF8String() ?? "None");
+            if (game.GetEngineVersion() is EGame.UE4_25 && game is not EGame.GAME_Valorant_Delta) {
+                // I tried to track what caused this in UE code, but i failed.
+                // for now, trust UEViewer.
+                offset += 1; // ????
             }
-        }
 
-        if (IsIndexEncrypted || EncryptionGuid != Guid.Empty && EncryptionKey != null) {
-            var testBlock = new byte[16].AsSpan();
-            stream.Position = indexOffset;
-            stream.ReadExactly(testBlock);
+            using var buffer = MemoryOwner<byte>.Allocate(offset);
+            stream.Seek(-offset, SeekOrigin.End);
+            stream.ReadExactly(buffer.Span);
 
-            if (keyStore == null || !keyStore.FindEncryptionKey(EncryptionGuid, testBlock, out var enc)) {
-                Log.Error("Can't find encryption key that suits Encryption Key GUID {KeyGuid} for PAK {PakName}", EncryptionGuid, Name);
+            using var header = new FArchiveReader(game, buffer);
+
+            EncryptionGuid = header.Read<Guid>();
+            IsIndexEncrypted = header.Read<byte>() != 0;
+            Tag = header.Read<uint>();
+            if (Tag != 0x5A6F12E1) {
+                Log.Error("Failed to read PakFile header for {PakName}! Magic is invalid, expected 5A6F12E1 but got {Tag:X}", Name, Tag);
                 return;
             }
 
-            EncryptionKey = enc;
-        }
+            Version = header.Read<EPakVersion>();
 
-        using var indexReader = new FArchiveReader(game, ReadBytes(indexOffset, indexSize, IsIndexEncrypted));
-        Index = new FPakIndex(indexReader, this, hashStore);
-
-        if (IsIndexEncrypted || EncryptionGuid != Guid.Empty) {
-            if (EncryptionGuid == Guid.Empty) {
-                Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, encryption key is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionKey == null ? "not present" : "present");
-            } else {
-                Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, encryption key {EncryptionGuid:n} is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionGuid, EncryptionKey == null ? "not present" : "present");
+            if (Version < EPakVersion.IndexEncryption) {
+                IsIndexEncrypted = false;
             }
-        } else {
-            Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files)", Name, Index.MountPoint, Index.Files.Count);
+
+            if (Version < EPakVersion.EncryptionKeyGuid) {
+                EncryptionGuid = Guid.Empty;
+            }
+
+            SubVersion = header.Read<ushort>();
+            var indexOffset = header.Read<long>();
+            var indexSize = header.Read<long>();
+            IndexHash = header.ReadArray<byte>(0x14).ToArray();
+
+            if (Version is EPakVersion.FrozenIndex) {
+                IndexIsFrozen = header.Read<byte>() != 0;
+            }
+
+            if (Version < EPakVersion.FNameBasedCompressionMethod) {
+                CompressionMethods = new List<string> {
+                    "None", // COMPRESS_None
+                    "Zlib", // COMPRESS_ZLIB
+                    "Gzip", // COMPRESS_GZIP
+                    "Custom", // This was never defined, but some games defined it as Oodle.
+                    "Custom", // COMPRESS_Custom, but it's probably Oodle (that's what the UE source assumes.) -- Validate headers, if nothing works it's probably LZ4
+                };
+            } else {
+                CompressionMethods = new List<string> {
+                    "None",
+                };
+
+                var count = 4;
+                if (game >= EGame.UE4_23) {
+                    count += 1;
+                }
+
+                for (var index = 0; index < count; ++index) {
+                    CompressionMethods.Add(header.ReadArray<byte>(0x20).ReadUTF8String() ?? "None");
+                }
+            }
+
+            if (IsIndexEncrypted || EncryptionGuid != Guid.Empty && EncryptionKey != null) {
+                var testBlock = new byte[16].AsSpan();
+                stream.Position = indexOffset;
+                stream.ReadExactly(testBlock);
+
+                if (!manager.KeyStore.FindEncryptionKey(EncryptionGuid, testBlock, out var enc)) {
+                    Log.Error("Can't find encryption key that suits Encryption Key GUID {KeyGuid} for PAK {PakName}", EncryptionGuid, Name);
+                    return;
+                }
+
+                EncryptionKey = enc;
+            }
+
+            using var indexReader = new FArchiveReader(game, ReadBytes(indexOffset, indexSize, IsIndexEncrypted));
+            Index = new FPakIndex(indexReader, this, manager.HashStore);
+
+            if (IsIndexEncrypted || EncryptionGuid != Guid.Empty) {
+                if (EncryptionGuid == Guid.Empty) {
+                    Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, encryption key is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionKey == null ? "not present" : "present");
+                } else {
+                    Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files, encryption key {EncryptionGuid:n} is {Present})", Name, Index.MountPoint, Index.Files.Count, EncryptionGuid, EncryptionKey == null ? "not present" : "present");
+                }
+            } else {
+                Log.Information("Mounted VFS Pak {Name} on \"{MountPoint}\" ({Count} files)", Name, Index.MountPoint, Index.Files.Count);
+            }
+        } finally {
+            if (!leaveOpen) {
+                stream.Dispose();
+            }
         }
     }
 
     public List<string> CompressionMethods { get; } = null!;
-    private string FullPath { get; } = null!;
+    private string? FullPath { get; }
+    private Stream? BaseStream { get; }
     public bool IsIndexEncrypted { get; }
     public uint Tag { get; }
     public EPakVersion Version { get; }
@@ -284,13 +294,22 @@ public sealed class FPakFile : IVFSFile {
     }
 
     public MemoryOwner<byte> ReadBytes(long offset, long count, bool isEncrypted) {
-        using var stream = new FileStream(FullPath, FileMode.Open, FileAccess.ReadWrite);
+    #pragma warning disable CA2000
+        var stream = FullPath != null ? new FileStream(FullPath, FileMode.Open, FileAccess.ReadWrite) : BaseStream!;
+    #pragma warning restore CA2000
 
-        // aes needs 16 byte aligned data.
-        var data = MemoryOwner<byte>.Allocate((int) count.Align(16));
-        stream.Position = offset;
-        stream.ReadExactly(data.Span);
-        return Decrypt(data, isEncrypted)[..(int) count];
+        try {
+            // aes needs 16 byte aligned data.
+            var data = MemoryOwner<byte>.Allocate((int) count.Align(16));
+            stream.Position = offset;
+            stream.ReadExactly(data.Span);
+
+            return Decrypt(data, isEncrypted)[..(int) count];
+        } finally {
+            if (FullPath != null) {
+                stream.Dispose();
+            }
+        }
     }
 
     ~FPakFile() {
