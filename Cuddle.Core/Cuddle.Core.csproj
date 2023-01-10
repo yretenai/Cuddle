@@ -15,10 +15,6 @@
         <Optimize>True</Optimize>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(TargetFramework)' == 'net7.0' ">
-        <EnablePreviewFeatures>true</EnablePreviewFeatures>
-    </PropertyGroup>
-
     <ItemGroup>
         <ProjectReference Include="..\Cuddle.Security\Cuddle.Security.csproj" />
         <ProjectReference Include="..\DragonLib\DragonLib\DragonLib.csproj" />

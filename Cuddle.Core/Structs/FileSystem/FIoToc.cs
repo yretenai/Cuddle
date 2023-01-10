@@ -80,7 +80,7 @@ public sealed class FIoToc : IPoliteDisposable {
         stream.ReadExactly(pooled.Span);
 
         for (var i = 0; i < compressionMethodNameCount; ++i) {
-            CompressionMethods.Add(pooled.Span[(i * compressionMethodNameLength)..].ReadString() ?? throw new InvalidDataException());
+            CompressionMethods.Add(pooled.Span[(i * compressionMethodNameLength)..].ReadUTF8String() ?? throw new InvalidDataException());
         }
 
         if (ContainerFlags.HasFlag(EIoContainerFlags.Signed)) {

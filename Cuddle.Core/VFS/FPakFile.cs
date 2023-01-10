@@ -92,7 +92,7 @@ public sealed class FPakFile : IVFSFile {
             }
 
             for (var index = 0; index < count; ++index) {
-                CompressionMethods.Add(header.ReadArray<byte>(0x20).ReadString() ?? "None");
+                CompressionMethods.Add(header.ReadArray<byte>(0x20).ReadUTF8String() ?? "None");
             }
         }
 

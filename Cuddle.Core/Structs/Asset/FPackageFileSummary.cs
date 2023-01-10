@@ -88,6 +88,11 @@ public class FPackageFileSummary {
         }
 
         ThumbnailTableOffset = archive.Read<int>();
+
+        if (archive.Game is EGame.GAME_Valorant_Gamma or EGame.GAME_Valorant_Delta) {
+            VALORANT_Id = archive.Read<ulong>();
+        }
+
         Guid = archive.Read<Guid>();
 
         if (HasEditorData) {
@@ -179,6 +184,7 @@ public class FPackageFileSummary {
     public int SoftPackageReferencesOffset { get; }
     public int SearchableNamesOffset { get; }
     public int ThumbnailTableOffset { get; }
+    public ulong VALORANT_Id { get; }
     public Guid Guid { get; }
     public Guid PersistentGuid { get; }
     public Guid OwnerPersistentGuid { get; }

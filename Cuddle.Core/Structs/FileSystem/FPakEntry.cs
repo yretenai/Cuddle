@@ -195,7 +195,7 @@ public sealed record FPakEntry : IVFSEntry {
         }
 
         // Project/Content/Stuff/ -> Game/Content/Stuff -- strip project nname
-        var index = mountedPath.IndexOf('/');
+        var index = mountedPath.IndexOf('/', StringComparison.Ordinal);
         if (index == -1) {
             return mountedPath;
         }

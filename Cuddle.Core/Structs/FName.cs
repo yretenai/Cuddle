@@ -26,7 +26,7 @@ public readonly record struct FName : IEquatable<string?> {
     }
 
     public FName(string value, int instance = 0) {
-        var index = value.IndexOf(':');
+        var index = value.IndexOf(':', StringComparison.Ordinal);
         if (index > -1 && int.TryParse(value[(index + 1)..], out instance)) {
             value = value[..index];
         }

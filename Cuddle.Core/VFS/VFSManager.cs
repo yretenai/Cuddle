@@ -125,7 +125,7 @@ public sealed class VFSManager : IResettable {
         }
 
         name = new FName(ext[1..]);
-        var strippedPath = path[..path.IndexOf('.')];
+        var strippedPath = path[..path.IndexOf('.', StringComparison.Ordinal)];
 
         if (isObject && UniqueFilesObjectPath.TryGetValue(strippedPath, out file)) {
             return file;

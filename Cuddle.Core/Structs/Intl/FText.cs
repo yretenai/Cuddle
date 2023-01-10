@@ -9,7 +9,7 @@ namespace Cuddle.Core.Structs.Intl;
 public class FText {
     public FText(FArchiveReader data, UAssetFile? owner) {
         Flags = data.Read<ETextFlag>();
-        Owner = owner;
+        Owner = owner!;
         if (data.Version >= EObjectVersion.FTEXT_HISTORY) {
             Type = data.Read<ETextHistoryType>();
             History = Type switch {

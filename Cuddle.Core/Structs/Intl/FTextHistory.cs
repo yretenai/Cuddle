@@ -169,12 +169,12 @@ public abstract class FTextHistory {
             // todo: TimeZone, Culture
             return DateStyle switch {
                 EDateTimeStyle.Default => dt.ToString("d/M/y"),
-                EDateTimeStyle.Short => dt.ToString("d/M/y"),
-                EDateTimeStyle.Medium => dt.ToString("MM d, y"),
-                EDateTimeStyle.Long => dt.ToString("MMMM d, y"),
-                EDateTimeStyle.Full => dt.ToString("DDD, MMM d, y"),
-                EDateTimeStyle.Custom => dt.ToString("d/M/y"), // not supported, internal use only?
-                _ => throw new ArgumentOutOfRangeException(),
+                EDateTimeStyle.Short   => dt.ToString("d/M/y"),
+                EDateTimeStyle.Medium  => dt.ToString("MM d, y"),
+                EDateTimeStyle.Long    => dt.ToString("MMMM d, y"),
+                EDateTimeStyle.Full    => dt.ToString("DDD, MMM d, y"),
+                EDateTimeStyle.Custom  => dt.ToString("d/M/y"), // not supported, internal use only?
+                _                      => throw new NotSupportedException($"DateTimeStyle {DateStyle} is not supported"),
             };
         }
     }
@@ -197,13 +197,12 @@ public abstract class FTextHistory {
             // todo: TimeZone, Culture
             return DateStyle switch {
                 EDateTimeStyle.Default => dt.ToString("h:m tt"),
-                EDateTimeStyle.Short => dt.ToString("h:m tt"),
-                EDateTimeStyle.Medium => dt.ToString("h:mm:ss tt"),
-                EDateTimeStyle.Long => dt.ToString("h:mm:ss tt zz"),
-                EDateTimeStyle.Full => dt.ToString("y a\\t h:mm:ss tt zz"),
-                EDateTimeStyle.Custom => dt.ToString("h:m tt"), // not supported, internal use only?
-                _ => throw new ArgumentOutOfRangeException(),
-            };
+                EDateTimeStyle.Short   => dt.ToString("h:m tt"),
+                EDateTimeStyle.Medium  => dt.ToString("h:mm:ss tt"),
+                EDateTimeStyle.Long    => dt.ToString("h:mm:ss tt zz"),
+                EDateTimeStyle.Full    => dt.ToString("y a\\t h:mm:ss tt zz"),
+                EDateTimeStyle.Custom  => dt.ToString("h:m tt"), // not supported, internal use only?
+                _                      => throw new NotSupportedException($"DateTimeStyle {DateStyle} is not supported"),            };
         }
     }
 
@@ -211,6 +210,7 @@ public abstract class FTextHistory {
         public AsDateTime(FArchiveReader data) {
             SourceDateTime = data.Read<FDateTime>();
             DateStyle = data.Read<EDateTimeStyle>();
+            // todo: TimeStyle = data.Read<EDateTimeStyle>(); ?
             TimeZone = data.ReadString();
             TargetCulture = data.ReadString();
         }
@@ -226,12 +226,12 @@ public abstract class FTextHistory {
             // todo: TimeZone, Culture
             return DateStyle switch {
                 EDateTimeStyle.Default => dt.ToString("d/M/y, h:m tt"),
-                EDateTimeStyle.Short => dt.ToString("d/M/y, h:m tt"),
-                EDateTimeStyle.Medium => dt.ToString("MM d, y, h:mm:ss tt"),
-                EDateTimeStyle.Long => dt.ToString("MMMM d, y, h:mm:ss tt zz"),
-                EDateTimeStyle.Full => dt.ToString("DDD, MMM d, y a\\t h:mm:ss tt zz"),
-                EDateTimeStyle.Custom => dt.ToString("d/M/y, h:m tt"), // not supported, internal use only?
-                _ => throw new ArgumentOutOfRangeException(),
+                EDateTimeStyle.Short   => dt.ToString("d/M/y, h:m tt"),
+                EDateTimeStyle.Medium  => dt.ToString("MM d, y, h:mm:ss tt"),
+                EDateTimeStyle.Long    => dt.ToString("MMMM d, y, h:mm:ss tt zz"),
+                EDateTimeStyle.Full    => dt.ToString("DDD, MMM d, y a\\t h:mm:ss tt zz"),
+                EDateTimeStyle.Custom  => dt.ToString("d/M/y, h:m tt"), // not supported, internal use only?
+                _                      => throw new NotSupportedException($"DateTimeStyle {DateStyle} is not supported"),
             };
         }
     }

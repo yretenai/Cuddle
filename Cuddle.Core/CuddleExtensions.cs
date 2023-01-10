@@ -28,7 +28,7 @@ public static class CuddleExtensions {
 
         var text = Enum.GetNames<EGame>().Zip(Enum.GetValues<EGame>()).Where(x => x.Second == game).Select(x => x.First.ToString()).MaxBy(x => x.Length);
         if (game.IsBranch() && !string.IsNullOrEmpty(text)) {
-            var index = text.IndexOf('_');
+            var index = text.IndexOf('_', StringComparison.Ordinal);
             if (index > -1) {
                 sb.Append(text[(index + 1 + (minor > 9 ? 2 : 1))..]);
                 return sb.ToString();

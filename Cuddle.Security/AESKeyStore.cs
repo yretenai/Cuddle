@@ -12,7 +12,7 @@ namespace Cuddle.Security;
 public sealed class AESKeyStore {
     public Dictionary<Guid, byte[]> Keys { get; } = new();
     public List<byte[]> NullKeys { get; } = new();
-    public IEnumerable<string> AllKeys => Keys.Values.Concat(NullKeys).Select(x => x.ToHexString()).Distinct();
+    public IEnumerable<string> AllKeys => Keys.Values.Concat(NullKeys).Select(x => x.AsSpan().ToHexString()).Distinct();
 
     public void RemoveKey(Guid identifier) {
         if (Keys.TryGetValue(identifier, out var key)) {
@@ -50,7 +50,7 @@ public sealed class AESKeyStore {
     }
 
     public void AddKey(string key) {
-        if (key.Contains('=')) {
+        if (key.Contains('=', StringComparison.Ordinal)) {
             var parts = key.Split('=', 2, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
             AddKey(parts[0].StartsWith("0x") ? new Guid(parts[0][2..].ToBytes()) : Guid.Parse(parts[0]), parts[1]);
             return;
@@ -66,11 +66,11 @@ public sealed class AESKeyStore {
 
         Log.Information("Keys:");
         foreach (var key in Keys) {
-            Log.Information("  {Guid:n} = 0x{Key}", key.Key, key.Value.ToHexString());
+            Log.Information("  {Guid:n} = 0x{Key}", key.Key, key.Value.AsSpan().ToHexString());
         }
 
         foreach (var key in NullKeys) {
-            Log.Information("  {Guid:n} = 0x{Key}", Guid.Empty, key.ToHexString());
+            Log.Information("  {Guid:n} = 0x{Key}", Guid.Empty, key.AsSpan().ToHexString());
         }
     }
 
